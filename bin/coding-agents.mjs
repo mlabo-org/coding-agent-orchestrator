@@ -3267,7 +3267,7 @@ Usage:
   node bin/coding-agents.mjs --help
 
 Commands:
-  intake   Create or update target .coding-agents workflow files.
+  intake   Start or replace current generated task state for the target repo. Existing completed state never locks the repo; a new purpose uses fresh task_id/epoch/scope and preserves runner.md history.
   assign   Record a scoped specialist assignment in .coding-agents/runner.md.
   collect  Record a worker-result-collection packet and its workflow-state-only lifecycle disposition. Completed collection does not require task-wide D/C/source-spec coverage. state_retired requires exactly one allowed --cancel-reason; continuation_expected rejects --cancel-reason.
   finalize Validate complete active D/C/source-spec coverage and record a distinct task-finalization packet. Every ID segment and source_spec_coverage requires one accepted typed reference.

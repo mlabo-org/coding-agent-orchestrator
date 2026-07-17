@@ -1,7 +1,7 @@
 {
   "name": "coding-agents",
   "version": "0.1.0",
-  "description": "Coding Agents explicit-only legacy workflow for named .coding-agents state and source CLI continuation, audit, or repair. Primary route: explicit Coding Agents workflow with worker dispatch only through official Codex subagent spawn tools. Fallback: parent-side work when official subagents are unavailable; never launch codex exec or a custom process runner. Do not auto-route generic coding, debug, source changes, delegation, or subagent coordination.",
+  "description": "Coding Agents same-repo continuation and new-task intake for named requests or strong continuation intent on valid .coding-agents state. Primary route: start new user-visible work with fresh task_id/epoch/scope while preserving historical runner packets; continue unfinished work with its existing identity. Fallback: parent-side work when official subagents are unavailable; never launch codex exec or a custom process runner. Do not auto-route unrelated generic coding.",
   "homepage": "https://github.com/mlabo-org/coding-agents#readme",
   "repository": "https://github.com/mlabo-org/coding-agents",
   "license": "MIT",
@@ -11,14 +11,17 @@
     ".coding-agents",
     "coding-agents-cli",
     "coding-agents-continuation",
+    "coding-agents-same-repo",
+    "coding-agents-next-stage",
+    "coding-agents-new-task-intake",
     "coding-agents-audit",
     "coding-agents-repair",
     "legacy-coding-agents"
   ],
   "interface": {
     "displayName": "Coding Agents",
-    "shortDescription": "Explicit-only legacy Coding Agents state/CLI workflow; official Codex spawn only for worker dispatch.",
-    "longDescription": "Discovery is intentionally explicit-only. Select only when the user names Coding Agents/coding-agents or asks to continue, audit, or repair existing .coding-agents state or the Coding Agents source CLI. Do not auto-route generic coding, debugging or repair, source changes, delegation, multi-agent work, or subagent coordination. Intake, assign, collect, finalize, handoff, audit, and record-only run/orchestrate remain available. Actual workers are dispatched only through official Codex subagent spawn tools; the CLI never launches codex exec, an OS child Codex worker, or a custom runner fallback.",
+    "shortDescription": "Same-repo continuation and new-task intake; official Codex spawn only for workers.",
+    "longDescription": "Select Coding Agents when the user names it, audits or repairs its state/CLI, or expresses strong continuation intent for a repository with valid .coding-agents state, such as a next stage, new specification, or new purpose in the same repo. Existing completed state never locks the repository. New work starts with fresh task_id/epoch/scope, replaces current generated task documents, and preserves runner history. Mere state presence and unrelated generic coding do not trigger it. Actual workers are dispatched only through official Codex subagent spawn tools; the CLI never launches codex exec or a custom runner fallback.",
     "developerName": "Makoto Suzuki",
     "category": "Developer Tools",
     "websiteURL": "https://github.com/mlabo-org/coding-agents",
@@ -26,12 +29,13 @@
       "Coding Agents State",
       "Coding Agents CLI",
       "Coding Agents Continuation",
+      "Same-Repo New Task Intake",
       "Coding Agents Audit/Repair"
     ],
     "defaultPrompt": [
-      "Use Coding Agents explicitly because I named Coding Agents/coding-agents.",
-      "Continue, audit, or repair this existing .coding-agents state or Coding Agents source CLI.",
-      "In Coding Agents, dispatch workers only through official Codex subagent spawn tools; never use a CLI process runner."
+      "Use Coding Agents for the next stage in this same repo with a fresh task_id, epoch, and scope.",
+      "Continue this valid .coding-agents repo for a new purpose; keep runner history and replace current task state.",
+      "Audit or repair this Coding Agents state or source CLI; use only official Codex subagents for workers."
     ],
     "brandColor": "#2563EB"
   },

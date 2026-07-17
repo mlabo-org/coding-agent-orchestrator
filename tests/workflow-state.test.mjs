@@ -133,6 +133,72 @@ test("runner commands require matching intake state before writing runner state"
   }
 });
 
+test("completed state does not lock the repo and fresh intake preserves runner history", () => {
+  const repo = makeTempGitRepo();
+  try {
+    const firstTask = "completed-first-purpose";
+    intake(repo, {
+      taskId: firstTask,
+      epoch: "e1",
+      scope: "README.md",
+      workType: "documentation",
+      task: "Document the first completed purpose",
+    });
+
+    const finalized = runCli([
+      "finalize",
+      "--target-cwd",
+      repo,
+      "--task-id",
+      firstTask,
+      "--epoch",
+      "e1",
+      "--scope",
+      "README.md",
+      "--work-type",
+      "documentation",
+      ...contractCoverageArgs(firstTask),
+    ]);
+    assert.equal(finalized.status, 0, finalized.stderr);
+    const historicalRunner = readState(repo, "runner.md");
+    assert.match(historicalRunner, /type: task-finalization/);
+    assert.match(historicalRunner, /task_id: completed-first-purpose/);
+
+    const nextTask = "next-purpose-same-repo";
+    const nextIntake = runCli([
+      "intake",
+      "--target-cwd",
+      repo,
+      "--work-type",
+      "documentation",
+      "--task",
+      "Start a distinct second purpose in the same repository",
+      "--task-id",
+      nextTask,
+      "--epoch",
+      "e2",
+      "--scope",
+      "docs/next-purpose.md",
+    ]);
+    assert.equal(nextIntake.status, 0, nextIntake.stderr);
+
+    for (const file of ["project.md", "task.md", "decisions.md", "handoff.md"]) {
+      const current = readState(repo, file);
+      assert.match(current, /next-purpose-same-repo/);
+      assert.doesNotMatch(current, /completed-first-purpose/);
+    }
+    assert.equal(readState(repo, "runner.md"), historicalRunner);
+
+    const handoff = runCli(["handoff", "--target-cwd", repo, "--task-id", nextTask]);
+    assert.equal(handoff.status, 0, handoff.stderr);
+    assert.match(handoff.stdout, /next-purpose-same-repo/);
+    assert.equal(runCli(["verify-assignments", "--target-cwd", repo]).status, 0);
+    assert.equal(runCli(["doctor", "--target-cwd", repo]).status, 0);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
 test("finalize requires exact delimiter-aware coverage IDs while preserving colon and equals mappings", () => {
   const repo = makeTempGitRepo();
   try {

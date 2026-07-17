@@ -16,7 +16,7 @@ function yamlScalar(document, key) {
   return match[1].trim();
 }
 
-test("discovery metadata keeps Coding Agents explicit-only", () => {
+test("discovery metadata supports intent-bound same-repo continuation", () => {
   const manifest = JSON.parse(read(".codex-plugin/plugin.json"));
   const skill = read("skills/coding-agents/SKILL.md");
   const frontmatter = skill.match(/^---\n([\s\S]*?)\n---\n/);
@@ -30,18 +30,21 @@ test("discovery metadata keeps Coding Agents explicit-only", () => {
     .map((line) => line.trim())
     .join(" ");
 
-  assert.match(manifest.description, /Coding Agents explicit-only legacy workflow/i);
+  assert.match(manifest.description, /Coding Agents same-repo continuation and new-task intake/i);
   assert.match(manifest.description, /Primary route:/);
   assert.match(manifest.description, /Fallback:/);
   assert.match(
     manifest.description,
-    /generic coding, debug, source changes, delegation, or subagent coordination/i,
+    /Do not auto-route unrelated generic coding/i,
   );
   assert.deepEqual(manifest.keywords, [
     "coding-agents",
     ".coding-agents",
     "coding-agents-cli",
     "coding-agents-continuation",
+    "coding-agents-same-repo",
+    "coding-agents-next-stage",
+    "coding-agents-new-task-intake",
     "coding-agents-audit",
     "coding-agents-repair",
     "legacy-coding-agents",
@@ -50,11 +53,13 @@ test("discovery metadata keeps Coding Agents explicit-only", () => {
     "Coding Agents State",
     "Coding Agents CLI",
     "Coding Agents Continuation",
+    "Same-Repo New Task Intake",
     "Coding Agents Audit/Repair",
   ]);
-  assert.match(manifest.interface.shortDescription, /Explicit-only legacy Coding Agents state\/CLI workflow/i);
-  assert.match(manifest.interface.longDescription, /Do not auto-route generic coding/i);
-  assert.match(manifest.interface.longDescription, /record-only run\/orchestrate remain available/i);
+  assert.match(manifest.interface.shortDescription, /Same-repo continuation and new-task intake/i);
+  assert.match(manifest.interface.longDescription, /Existing completed state never locks the repository/i);
+  assert.match(manifest.interface.longDescription, /fresh task_id\/epoch\/scope/i);
+  assert.match(manifest.interface.longDescription, /Mere state presence and unrelated generic coding do not trigger it/i);
   assert.match(manifest.interface.longDescription, /only through official Codex subagent spawn tools/i);
   assert.match(manifest.interface.longDescription, /never launches codex exec/i);
   assert.ok(
@@ -65,39 +70,30 @@ test("discovery metadata keeps Coding Agents explicit-only", () => {
   );
 
   assert.ok(frontmatterDescription.length <= 320, "skill description must stay routing-budget concise");
-  assert.match(frontmatterDescription.slice(0, 180), /\.coding-agents state\/CLI/i);
-  assert.match(frontmatterDescription, /^Coding Agents explicit-only legacy workflow\./);
-  assert.match(frontmatterDescription, /Use only when named or continuing, auditing, or repairing/i);
-  assert.match(frontmatterDescription, /official Codex subagent spawn tools; never CLI runners/i);
-  assert.match(frontmatterDescription, /Never auto-route generic coding, debugging, source edits, delegation, or subagent coordination/i);
+  assert.match(frontmatterDescription.slice(0, 180), /same-repo continuation and new-task intake.*\.coding-agents/i);
+  assert.match(frontmatterDescription, /^Coding Agents same-repo continuation and new-task intake\./);
+  assert.match(frontmatterDescription, /Start fresh task_id\/epoch\/scope for new work/i);
+  assert.match(frontmatterDescription, /completed state never locks the repo/i);
 
   const triggerBoundary = skill.match(/## Trigger Boundary\n\n([\s\S]*?)\n## Core Contract/);
   assert.ok(triggerBoundary, "SKILL.md must define Trigger Boundary before Core Contract");
-  assert.match(triggerBoundary[1], /only when the user explicitly names `Coding Agents` or `coding-agents`/i);
-  assert.match(triggerBoundary[1], /asks to continue, audit, or repair existing `\.coding-agents` workflow state or the Coding Agents source CLI/i);
-  assert.match(triggerBoundary[1], /Never auto-route this skill for generic coding/i);
-  assert.match(triggerBoundary[1], /changes discovery and selection only/i);
+  assert.match(triggerBoundary[1], /explicitly names `Coding Agents` or `coding-agents`/i);
+  assert.match(triggerBoundary[1], /strong continuation intent for a repository with valid `\.coding-agents` state/i);
+  assert.match(triggerBoundary[1], /Mere state-directory presence is not a trigger/i);
+  assert.match(triggerBoundary[1], /fresh `task_id`, `epoch`, and `scope`/i);
+  assert.match(triggerBoundary[1], /Never reject a repository because an earlier task is completed/i);
   assert.match(triggerBoundary[1], /record workflow packets and never launch a worker process/i);
   assert.doesNotMatch(triggerBoundary[1], /subagent development team coordination/i);
 });
 
-test("agents metadata uses a concise explicit-only prompt", () => {
-  const metadata = read("agents/openai.yaml");
+test("skill metadata permits natural-language continuation routing", () => {
   const skillMetadata = read("skills/coding-agents/agents/openai.yaml");
-  const shortDescription = yamlScalar(metadata, "short_description");
-  const defaultPrompt = yamlScalar(metadata, "default_prompt");
-
-  assert.match(shortDescription, /^Explicit-only legacy Coding Agents state\/CLI workflow/i);
-  assert.ok(defaultPrompt.length <= 240, "default_prompt must stay concise");
-  assert.match(defaultPrompt, /Use Coding Agents when I name it or continue, audit, or repair \.coding-agents state or its CLI/i);
-  assert.match(defaultPrompt, /official Codex subagent spawn tools; never use a CLI runner/i);
-  assert.match(defaultPrompt, /Never auto-route generic coding or delegation/i);
 
   assert.match(skillMetadata, /^interface:\n/m);
-  assert.match(skillMetadata, /^  short_description: Explicit-only Coding Agents state and CLI workflow$/m);
-  assert.match(skillMetadata, /^  default_prompt: Use \$coding-agents only when explicitly named/m);
-  assert.match(skillMetadata, /official Codex subagent spawn tools; never use a CLI runner/i);
-  assert.match(skillMetadata, /^  allow_implicit_invocation: false$/m);
+  assert.match(skillMetadata, /^  short_description: ['"]?Continue same-repo Coding Agents tasks['"]?$/m);
+  assert.match(skillMetadata, /^  default_prompt: ['"]?Use \$coding-agents to continue this valid \.coding-agents repository/m);
+  assert.match(skillMetadata, /^  allow_implicit_invocation: true$/m);
+  assert.doesNotMatch(skillMetadata, /^  allow_implicit_invocation: false$/m);
 });
 
 test("source CLI has no Codex process-runner route", () => {
@@ -108,4 +104,6 @@ test("source CLI has no Codex process-runner route", () => {
   assert.match(cli, /--runner and --timeout-ms are unsupported/);
   assert.match(cli, /this CLI never launches Codex workers; use the official Codex subagent spawn tools/);
   assert.match(cli, /record-only; dispatch subagents through the official Codex spawn tools outside this CLI/);
+  assert.match(cli, /Existing completed state never locks the repo/);
+  assert.match(cli, /preserves runner\.md history/);
 });

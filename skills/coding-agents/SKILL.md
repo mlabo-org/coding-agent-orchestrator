@@ -1,7 +1,7 @@
 ---
 name: coding-agents
 description: >-
-  Coding Agents explicit-only legacy workflow. Use only when named or continuing, auditing, or repairing .coding-agents state/CLI. Dispatch workers only with official Codex subagent spawn tools; never CLI runners. Never auto-route generic coding, debugging, source edits, delegation, or subagent coordination.
+  Coding Agents same-repo continuation and new-task intake. Select when named, when valid .coding-agents state is continued for a next stage/new purpose, or when auditing/repairing its state or CLI. Start fresh task_id/epoch/scope for new work; completed state never locks the repo.
 ---
 
 # Coding Agents
@@ -12,9 +12,11 @@ Codex は、本書の発火前提、作業手順、ツール境界、ファイ�
 
 ## Trigger Boundary
 
-- Use this skill only when the user explicitly names `Coding Agents` or `coding-agents`, or asks to continue, audit, or repair existing `.coding-agents` workflow state or the Coding Agents source CLI.
-- Never auto-route this skill for generic coding, debugging or repair, source changes, code review, delegation, multi-agent work, subagent coordination, supervision, or cancellation. Those concepts become available capabilities only after a valid explicit trigger.
-- After a valid explicit trigger, preserve the existing intake, assign, collect, finalize, record-only run/orchestrate, handoff, and audit behavior. This boundary changes discovery and selection only; `run` and `orchestrate` record workflow packets and never launch a worker process.
+- Use this skill when the user explicitly names `Coding Agents` or `coding-agents`; asks to audit or repair `.coding-agents` state or the Coding Agents source CLI; or expresses strong continuation intent for a repository with valid `.coding-agents` state, such as "the next stage in this same repo", "continue the previous work with a new specification", or "start a new purpose in this repository".
+- Valid `.coding-agents` state plus strong continuation intent is a trigger even when the user does not repeat the product name. Mere state-directory presence is not a trigger, and unrelated generic coding, debugging, source changes, code review, delegation, multi-agent work, subagent coordination, supervision, or cancellation must not auto-route here.
+- For a new user-visible purpose, run intake with a fresh `task_id`, `epoch`, and `scope`. Replace the current generated task documents and preserve `runner.md` as backward-readable history. Never reject a repository because an earlier task is completed or its worker assignment contexts are `state_retired`.
+- For an unfinished continuation of the same user-visible task, keep its existing `task_id`, `epoch`, and `scope` and use the current handoff instead of inventing a new identity.
+- After a valid trigger, preserve the existing intake, assign, collect, finalize, record-only run/orchestrate, handoff, and audit behavior. `run` and `orchestrate` record workflow packets and never launch a worker process.
 - Do not trigger this skill merely because a repository contains `docs/codex`. Legacy `docs/codex` is a migration source, not proof that the current workflow is active.
 - Do not perform legacy migration apply, plugin cache refresh, marketplace updates, or restart/reload actions unless the active user request includes that boundary.
 
@@ -32,6 +34,7 @@ Codex は、本書の発火前提、作業手順、ツール境界、ファイ�
 - During source upgrade work, resolve `CODING_AGENTS_SOURCE_ROOT` to the Git root containing the source CLI currently being executed; `$HOME/plugins/coding-agents` is a common personal checkout, not a required location. Direct execution runs source-tree behavior: `node "$CODING_AGENTS_SOURCE_ROOT/bin/coding-agents.mjs" ...`. This validates source behavior, not installed plugin activation.
 - Installed plugin activation is controlled by refreshing the plugin cache from validated source and then restarting Codex or opening a new thread when required. Do not claim a source CLI run proves cached plugin activation.
 - Maintain `{git-root}/.coding-agents/` as the workflow SSOT for the active job.
+- Treat `task_id` as one user-visible unit of work, not as the repository identity. Completion of a task, `task-finalization`, or `state_retired` worker contexts never retire the repository or forbid a later intake. A new purpose starts a new active identity while historical runner packets remain readable.
 - Dispatch actual workers only through the official Codex subagent spawn tools exposed in the current session. The Coding Agents CLI must not launch `codex exec`, an OS child Codex process, or any custom runner fallback. If official subagent tools are unavailable, record that limitation and continue only with parent-side work in scope.
 - When the user confirms a design or operating decision, record it as an accepted decision, convert it into actionable specification, and audit execution against it after implementation.
 - `collect` records one worker-result collection and its workflow-state lifecycle disposition; it does not require that worker to map every active decision, completion condition, or source/spec check for the task. Task-wide completion is accepted only through the distinct source CLI `finalize` command and its `task-finalization` packet.
@@ -103,6 +106,7 @@ Codex は、本書の発火前提、作業手順、ツール境界、ファイ�
 - When a child worker is operating under a parent-managed Coding Agents assignment, the parent has already selected Coding Agents for that scoped assignment. The child worker must not ask `coding-agents を使いますか？ [Y/n]` and must not start an independent nested Coding Agents workflow. It may delegate descendants only when finite hierarchy fields grant `remaining_depth > 0`, while keeping the same `task_id`, `epoch`, `scope` lineage and inherited supervision. It proceeds directly within the assigned `task_id`, `epoch`, and `scope`, while still stopping before scope expansion, destructive operations, external sending, commits, cache refresh, plugin activation, or unrelated edits.
 - Nested descendants inherit the parent supervision and cancellation rules and cannot broaden scope, depth, permissions, allowed tools, external side effects, cache refresh, plugin activation, destructive operations, or Git history permissions. A descendant may narrow scope or use less depth; it must not increase `remaining_depth` or claim a broader `max_depth` than the parent granted.
 - Reuse of a subagent context is an exception. The default workflow-state action after a meaningful task boundary, stale premise, scope change, or failed verification is a fresh assignment or `state_retired`.
+- This subagent-context rule applies only to worker assignment contexts. It must not be expanded into a ban on reusing the same repository, the `.coding-agents/` state root, or Coding Agents itself for a later user-visible task.
 - A subagent must return concise worker-result material: findings, changed files or proposed changes, verification notes, blockers, and unresolved assumptions.
 - Generated assignments and handoff material require the worker to return concise typed references relevant to its own result for parent finalization. The worker does not own complete task-wide D-*/C-*/source-spec coverage.
 - A subagent must stop after returning integration material. It must not stay open waiting for more work; any continuation requires a fresh explicit assignment or an intentional parent-managed reuse decision.
@@ -150,7 +154,7 @@ Use the source CLI when the user wants to test source-tree behavior before plugi
 2. Resolve the target jobsite path. Use `--target-cwd {jobsite}` for explicit cross-repo target selection; if no target is provided, use `invocation_cwd` as the jobsite.
 3. Resolve the jobsite Git root. Confirm the jobsite repository's `{git-root}/.coding-agents/` as the workflow state root before state writes.
 4. Ensure the jobsite repository's `.git/info/exclude` ignores `.coding-agents/`; do not edit tracked `.gitignore` unless explicitly requested.
-5. Run intake with explicit isolation keys and optional semantic work metadata:
+5. Run intake with explicit isolation keys and optional semantic work metadata. Existing completed state is not a blocker: for a new user-visible purpose, choose a fresh `task_id`, `epoch`, and `scope`; intake replaces the current generated task documents while preserving historical `runner.md` packets:
    `node "$CODING_AGENTS_SOURCE_ROOT/bin/coding-agents.mjs" intake --target-cwd {jobsite} --work-type {auto|documentation|source-change|debug} --task {task} --task-id {id} --epoch {epoch} --scope {scope}`.
 6. Run doctor:
    `node "$CODING_AGENTS_SOURCE_ROOT/bin/coding-agents.mjs" doctor --target-cwd {jobsite}`.
@@ -177,7 +181,7 @@ If source CLI output still names legacy `docs/codex`, treat that as source imple
 2. If target selection remains ambiguous, stop before edits or workflow state writes and ask for the intended jobsite.
 3. Resolve the jobsite repository's `{git-root}` and run project intake before editing: repository status, applicable instructions, current `.coding-agents` state, `.git/info/exclude` status, legacy `docs/codex` migration input, source/cache boundaries, and risk level.
 4. Before workflow state writes, create or update the jobsite repository's local `.git/info/exclude` entry for `.coding-agents/` when missing. Do not update tracked `.gitignore`.
-5. Create or update the active `.coding-agents` files before implementation when workflow state is missing or stale.
+5. Create or update the active `.coding-agents` files before implementation when workflow state is missing, stale, completed for an older task, or bound to another purpose. New work uses a fresh `task_id`, `epoch`, and `scope`; current generated task documents are replaced and historical `runner.md` packets are preserved.
 6. Initialize the fixed 14-role assignment scaffold with shared contracts once plus per-role `task_id`, `epoch`, `scope`, and `lifecycle`; create actual specialist assignments with complete finite-hierarchy and supervision fields only when scoped work is dispatched. Do not add roles for feature profiles.
 7. Execute or coordinate work according to the `.coding-agents` task checklist.
 8. Record user-confirmed decisions in `.coding-agents/decisions.md` and update `.coding-agents/task.md` when scope changes.

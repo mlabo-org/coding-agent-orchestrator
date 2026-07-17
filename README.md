@@ -1,6 +1,6 @@
 # Coding Agents
 
-Coding Agents is an explicit-only Codex plugin for inspectable coding workflow state. It records intake, bounded assignments, collection, finalization, audit, and handoff packets under `.coding-agents/`. Actual workers are dispatched only through official Codex subagent tools; the source CLI is record-only and never launches `codex exec` or a custom process runner.
+Coding Agents is an intent-bound Codex plugin for inspectable coding workflow state. It records intake, bounded assignments, collection, finalization, audit, and handoff packets under `.coding-agents/`. Actual workers are dispatched only through official Codex subagent tools; the source CLI is record-only and never launches `codex exec` or a custom process runner.
 
 Coding Agents can be used without Agentic Runner, from specification consultation through bounded implementation and verification. "Standalone" here means that Agentic Runner is optional; execution still belongs to the Codex main thread and, when available, official Codex subagents. The Coding Agents CLI records and validates workflow state but does not execute workers itself.
 
@@ -50,13 +50,27 @@ max_depth = 2
 
 Agentic Runner remains the optional upper cross-output controller, Coding Agents owns the coding workflow branch, and official Codex subagents perform the bounded assignments. Neither plugin bypasses the host limits, and either plugin can still be used alone with a shallower topology. Restart Codex or begin a fresh task after changing `config.toml`.
 
-## Trigger Explicitly
+## Start Or Continue Deliberately
 
-Use the plugin by name:
+Use the plugin by name, or clearly say that a repository with valid `.coding-agents` state should move to its next stage or a new purpose:
 
 > Use Coding Agents explicitly to audit this repository. Inspect README.md and package.json, run npm test, make no source changes or commits, and return the workflow-state and verification evidence.
 
-Generic coding, debugging, source changes, delegation, or subagent requests do not automatically select Coding Agents.
+> Continue this same repository with a new specification. Use the existing `.coding-agents` history, but start a fresh task identity for the new purpose.
+
+Mere `.coding-agents` presence does not hijack unrelated coding work. A valid state directory plus strong continuation intent does select Coding Agents even when the product name is not repeated.
+
+## New Purpose In The Same Repository
+
+A completed Coding Agents task never locks the repository.
+
+- A new user-visible purpose starts a fresh `task_id`, `epoch`, and `scope`.
+- `intake` replaces the current generated task documents such as `task.md`, `decisions.md`, and `handoff.md`.
+- `runner.md` remains as backward-readable history, including earlier task finalization packets.
+- `state_retired` applies to worker assignment contexts, not to the repository, `.coding-agents/`, or the Coding Agents plugin.
+- An unfinished continuation of the same task keeps its current identity and handoff.
+
+This lets a new Codex task return to the same repository repeatedly without reusing stale worker context or losing workflow history.
 
 ## From Specification To Execution
 

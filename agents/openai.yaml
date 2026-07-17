@@ -1,3 +1,0 @@
-display_name: Coding Agents
-short_description: Explicit-only legacy Coding Agents state/CLI workflow; official Codex spawn only for worker dispatch.
-default_prompt: Use Coding Agents when I name it or continue, audit, or repair .coding-agents state or its CLI. Dispatch workers only with official Codex subagent spawn tools; never use a CLI runner. Never auto-route generic coding or delegation.

@@ -1,41 +1,68 @@
 {
-  "schema_version": "creator-contract/v1",
+  "schema_version": "creator-contract/v2",
   "kind": "plugin",
   "capability_id": "coding-agents",
   "official_creator": "plugin-creator",
   "routing": {
-    "task_class": "Explicit Coding Agents workflow-state and source CLI continuation, audit, or repair",
+    "task_class": "Coding Agents same-repository continuation, new-task intake, state audit, and source CLI repair",
     "natural_language_triggers": [
       "Coding Agents",
       "coding-agents",
+      "continue this same repository with a new purpose",
+      "the next stage in this repo",
       "continue, audit, or repair .coding-agents state"
     ],
-    "primary_route": "Use Coding Agents only after an explicit trigger, preserve .coding-agents workflow records, and dispatch actual workers only through official Codex subagent spawn tools.",
+    "primary_route": "Use Coding Agents when named or when valid .coding-agents state is paired with strong continuation intent. Start new user-visible work with fresh task_id/epoch/scope, replace current generated task state, preserve runner history, and dispatch actual workers only through official Codex subagent spawn tools.",
     "fallback_conditions": [
       "When official Codex subagent tools are unavailable, keep execution in the parent thread and do not launch a CLI process runner."
     ],
     "non_use_conditions": [
-      "Generic coding, debugging, source changes, delegation, or subagent coordination do not trigger Coding Agents."
+      "Mere .coding-agents directory presence and unrelated generic coding, debugging, source changes, delegation, or subagent coordination do not trigger Coding Agents."
     ],
     "discovery": {
       "task_terms": [
-        "Coding Agents"
+        "Coding Agents",
+        "same-repo continuation",
+        "new-task intake"
       ],
       "trigger_phrases": [
-        "continue, audit, or repair"
+        "continue, audit, or repair",
+        "next stage in this same repo",
+        "continue with a new purpose"
       ],
       "artifact_or_tool_terms": [
-        ".coding-agents"
+        ".coding-agents",
+        "task_id",
+        "epoch",
+        "runner.md"
       ],
       "aliases": [
         "coding-agents"
+      ]
+    },
+    "openai_yaml": {
+      "manifests": [
+        {
+          "skill_root": "skills/coding-agents",
+          "path": "skills/coding-agents/agents/openai.yaml",
+          "document": {
+            "interface": {
+              "display_name": "Coding Agents",
+              "short_description": "Continue same-repo Coding Agents tasks",
+              "default_prompt": "Use $coding-agents to continue this valid .coding-agents repository for a next stage or new purpose with a fresh task_id, epoch, and scope while preserving runner history."
+            },
+            "policy": {
+              "allow_implicit_invocation": true
+            }
+          }
+        }
       ]
     }
   },
   "inputs": [
     {
       "name": "Explicit workflow request",
-      "description": "A user-named Coding Agents request or a request to continue, audit, or repair existing .coding-agents state or the source CLI."
+      "description": "A user-named Coding Agents request, strong continuation intent for a repository with valid .coding-agents state, or a request to audit or repair its state or source CLI."
     },
     {
       "name": "Target repository and workflow identity",
@@ -62,7 +89,8 @@
       ],
       "covers": [
         "official-spawn-only",
-        "workflow-state-preserved"
+        "workflow-state-preserved",
+        "same-repo-new-task"
       ],
       "test_paths": [
         "tests/metacognitive-gate.test.mjs",
@@ -124,6 +152,19 @@
         ],
         "tests": [
           "tests/metacognitive-gate.test.mjs",
+          "tests/workflow-state.test.mjs"
+        ]
+      },
+      {
+        "id": "same-repo-new-task",
+        "description": "A completed task in .coding-agents never locks the repository; a later purpose can replace current generated task state with a fresh task_id/epoch/scope while preserving historical runner packets.",
+        "enforcement_points": [
+          "bin/coding-agents.mjs",
+          "skills/coding-agents/SKILL.md",
+          ".codex-plugin/plugin.json"
+        ],
+        "tests": [
+          "tests/routing-metadata.test.mjs",
           "tests/workflow-state.test.mjs"
         ]
       }

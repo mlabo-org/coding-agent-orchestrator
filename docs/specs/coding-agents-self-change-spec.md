@@ -6,7 +6,7 @@ behavior. It is not workflow state and must not be treated as a generated
 
 ## Confirmed Boundary
 
-Items 1-10 are Coding Agents self changes. Item 11 is external legacy cleanup.
+Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
 
 1. State directory
    - Coding Agents runtime/workflow state belongs under `<git-root>/.coding-agents/`.
@@ -222,7 +222,23 @@ Items 1-10 are Coding Agents self changes. Item 11 is external legacy cleanup.
      contract. They cannot broaden scope, depth, permissions, or cancellation
      authority.
 
-11. Legacy migration and cleanup
+11. Same-repository sequential tasks
+   - A completed user-visible task, a `task-finalization` packet, or
+     `state_retired` worker contexts must never lock the repository or forbid a
+     later Coding Agents task.
+   - When the user starts a new purpose in the same repository, intake uses a
+     fresh `task_id`, `epoch`, and `scope`, then replaces the current generated
+     task documents while leaving `runner.md` history backward-readable.
+   - When the user continues the same unfinished purpose, the workflow keeps the
+     existing `task_id`, `epoch`, `scope`, and handoff.
+   - Mere `.coding-agents` presence does not auto-route unrelated generic coding.
+     Valid state plus strong continuation intent such as a next stage, new
+     specification, or new purpose is sufficient even when the user does not
+     repeat the Coding Agents product name.
+   - The skill invocation policy must permit model-visible natural-language
+     routing; structured `$coding-agents` invocation remains available.
+
+12. Legacy migration and cleanup
    - Existing legacy locations are cleaned through an explicit migration workflow,
      not by silent deletion or broad automatic rewriting.
    - The migration workflow must perform a preflight backup before destructive or
