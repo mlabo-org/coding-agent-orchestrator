@@ -226,11 +226,24 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
    - A completed user-visible task, a `task-finalization` packet, or
      `state_retired` worker contexts must never lock the repository or forbid a
      later Coding Agents task.
-   - When the user starts a new purpose in the same repository, intake uses a
-     fresh `task_id`, `epoch`, and `scope`, then replaces the current generated
-     task documents while leaving `runner.md` history backward-readable.
-   - When the user continues the same unfinished purpose, the workflow keeps the
-     existing `task_id`, `epoch`, `scope`, and handoff.
+   - Before fresh intake, Codex must inspect the current task, checklist, audit,
+     runner history, and handoff, then semantically compare the requested
+     outcome, affected artifacts, scope, decisions, and completion flags.
+   - Related work preserves the task lineage and completed checklist entries,
+     appends stable TODO items after existing progress, and resumes from the
+     first unfinished item. An unfinished continuation keeps its epoch; a
+     finalized or stale continuation advances the epoch when its old execution
+     context is no longer valid.
+   - Only a clearly unrelated objective uses fresh `task_id`, `epoch`, and
+     `scope`; intake then replaces current generated task documents while
+     leaving `runner.md` history backward-readable.
+   - The user is not required to choose a routine new-versus-continuation mode.
+     Codex records the relation, previous completion state, and decision reason
+     in active workflow state for audit.
+   - Successful finalization completes every active-task TODO entry.
+     `verify-assignments` and `doctor` reject both finalized state with open
+     active TODO entries and all-complete active TODO state without a current
+     finalization packet.
    - Mere `.coding-agents` presence does not auto-route unrelated generic coding.
      Valid state plus strong continuation intent such as a next stage, new
      specification, or new purpose is sufficient even when the user does not

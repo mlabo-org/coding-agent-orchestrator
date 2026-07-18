@@ -4,7 +4,7 @@
   "capability_id": "coding-agents",
   "official_creator": "plugin-creator",
   "routing": {
-    "task_class": "Coding Agents same-repository continuation, new-task intake, state audit, and source CLI repair",
+    "task_class": "Coding Agents state-first continuation, semantic new-task intake, state audit, and source CLI repair",
     "natural_language_triggers": [
       "Coding Agents",
       "coding-agents",
@@ -12,7 +12,7 @@
       "the next stage in this repo",
       "continue, audit, or repair .coding-agents state"
     ],
-    "primary_route": "Use Coding Agents when named or when valid .coding-agents state is paired with strong continuation intent. Start new user-visible work with fresh task_id/epoch/scope, replace current generated task state, preserve runner history, and dispatch actual workers only through official Codex subagent spawn tools.",
+    "primary_route": "Use Coding Agents when named or when valid .coding-agents state is paired with strong continuation intent. Inspect active state and completion flags first, semantically preserve and append related progress, and use fresh task_id/epoch/scope only for clearly unrelated work without asking the user for a routine mode. Preserve runner history and dispatch actual workers only through official Codex subagent spawn tools.",
     "fallback_conditions": [
       "When official Codex subagent tools are unavailable, keep execution in the parent thread and do not launch a CLI process runner."
     ],
@@ -23,12 +23,13 @@
       "task_terms": [
         "Coding Agents",
         "same-repo continuation",
-        "new-task intake"
+        "new-task intake",
+        "semantic state triage"
       ],
       "trigger_phrases": [
-        "continue, audit, or repair",
-        "next stage in this same repo",
-        "continue with a new purpose"
+        "strong continuation intent",
+        "resume related work",
+        "audit or repair"
       ],
       "artifact_or_tool_terms": [
         ".coding-agents",
@@ -48,8 +49,8 @@
           "document": {
             "interface": {
               "display_name": "Coding Agents",
-              "short_description": "Continue same-repo Coding Agents tasks",
-              "default_prompt": "Use $coding-agents to continue this valid .coding-agents repository for a next stage or new purpose with a fresh task_id, epoch, and scope while preserving runner history."
+              "short_description": "State-first Coding Agents continuation",
+              "default_prompt": "Use $coding-agents to inspect this valid .coding-agents state, semantically resume related work with completed progress preserved, and use fresh intake only for clearly unrelated work without asking me for a mode."
             },
             "policy": {
               "allow_implicit_invocation": true
@@ -90,7 +91,8 @@
       "covers": [
         "official-spawn-only",
         "workflow-state-preserved",
-        "same-repo-new-task"
+        "semantic-state-triage",
+        "active-checklist-finalization-consistency"
       ],
       "test_paths": [
         "tests/metacognitive-gate.test.mjs",
@@ -156,15 +158,25 @@
         ]
       },
       {
-        "id": "same-repo-new-task",
-        "description": "A completed task in .coding-agents never locks the repository; a later purpose can replace current generated task state with a fresh task_id/epoch/scope while preserving historical runner packets.",
+        "id": "semantic-state-triage",
+        "description": "Codex inspects existing .coding-agents state and completion flags before intake, preserves and appends semantically related progress without asking the user for a routine mode, and creates fresh identity only for clearly unrelated work while preserving historical runner packets.",
         "enforcement_points": [
-          "bin/coding-agents.mjs",
           "skills/coding-agents/SKILL.md",
-          ".codex-plugin/plugin.json"
+          ".codex-plugin/plugin.json",
+          "creator-contract.json",
+          "docs/specs/coding-agents-self-change-spec.md"
         ],
         "tests": [
-          "tests/routing-metadata.test.mjs",
+          "tests/routing-metadata.test.mjs"
+        ]
+      },
+      {
+        "id": "active-checklist-finalization-consistency",
+        "description": "Successful finalize completes every active-task checklist entry, while doctor and verify-assignments reject finalized/open and all-complete/unfinalized contradictions.",
+        "enforcement_points": [
+          "bin/coding-agents.mjs"
+        ],
+        "tests": [
           "tests/workflow-state.test.mjs"
         ]
       }

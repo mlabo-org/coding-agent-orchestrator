@@ -50,27 +50,28 @@ max_depth = 2
 
 Agentic Runner remains the optional upper cross-output controller, Coding Agents owns the coding workflow branch, and official Codex subagents perform the bounded assignments. Neither plugin bypasses the host limits, and either plugin can still be used alone with a shallower topology. Restart Codex or begin a fresh task after changing `config.toml`.
 
-## Start Or Continue Deliberately
+## State-First Start Or Continue
 
-Use the plugin by name, or clearly say that a repository with valid `.coding-agents` state should move to its next stage or a new purpose:
+Use the plugin by name, or give a concrete next objective in a repository with valid `.coding-agents` state:
 
 > Use Coding Agents explicitly to audit this repository. Inspect README.md and package.json, run npm test, make no source changes or commits, and return the workflow-state and verification evidence.
 
-> Continue this same repository with a new specification. Use the existing `.coding-agents` history, but start a fresh task identity for the new purpose.
+> Continue this same repository with a new specification. Inspect the existing `.coding-agents` state, preserve completed progress when it is related, and decide autonomously whether this is an addition or a clearly unrelated new task.
 
 Mere `.coding-agents` presence does not hijack unrelated coding work. A valid state directory plus strong continuation intent does select Coding Agents even when the product name is not repeated.
 
-## New Purpose In The Same Repository
+## Semantic Existing-State Triage
 
-A completed Coding Agents task never locks the repository.
+`.coding-agents` is the workflow SSOT. Before running fresh intake, Codex reads the active task, checklist, audit, handoff, and runner history and compares their outcome, artifacts, scope, and completion state with the new request.
 
-- A new user-visible purpose starts a fresh `task_id`, `epoch`, and `scope`.
-- `intake` replaces the current generated task documents such as `task.md`, `decisions.md`, and `handoff.md`.
-- `runner.md` remains as backward-readable history, including earlier task finalization packets.
+- Semantically related work stays in the existing task lineage. Completed checklist entries remain checked, new stable TODO items are appended after existing progress, and work resumes from the first unfinished item.
+- An unfinished related task keeps its current `task_id` and `epoch`. A finalized or stale related task keeps the lineage but advances the epoch when the old execution context is no longer valid.
+- Only clearly unrelated work starts fresh `task_id`, `epoch`, and `scope` through `intake`, which replaces current generated task documents while preserving `runner.md` history.
+- The classification uses Codex's semantic reasoning, not a keyword-only rule or directory presence. The user is not asked to choose a routine new/continue mode.
+- The relation, prior completion state, and decision reason are recorded in `.coding-agents/audit.md` or `.coding-agents/decisions.md` for later inspection.
 - `state_retired` applies to worker assignment contexts, not to the repository, `.coding-agents/`, or the Coding Agents plugin.
-- An unfinished continuation of the same task keeps its current identity and handoff.
 
-This lets a new Codex task return to the same repository repeatedly without reusing stale worker context or losing workflow history.
+A completed task therefore never locks the repository, but it also is not discarded merely because the next request is phrased as a new stage or purpose.
 
 ## From Specification To Execution
 

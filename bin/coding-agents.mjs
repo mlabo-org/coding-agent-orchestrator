@@ -402,13 +402,29 @@ function finalize(args) {
   const packet = requireTaskFinalizationPacket(args, commandContext);
   assertValidIntakeForPacket(commandContext, packet, "finalize");
   validateTaskFinalizationContractCoveragePacket(packet);
-  appendRunnerEntry(commandContext, "Task Finalizations", renderTaskFinalizationPacket(packet));
+  const todoUpdate = prepareTaskTodoCompletion(commandContext, packet);
+  prepareStateWrite(todoUpdate.state);
+  writeFileSync(todoUpdate.todoPath, todoUpdate.next, "utf8");
+  try {
+    appendRunnerEntry(commandContext, "Task Finalizations", renderTaskFinalizationPacket(packet));
+  } catch (error) {
+    try {
+      writeFileSync(todoUpdate.todoPath, todoUpdate.current, "utf8");
+    } catch (rollbackError) {
+      throw new CliError(
+        `finalize failed before runner commit and TODO rollback also failed: ${error.message}; rollback: ${rollbackError.message}`,
+        1,
+      );
+    }
+    throw error;
+  }
   console.log(`ok task-finalization: ${packet.taskId}`);
   console.log(`ok status: ${packet.status}`);
   console.log(`ok task_id: ${packet.taskId}`);
   console.log(`ok epoch: ${packet.epoch}`);
   console.log(`ok scope: ${packet.scope}`);
   console.log(`ok work_type: ${workTypeId(packet)}`);
+  console.log(`ok todo: completed ${todoUpdate.entryCount} active task item(s)`);
 }
 
 function run(args) {
@@ -1741,6 +1757,10 @@ function validateAssignmentFiles(stateDir) {
     fatal = fatal || runnerValidation.fatal;
   }
 
+  const todoCompletionValidation = validateTaskTodoCompletionState(stateDir, workflowGate);
+  results.push(...todoCompletionValidation.results);
+  fatal = fatal || todoCompletionValidation.fatal;
+
   if (checkedFiles === 0) {
     results.push(["warn", `no assignment files found in ${stateDir}`]);
     fatal = true;
@@ -2187,6 +2207,96 @@ function readWorkflowContractCoverageContext(stateDir) {
   return {
     decisionIds: extractContractIds(decisionsText, "D"),
     completionIds: extractContractIds(taskText, "C"),
+  };
+}
+
+function readTaskTodoEntries(text, taskId) {
+  if (!taskId) return [];
+  const pattern = new RegExp(`^- \\[([ xX])\\] (${escapeRegExp(taskId)}\\.\\d+)(?=\\s|$)`, "gm");
+  return [...String(text || "").matchAll(pattern)].map((match) => ({
+    id: match[2],
+    completed: match[1].toLowerCase() === "x",
+  }));
+}
+
+function prepareTaskTodoCompletion(commandContext, packet) {
+  const state = resolveWorkflowState(commandContext.targetCwd);
+  const todoPath = path.join(state.stateDir, "todo.md");
+  if (!existsSync(todoPath)) {
+    throw new CliError(`finalize requires current TODO state: missing ${todoPath}`, 1);
+  }
+  const current = readFileSync(todoPath, "utf8");
+  const entries = readTaskTodoEntries(current, packet.taskId);
+  if (entries.length === 0) {
+    throw new CliError(`finalize requires active TODO entries for task_id ${packet.taskId}`, 1);
+  }
+  const pattern = new RegExp(
+    `^(\\s*- \\[)[ xX](\\]\\s+${escapeRegExp(packet.taskId)}\\.\\d+(?=\\s|$).*)$`,
+    "gm",
+  );
+  return {
+    state,
+    todoPath,
+    current,
+    next: current.replace(pattern, "$1x$2"),
+    entryCount: entries.length,
+  };
+}
+
+function validateTaskTodoCompletionState(stateDir, workflowGate = {}) {
+  if (!workflowGate.taskId) return { results: [], fatal: false };
+  const todoPath = path.join(stateDir, "todo.md");
+  if (!existsSync(todoPath)) {
+    return { results: [["warn", "task completion state unavailable: todo.md missing"]], fatal: true };
+  }
+
+  const entries = readTaskTodoEntries(readFileSync(todoPath, "utf8"), workflowGate.taskId);
+  if (entries.length === 0) {
+    return {
+      results: [["warn", `task completion state invalid: no TODO entries for current task ${workflowGate.taskId}`]],
+      fatal: true,
+    };
+  }
+
+  const runnerPath = path.join(stateDir, RUNNER_FILE);
+  const finalizations = existsSync(runnerPath)
+    ? getModernRunnerPacketSections(readFileSync(runnerPath, "utf8")).filter((section) =>
+      getFieldValue(section, "type") === TASK_FINALIZATION_TYPE
+      && isCurrentWorkflowPacket(section, workflowGate)
+    )
+    : [];
+  const openIds = entries.filter((entry) => !entry.completed).map((entry) => entry.id);
+
+  if (finalizations.length > 0 && openIds.length > 0) {
+    return {
+      results: [[
+        "warn",
+        `task-finalization/TODO contradiction: current task ${workflowGate.taskId} is finalized but has open TODO items: ${openIds.join(", ")}`,
+      ]],
+      fatal: true,
+    };
+  }
+  if (finalizations.length === 0 && openIds.length === 0) {
+    return {
+      results: [[
+        "warn",
+        `TODO/task-finalization contradiction: current task ${workflowGate.taskId} has every TODO item completed but no current task-finalization packet`,
+      ]],
+      fatal: true,
+    };
+  }
+  if (finalizations.length > 0) {
+    return {
+      results: [["ok", `task-finalization and TODO completion agree (${entries.length} completed item(s))`]],
+      fatal: false,
+    };
+  }
+  return {
+    results: [[
+      "ok",
+      `active task TODO progress valid (${entries.length - openIds.length} completed, ${openIds.length} open; not finalized)`,
+    ]],
+    fatal: false,
   };
 }
 
@@ -3267,10 +3377,10 @@ Usage:
   node bin/coding-agents.mjs --help
 
 Commands:
-  intake   Start or replace current generated task state for the target repo. Existing completed state never locks the repo; a new purpose uses fresh task_id/epoch/scope and preserves runner.md history.
+  intake   Fresh-state action used after state-first semantic triage when workflow state is missing or clearly unrelated. It replaces current generated task state and preserves runner.md history.
   assign   Record a scoped specialist assignment in .coding-agents/runner.md.
   collect  Record a worker-result-collection packet and its workflow-state-only lifecycle disposition. Completed collection does not require task-wide D/C/source-spec coverage. state_retired requires exactly one allowed --cancel-reason; continuation_expected rejects --cancel-reason.
-  finalize Validate complete active D/C/source-spec coverage and record a distinct task-finalization packet. Every ID segment and source_spec_coverage requires one accepted typed reference.
+  finalize Validate complete active D/C/source-spec coverage, complete every active task TODO item, and record a distinct task-finalization packet. Every ID segment and source_spec_coverage requires one accepted typed reference.
   run/orchestrate
            Record an assignment and orchestration skeleton only. Actual worker dispatch uses the official Codex subagent spawn tools outside this CLI.
   verify-assignments
@@ -3278,7 +3388,7 @@ Commands:
   normalize-debugging-integrity
            Dry-run by default. With --execute, add debugging integrity and metacognitive gate schema to existing .coding-agents files and supersede pre-gate completion claims that lack required result fields.
   handoff  Print target .coding-agents/handoff.md.
-  doctor   Check required workflow files, role assignments, isolation keys, and Git state.
+  doctor   Check required workflow files, role assignments, isolation keys, task-finalization/TODO agreement, and Git state.
 
 State:
   The workflow state directory is <git-root>/.coding-agents.

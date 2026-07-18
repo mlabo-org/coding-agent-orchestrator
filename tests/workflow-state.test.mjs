@@ -133,7 +133,7 @@ test("runner commands require matching intake state before writing runner state"
   }
 });
 
-test("completed state does not lock the repo and fresh intake preserves runner history", () => {
+test("completed state does not lock the repo and clearly unrelated fresh intake preserves runner history", () => {
   const repo = makeTempGitRepo();
   try {
     const firstTask = "completed-first-purpose";
@@ -172,7 +172,7 @@ test("completed state does not lock the repo and fresh intake preserves runner h
       "--work-type",
       "documentation",
       "--task",
-      "Start a distinct second purpose in the same repository",
+      "Start a clearly unrelated second purpose in the same repository",
       "--task-id",
       nextTask,
       "--epoch",
@@ -194,6 +194,95 @@ test("completed state does not lock the repo and fresh intake preserves runner h
     assert.match(handoff.stdout, /next-purpose-same-repo/);
     assert.equal(runCli(["verify-assignments", "--target-cwd", repo]).status, 0);
     assert.equal(runCli(["doctor", "--target-cwd", repo]).status, 0);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("finalize synchronizes active TODO state and validators reject completion contradictions", () => {
+  const repo = makeTempGitRepo();
+  try {
+    const taskId = "todo-finalization-consistency";
+    intake(repo, {
+      taskId,
+      epoch: "e1",
+      scope: "README.md",
+      workType: "documentation",
+      task: "Verify task finalization and TODO state remain consistent",
+    });
+
+    const initialTodo = readState(repo, "todo.md");
+    assert.match(initialTodo, new RegExp(`^- \\[ \\] ${taskId}\\.4`, "m"));
+    assert.match(initialTodo, new RegExp(`^- \\[ \\] ${taskId}\\.5`, "m"));
+
+    const prematureTodo = initialTodo.replace(
+      new RegExp(`^- \\[ \\] (${taskId}\\.\\d+.*)$`, "gm"),
+      "- [x] $1",
+    );
+    writeFileSync(path.join(repo, ".coding-agents", "todo.md"), prematureTodo, "utf8");
+    const prematureDoctor = runCli(["doctor", "--target-cwd", repo]);
+    assert.notEqual(prematureDoctor.status, 0);
+    assert.match(prematureDoctor.stdout, /TODO\/task-finalization contradiction/);
+    writeFileSync(path.join(repo, ".coding-agents", "todo.md"), initialTodo, "utf8");
+
+    const rejected = runCli([
+      "finalize",
+      "--target-cwd",
+      repo,
+      "--task-id",
+      taskId,
+      "--epoch",
+      "e1",
+      "--scope",
+      "README.md",
+      "--work-type",
+      "documentation",
+      "--contract-coverage",
+      "required",
+      "--decision-coverage",
+      "missing",
+      "--completion-coverage",
+      "missing",
+      "--source-spec-coverage",
+      "missing",
+    ]);
+    assert.notEqual(rejected.status, 0);
+    assert.equal(readState(repo, "todo.md"), initialTodo, "rejected finalize must not mutate TODO");
+    assert.equal(existsSync(path.join(repo, ".coding-agents", "runner.md")), false);
+
+    const finalized = runCli([
+      "finalize",
+      "--target-cwd",
+      repo,
+      "--task-id",
+      taskId,
+      "--epoch",
+      "e1",
+      "--scope",
+      "README.md",
+      "--work-type",
+      "documentation",
+      ...contractCoverageArgs(taskId),
+    ]);
+    assert.equal(finalized.status, 0, finalized.stderr);
+    assert.match(finalized.stdout, /ok todo: completed 5 active task item\(s\)/);
+
+    const completedTodo = readState(repo, "todo.md");
+    assert.doesNotMatch(completedTodo, new RegExp(`^- \\[ \\] ${taskId}\\.`, "m"));
+    assert.equal(runCli(["verify-assignments", "--target-cwd", repo]).status, 0);
+    assert.equal(runCli(["doctor", "--target-cwd", repo]).status, 0);
+
+    const contradictoryTodo = completedTodo.replace(
+      `- [x] ${taskId}.5`,
+      `- [ ] ${taskId}.5`,
+    );
+    writeFileSync(path.join(repo, ".coding-agents", "todo.md"), contradictoryTodo, "utf8");
+    const contradictoryVerify = runCli(["verify-assignments", "--target-cwd", repo]);
+    assert.notEqual(contradictoryVerify.status, 0);
+    assert.match(contradictoryVerify.stdout, /task-finalization\/TODO contradiction/);
+    const contradictoryDoctor = runCli(["doctor", "--target-cwd", repo]);
+    assert.notEqual(contradictoryDoctor.status, 0);
+    assert.match(contradictoryDoctor.stdout, /task-finalization\/TODO contradiction/);
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }

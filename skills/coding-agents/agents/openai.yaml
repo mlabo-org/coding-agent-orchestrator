@@ -1,6 +1,6 @@
 interface:
   display_name: "Coding Agents"
-  short_description: "Continue same-repo Coding Agents tasks"
-  default_prompt: "Use $coding-agents to continue this valid .coding-agents repository for a next stage or new purpose with a fresh task_id, epoch, and scope while preserving runner history."
+  short_description: "State-first Coding Agents continuation"
+  default_prompt: "Use $coding-agents to inspect this valid .coding-agents state, semantically resume related work with completed progress preserved, and use fresh intake only for clearly unrelated work without asking me for a mode."
 policy:
   allow_implicit_invocation: true
