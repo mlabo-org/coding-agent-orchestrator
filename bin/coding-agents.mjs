@@ -319,6 +319,15 @@ function intake(args) {
   const taskId = requireIdentityArg(args.taskId, "--task-id");
   const epoch = requireIdentityArg(args.epoch, "--epoch");
   const scope = requireIdentityArg(args.scope, "--scope");
+  const evidenceRef = args.evidenceRef ?? "none";
+  if (
+    args.evidenceRef !== undefined &&
+    !hasTypedContractCoverageReference(args.evidenceRef)
+  ) {
+    throw new CliError(
+      `--evidence-ref must contain a concrete typed reference (${CONTRACT_COVERAGE_TYPED_REFERENCE_FORMS})`,
+    );
+  }
   const metacognitiveGate = classifyMetacognitiveGate({ task, scope }, commandContext.workType);
   const state = resolveWorkflowState(commandContext.targetCwd);
   prepareStateWrite(state);
@@ -332,6 +341,7 @@ function intake(args) {
     taskId,
     epoch,
     scope,
+    evidenceRef,
     workType: commandContext.workType,
     stateDir: state.stateDir,
     gitRoot: state.gitRoot,
@@ -348,6 +358,7 @@ function intake(args) {
   console.log(`ok task_id: ${taskId}`);
   console.log(`ok epoch: ${epoch}`);
   console.log(`ok scope: ${scope}`);
+  console.log(`ok evidence_ref: ${evidenceRef}`);
   console.log(`ok work_type: ${workTypeId(commandContext)}`);
   console.log(`ok metacognitive_gate_required: ${metacognitiveGate.required}`);
   if (metacognitiveGate.required) console.log(`ok metacognitive_gate_triggers: ${metacognitiveGate.triggers.join(", ")}`);
@@ -635,6 +646,7 @@ function renderProject(context) {
 - task_id: ${context.taskId}
 - epoch: ${context.epoch}
 - scope: ${context.scope}
+- evidence_ref: ${context.evidenceRef}
 - work_type: ${workTypeId(context)}
 `;
 }
@@ -657,6 +669,7 @@ function renderTask(context) {
 - task_id: ${context.taskId}
 - epoch: ${context.epoch}
 - scope: ${context.scope}
+- evidence_ref: ${context.evidenceRef}
 - work_type: ${workTypeId(context)}
 - lifecycle_contract_version: ${LIFECYCLE_CONTRACT_VERSION}
 - lifecycle_contract_effective_at: ${context.timestamp}
@@ -735,6 +748,7 @@ function renderAudit(context) {
 - task_id: ${context.taskId}
 - epoch: ${context.epoch}
 - scope: ${context.scope}
+- evidence_ref: ${context.evidenceRef}
 - work_type: ${workTypeId(context)}
 - git_status: ${context.gitStatus.ok ? summarizeGit(context.gitStatus.output) : `unavailable (${context.gitStatus.error})`}
 - metacognitive_gate_required: ${context.metacognitiveGate.required}
@@ -825,6 +839,7 @@ You are a coding-agents worker for task \`${context.taskId}\`.
 - task: ${context.task}
 - epoch: ${context.epoch}
 - scope: ${context.scope}
+- evidence_ref: ${context.evidenceRef}
 - work_type: ${workTypeId(context)}
 
 Read \`${STATE_DIR_NAME}/README.md\`, then \`project.md\`, \`task.md\`, \`todo.md\`, \`decisions.md\`, \`assignments.md\`, \`audit.md\`, and \`runner.md\` if present.
@@ -3365,7 +3380,7 @@ function printHelp() {
   console.log(`coding-agents MVP CLI
 
 Usage:
-  node bin/coding-agents.mjs intake [--cwd <path>] [--target-cwd <path>] [--work-type <id>] --task <text> --task-id <id> --epoch <epoch> --scope <scope>
+  node bin/coding-agents.mjs intake [--cwd <path>] [--target-cwd <path>] [--work-type <id>] [--evidence-ref <typed-ref>] --task <text> --task-id <id> --epoch <epoch> --scope <scope>
   node bin/coding-agents.mjs assign [--cwd <path>] [--target-cwd <path>] --role <role> --task-id <id> --epoch <epoch> --scope <scope> [--feature-profile <id>] [--work-type <id>] [--hierarchy-mode none|one_level|n_level] [--max-depth <n>] [--depth <n>] [--remaining-depth <n>] [--heartbeat-interval <ISO-8601 duration>] [--heartbeat-deadline <ISO-8601 duration>] [--max-silence <ISO-8601 duration>] [--soft-timeout <ISO-8601 duration>] [--hard-timeout <ISO-8601 duration>] [--no-interrupt-until <ISO-8601 duration>] --assignment <text> --expected-output <text>
   node bin/coding-agents.mjs collect [--cwd <path>] [--target-cwd <path>] --role <role> --task-id <id> --epoch <epoch> --scope <scope> [--feature-profile <id>] [--work-type <id>] --status <status> --lifecycle-disposition state_retired|continuation_expected [--cancel-reason <allowed-reason>] [--findings <text>] [--changed-files <text>] [--verification <text>] [--blockers <text>] [--assumptions <text>] [--next <text>] [--finalization-references <typed-refs>] [--expected-outcome <text>] [--actual-result <text>] [--reproduction-or-evidence <text>] [--failure-point <text>] [--hypothesis-branches <text>] [--source-of-truth-boundary <text>] [--plugin-contract-boundary <text>] [--generated-artifact-boundary <text>] [--before-context-effects <text>] [--after-context-effects <text>] [--cross-feature-consequences <text>] [--root-cause <text>] [--fix-summary <text>] [--verification-evidence <text>] [--skipped-checks <text>] [--unresolved-risks <text>] [--next-investigation <text>]
   node bin/coding-agents.mjs finalize [--cwd <path>] [--target-cwd <path>] --task-id <id> --epoch <epoch> --scope <scope> [--work-type <id>] [--contract-coverage required] --decision-coverage <text> --completion-coverage <text> --source-spec-coverage <text>
@@ -3406,6 +3421,7 @@ State:
   Supervision treats silence before heartbeat deadline as neutral, forbids cancel/interruption/workflow state_retired/replacement of quiet workers during the no-interrupt window, requires workers that are still running at heartbeat_interval to self-report completed/current/blocker/ETA progress, treats explicit completed/blocked/failed results as immediate collect/integrate triggers rather than silence, treats heartbeat as telemetry rather than completion evidence, requires explicit state_retired reasons (${SUPERVISION_RETIRE_CANCEL_REASONS.join(", ")}), and uses missed heartbeat -> soft ping/status request -> grace wait -> stale mark before cancel/replace.
   Optional --feature-profile overlays provide scoped assignment guidance only. Known ids: ${knownFeatureProfileIds().join(", ")}.
   Optional --work-type is semantic command metadata. Known ids: ${knownWorkTypeIds().join(", ")}.
+  Optional intake --evidence-ref accepts one concrete typed reference and propagates it to project.md, task.md, audit.md, and handoff.md. Use it for source-local capability-improvement proposals and other externally owned evidence; it does not authorize dispatch or repair.
   --work-type auto preserves keyword/path inference. --work-type source-change and --work-type debug force the metacognitive gate for that command.
   --work-type documentation suppresses keyword/path gate inference for that command only; it does not replace debug/root-cause gates and cannot downgrade existing gate-required workflow state.
   Optional hierarchy and supervision timing flags are packet metadata. Defaults: hierarchy_mode none, max_depth/depth/remaining_depth 0, heartbeat_interval PT15M, heartbeat_deadline PT30M, max_silence PT45M, soft_timeout PT60M, hard_timeout PT120M, and no_interrupt_until PT30M.

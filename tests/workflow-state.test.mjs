@@ -744,6 +744,48 @@ test("intake describes fixed roles as scaffold, not resident agents", () => {
   }
 });
 
+test("intake validates and propagates one typed evidence reference", () => {
+  const repo = makeTempGitRepo();
+  const evidenceRef =
+    "artifact:.coding-agents/improvements/proposal-0123456789abcdef0123.json";
+  try {
+    intake(repo, {
+      taskId: "evidence-link",
+      epoch: "e1",
+      scope: "src/parser.js",
+      workType: "debug",
+      evidenceRef,
+    });
+    for (const filename of ["project.md", "task.md", "audit.md", "handoff.md"]) {
+      assert.ok(
+        readState(repo, filename).includes(`- evidence_ref: ${evidenceRef}\n`),
+      );
+    }
+
+    const before = readState(repo, "task.md");
+    const rejected = runCli([
+      "intake",
+      "--target-cwd",
+      repo,
+      "--task",
+      "Reject an untyped evidence value",
+      "--task-id",
+      "evidence-rejected",
+      "--epoch",
+      "e2",
+      "--scope",
+      "src/parser.js",
+      "--evidence-ref",
+      "looked at the session",
+    ]);
+    assert.notEqual(rejected.status, 0);
+    assert.match(rejected.stderr, /--evidence-ref must contain a concrete typed reference/);
+    assert.equal(readState(repo, "task.md"), before);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
 test("intake centralizes shared supervision guidance without duplicating scaffold roles", () => {
   const repo = makeTempGitRepo();
   try {
@@ -1935,6 +1977,7 @@ function intake(repo, options) {
     options.scope,
   ];
   if (options.workType) args.splice(3, 0, "--work-type", options.workType);
+  if (options.evidenceRef) args.push("--evidence-ref", options.evidenceRef);
   const result = runCli(args);
   assert.equal(result.status, 0, result.stderr);
 }

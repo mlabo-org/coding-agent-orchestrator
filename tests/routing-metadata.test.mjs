@@ -93,7 +93,13 @@ test("discovery metadata enforces state-first semantic continuation", () => {
   assert.match(creatorContract.routing.primary_route, /fresh task_id\/epoch\/scope only for clearly unrelated work/i);
   assert.deepEqual(
     creatorContract.production_contract.rules.map((rule) => rule.id),
-    ["official-spawn-only", "workflow-state-preserved", "semantic-state-triage", "active-checklist-finalization-consistency"],
+    [
+      "official-spawn-only",
+      "workflow-state-preserved",
+      "capability-improvement-evidence-link",
+      "semantic-state-triage",
+      "active-checklist-finalization-consistency",
+    ],
   );
 });
 

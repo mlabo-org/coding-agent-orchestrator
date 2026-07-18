@@ -4,15 +4,16 @@
   "capability_id": "coding-agents",
   "official_creator": "plugin-creator",
   "routing": {
-    "task_class": "Coding Agents state-first continuation, semantic new-task intake, state audit, and source CLI repair",
+    "task_class": "Coding Agents state-first continuation, semantic new-task intake, evidence-bound capability repair handoff, state audit, and source CLI repair",
     "natural_language_triggers": [
       "Coding Agents",
       "coding-agents",
       "continue this same repository with a new purpose",
       "the next stage in this repo",
+      "repair this capability improvement proposal",
       "continue, audit, or repair .coding-agents state"
     ],
-    "primary_route": "Use Coding Agents when named or when valid .coding-agents state is paired with strong continuation intent. Inspect active state and completion flags first, semantically preserve and append related progress, and use fresh task_id/epoch/scope only for clearly unrelated work without asking the user for a routine mode. Preserve runner history and dispatch actual workers only through official Codex subagent spawn tools.",
+    "primary_route": "Use Coding Agents when named or when valid .coding-agents state is paired with strong continuation intent. Inspect active state and completion flags first, semantically preserve and append related progress, and use fresh task_id/epoch/scope only for clearly unrelated work without asking the user for a routine mode. For a validated source-local capability-improvement proposal, pass its typed artifact reference through intake --evidence-ref so project, task, audit, and handoff state carry it. Preserve runner history and dispatch actual workers only through official Codex subagent spawn tools.",
     "fallback_conditions": [
       "When official Codex subagent tools are unavailable, keep execution in the parent thread and do not launch a CLI process runner."
     ],
@@ -24,7 +25,8 @@
         "Coding Agents",
         "same-repo continuation",
         "new-task intake",
-        "semantic state triage"
+        "semantic state triage",
+        "capability improvement handoff"
       ],
       "trigger_phrases": [
         "strong continuation intent",
@@ -35,7 +37,8 @@
         ".coding-agents",
         "task_id",
         "epoch",
-        "runner.md"
+        "runner.md",
+        "evidence_ref"
       ],
       "aliases": [
         "coding-agents"
@@ -68,6 +71,10 @@
     {
       "name": "Target repository and workflow identity",
       "description": "The target Git worktree plus task_id, epoch, scope, and optional work type or assignment overlay."
+    },
+    {
+      "name": "Optional typed evidence reference",
+      "description": "One Coding Agents-compatible typed reference, such as a source-local capability-improvement proposal, propagated into standard intake state without granting repair or dispatch authority."
     }
   ],
   "outputs": [
@@ -78,6 +85,10 @@
     {
       "name": "Official subagent dispatch boundary",
       "description": "Actual workers are dispatched only through official Codex subagent spawn tools; the CLI emits no Codex child process."
+    },
+    {
+      "name": "Evidence-linked standard state",
+      "description": "When intake receives --evidence-ref, project.md, task.md, audit.md, and handoff.md carry the exact validated typed reference."
     }
   ],
   "validation_commands": [
@@ -91,6 +102,7 @@
       "covers": [
         "official-spawn-only",
         "workflow-state-preserved",
+        "capability-improvement-evidence-link",
         "semantic-state-triage",
         "active-checklist-finalization-consistency"
       ],
@@ -154,6 +166,17 @@
         ],
         "tests": [
           "tests/metacognitive-gate.test.mjs",
+          "tests/workflow-state.test.mjs"
+        ]
+      },
+      {
+        "id": "capability-improvement-evidence-link",
+        "description": "Fresh intake accepts one optional validated typed --evidence-ref and propagates it to project, task, audit, and handoff state without authorizing repair, dispatch, commit, refresh, or activation.",
+        "enforcement_points": [
+          "bin/coding-agents.mjs",
+          "skills/coding-agents/SKILL.md"
+        ],
+        "tests": [
           "tests/workflow-state.test.mjs"
         ]
       },
