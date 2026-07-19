@@ -536,7 +536,7 @@ test("cache/runtime versus source mismatch triggers the metacognitive gate", () 
   }
 });
 
-test("source-change work triggers the metacognitive gate", () => {
+test("iterative source-change work does not force exhaustive metacognitive completion fields", () => {
   const repo = makeTempGitRepo();
   try {
     const intake = runCli([
@@ -554,11 +554,12 @@ test("source-change work triggers the metacognitive gate", () => {
     ]);
 
     assert.equal(intake.status, 0, intake.stderr);
-    assert.match(intake.stdout, /ok metacognitive_gate_required: true/);
-    assert.match(intake.stdout, /source change/);
-    assert.match(readState(repo, "task.md"), /metacognitive_gate_triggers: .*source change/);
+    assert.match(intake.stdout, /ok delivery_mode: ITERATIVE_DELIVERY/);
+    assert.match(intake.stdout, /ok metacognitive_gate_required: false/);
+    assert.match(readState(repo, "task.md"), /delivery_mode: ITERATIVE_DELIVERY/);
+    assert.match(readState(repo, "task.md"), /metacognitive_gate_triggers: none/);
 
-    const rejected = runCli([
+    const collected = runCli([
       "collect",
       "--target-cwd",
       repo,
@@ -569,7 +570,7 @@ test("source-change work triggers the metacognitive gate", () => {
       "--epoch",
       "e1",
       "--scope",
-      "bin/coding-agents.mjs",
+      "source-change metacognitive baseline in bin/coding-agents.mjs",
       "--status",
       "completed",
       "--findings",
@@ -578,12 +579,175 @@ test("source-change work triggers the metacognitive gate", () => {
       "bin/coding-agents.mjs",
       "--verification",
       "not run",
-      ...contractCoverageArgs("meta-doc-work-type"),
+      ...contractCoverageArgs("meta-source-change"),
     ]);
 
-    assert.notEqual(rejected.status, 0);
-    assert.match(rejected.stderr, /collect --status completed rejected/);
+    assert.equal(collected.status, 0, collected.stderr);
+    assert.match(readState(repo, "runner.md"), /delivery_mode: ITERATIVE_DELIVERY/);
+    assert.doesNotMatch(readState(repo, "runner.md"), /metacognitive_gate_required: true/);
     assert.equal(runCli(["verify-assignments", "--target-cwd", repo]).status, 0);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("one-shot source change requires explicit task-local user authority and activates broad review", () => {
+  const repo = makeTempGitRepo();
+  try {
+    const missingAuthority = runCli([
+      "intake",
+      "--target-cwd",
+      repo,
+      "--delivery-mode",
+      "ONE_SHOT_QUALITY",
+      "--task",
+      "Implement the source change",
+      "--task-id",
+      "one-shot-missing-authority",
+      "--epoch",
+      "e1",
+      "--scope",
+      "bin/coding-agents.mjs",
+    ]);
+    assert.notEqual(missingAuthority.status, 0);
+    assert.match(missingAuthority.stderr, /requires --one-shot-authority user_request:/);
+    assert.equal(existsSync(path.join(repo, ".coding-agents")), false);
+
+    const intake = runCli([
+      "intake",
+      "--target-cwd",
+      repo,
+      "--work-type",
+      "source-change",
+      "--delivery-mode",
+      "ONE_SHOT_QUALITY",
+      "--one-shot-authority",
+      "user_request:ワンショット品質で頼む",
+      "--task",
+      "Implement the explicitly requested one-shot source change",
+      "--task-id",
+      "one-shot-source-change",
+      "--epoch",
+      "e1",
+      "--scope",
+      "bin/coding-agents.mjs",
+    ]);
+    assert.equal(intake.status, 0, intake.stderr);
+    assert.match(intake.stdout, /ok delivery_mode: ONE_SHOT_QUALITY/);
+    assert.match(intake.stdout, /ok metacognitive_gate_required: true/);
+    assert.match(intake.stdout, /ONE_SHOT_QUALITY source-change/);
+
+    for (const file of ["task.md", "assignments.md", "handoff.md"]) {
+      const state = readState(repo, file);
+      assert.match(state, /delivery_mode: ONE_SHOT_QUALITY/);
+      assert.match(state, /one_shot_authority: user_request:ワンショット品質で頼む/);
+    }
+
+    const assigned = runCli([
+      "assign",
+      "--target-cwd",
+      repo,
+      "--role",
+      "Implementer",
+      "--task-id",
+      "one-shot-source-change",
+      "--epoch",
+      "e1",
+      "--scope",
+      "bin/coding-agents.mjs",
+      "--assignment",
+      "perform the bounded one-shot implementation and hardening",
+      "--expected-output",
+      "source patch and broad verification evidence",
+    ]);
+    assert.equal(assigned.status, 0, assigned.stderr);
+    assert.match(readState(repo, "runner.md"), /delivery_mode: ONE_SHOT_QUALITY/);
+    assert.match(readState(repo, "runner.md"), /metacognitive_gate_required: true/);
+
+    const illegalOverride = runCli([
+      "assign",
+      "--target-cwd",
+      repo,
+      "--delivery-mode",
+      "ITERATIVE_DELIVERY",
+      "--role",
+      "Implementer",
+      "--task-id",
+      "one-shot-source-change",
+      "--epoch",
+      "e1",
+      "--scope",
+      "bin/coding-agents.mjs",
+      "--assignment",
+      "attempt an illegal mode override",
+      "--expected-output",
+      "rejection",
+    ]);
+    assert.notEqual(illegalOverride.status, 0);
+    assert.match(illegalOverride.stderr, /intake-only/);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("one-shot wording without the explicit mode flag stays iterative and a later task is non-sticky", () => {
+  const repo = makeTempGitRepo();
+  try {
+    const wordingOnly = runCli([
+      "intake",
+      "--target-cwd",
+      repo,
+      "--task",
+      "完成させて。本番向けで品質高く、ワンショットのように見える文言も含む",
+      "--task-id",
+      "wording-only",
+      "--epoch",
+      "e1",
+      "--scope",
+      "bin/coding-agents.mjs",
+    ]);
+    assert.equal(wordingOnly.status, 0, wordingOnly.stderr);
+    assert.match(wordingOnly.stdout, /ok delivery_mode: ITERATIVE_DELIVERY/);
+    assert.match(wordingOnly.stdout, /ok one_shot_authority: none/);
+
+    const explicit = runCli([
+      "intake",
+      "--target-cwd",
+      repo,
+      "--delivery-mode",
+      "ONE_SHOT_QUALITY",
+      "--one-shot-authority",
+      "user_request:explicit-one-shot-task",
+      "--task",
+      "Run the explicit one-shot task",
+      "--task-id",
+      "explicit-one-shot-task",
+      "--epoch",
+      "e2",
+      "--scope",
+      "README.md",
+    ]);
+    assert.equal(explicit.status, 0, explicit.stderr);
+    assert.match(readState(repo, "task.md"), /delivery_mode: ONE_SHOT_QUALITY/);
+
+    const later = runCli([
+      "intake",
+      "--target-cwd",
+      repo,
+      "--task",
+      "Start the next ordinary task",
+      "--task-id",
+      "later-iterative-task",
+      "--epoch",
+      "e3",
+      "--scope",
+      "README.md",
+    ]);
+    assert.equal(later.status, 0, later.stderr);
+    assert.match(later.stdout, /ok delivery_mode: ITERATIVE_DELIVERY/);
+    assert.match(readState(repo, "task.md"), /delivery_mode: ITERATIVE_DELIVERY/);
+    assert.match(readState(repo, "task.md"), /one_shot_authority: none/);
+    assert.doesNotMatch(readState(repo, "task.md"), /explicit-one-shot-task/);
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
@@ -679,7 +843,7 @@ test("documentation work type suppresses keyword and path inference for docs-onl
   }
 });
 
-test("explicit auto work type preserves current keyword and path inference", () => {
+test("explicit auto work type does not turn an iterative source path into exhaustive review", () => {
   const repo = makeTempGitRepo();
   try {
     const intake = runCli([
@@ -700,15 +864,15 @@ test("explicit auto work type preserves current keyword and path inference", () 
 
     assert.equal(intake.status, 0, intake.stderr);
     assert.match(intake.stdout, /ok work_type: auto/);
-    assert.match(intake.stdout, /ok metacognitive_gate_required: true/);
-    assert.match(intake.stdout, /source\/test\/config path scope/);
+    assert.match(intake.stdout, /ok delivery_mode: ITERATIVE_DELIVERY/);
+    assert.match(intake.stdout, /ok metacognitive_gate_required: false/);
     assert.match(readState(repo, "task.md"), /work_type: auto/);
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
 });
 
-test("source, test, and config path scopes trigger the metacognitive gate even with bland task text", () => {
+test("source, test, and config path scopes alone do not block iterative delivery", () => {
   const repo = makeTempGitRepo();
   try {
     for (const [taskId, scope] of [
@@ -731,8 +895,8 @@ test("source, test, and config path scopes trigger the metacognitive gate even w
       ]);
 
       assert.equal(intake.status, 0, intake.stderr);
-      assert.match(intake.stdout, /ok metacognitive_gate_required: true/);
-      assert.match(intake.stdout, /source\/test\/config path scope/);
+      assert.match(intake.stdout, /ok delivery_mode: ITERATIVE_DELIVERY/);
+      assert.match(intake.stdout, /ok metacognitive_gate_required: false/);
     }
   } finally {
     rmSync(repo, { recursive: true, force: true });
@@ -765,7 +929,7 @@ test("English and Japanese debug and test-failure terms trigger the metacognitiv
   }
 });
 
-test("Japanese source edit wording triggers the metacognitive gate", () => {
+test("Japanese source edit wording alone remains iterative and does not trigger exhaustive review", () => {
   const repo = makeTempGitRepo();
   try {
     const intake = runCli([
@@ -783,9 +947,9 @@ test("Japanese source edit wording triggers the metacognitive gate", () => {
     ]);
 
     assert.equal(intake.status, 0, intake.stderr);
-    assert.match(intake.stdout, /ok metacognitive_gate_required: true/);
-    assert.match(intake.stdout, /source change/);
-    assert.match(readState(repo, "task.md"), /metacognitive_gate_triggers: .*source change/);
+    assert.match(intake.stdout, /ok delivery_mode: ITERATIVE_DELIVERY/);
+    assert.match(intake.stdout, /ok metacognitive_gate_required: false/);
+    assert.match(readState(repo, "task.md"), /metacognitive_gate_triggers: none/);
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }

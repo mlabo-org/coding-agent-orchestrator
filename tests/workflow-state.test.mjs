@@ -731,7 +731,8 @@ test("intake describes fixed roles as scaffold, not resident agents", () => {
     const decisions = readState(repo, "decisions.md");
     assert.equal([...taskState.matchAll(/^- C-role-scaffold-\d{3}:/gm)].length, 5);
     assert.equal([...decisions.matchAll(/^## D-role-scaffold-\d{3} /gm)].length, 4);
-    assert.match(taskState, /The requested task is completed within scope and outcome evidence addresses:/);
+    assert.match(taskState, /A specification-consistent, user-usable first runnable release completes the primary path end to end:/);
+    assert.match(taskState, /delivery_mode: ITERATIVE_DELIVERY/);
 
     const verify = runCli(["verify-assignments", "--target-cwd", repo]);
     assert.equal(verify.status, 0, verify.stdout + verify.stderr);
@@ -1924,7 +1925,7 @@ test("normalize runner metacognitive gate does not accept packet fields as pream
       taskId: "normalize-runner-preamble",
       epoch: "e1",
       scope: "bin/coding-agents.mjs",
-      workType: "source-change",
+      workType: "debug",
     });
     const assigned = runCli([
       "assign",
@@ -1939,7 +1940,7 @@ test("normalize runner metacognitive gate does not accept packet fields as pream
       "--scope",
       "bin/coding-agents.mjs",
       "--work-type",
-      "source-change",
+      "debug",
       "--assignment",
       "change source parser behavior",
       "--expected-output",
@@ -1977,6 +1978,8 @@ function intake(repo, options) {
     options.scope,
   ];
   if (options.workType) args.splice(3, 0, "--work-type", options.workType);
+  if (options.deliveryMode) args.splice(3, 0, "--delivery-mode", options.deliveryMode);
+  if (options.oneShotAuthority) args.splice(3, 0, "--one-shot-authority", options.oneShotAuthority);
   if (options.evidenceRef) args.push("--evidence-ref", options.evidenceRef);
   const result = runCli(args);
   assert.equal(result.status, 0, result.stderr);

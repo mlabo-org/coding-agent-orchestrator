@@ -61,9 +61,10 @@ test("discovery metadata enforces state-first semantic continuation", () => {
   assert.match(manifest.interface.longDescription, /Inspect task, active checklist, audit, runner, and handoff state/i);
   assert.match(manifest.interface.longDescription, /related work preserves completed progress and appends/i);
   assert.match(manifest.interface.longDescription, /only clearly unrelated work gets a fresh task identity/i);
-  assert.match(manifest.interface.longDescription, /not asked for a routine new-versus-continue mode/i);
   assert.match(manifest.interface.longDescription, /only through official Codex subagent spawn tools/i);
   assert.match(manifest.interface.longDescription, /never launches codex exec/i);
+  assert.match(manifest.interface.longDescription, /ITERATIVE_DELIVERY/);
+  assert.match(manifest.interface.longDescription, /ONE_SHOT_QUALITY is task-local, non-sticky/i);
   assert.ok(
     manifest.interface.defaultPrompt.every((prompt) =>
       /Coding Agents|\.coding-agents/.test(prompt),
@@ -99,6 +100,7 @@ test("discovery metadata enforces state-first semantic continuation", () => {
       "capability-improvement-evidence-link",
       "semantic-state-triage",
       "active-checklist-finalization-consistency",
+      "delivery-mode-authority-and-propagation",
     ],
   );
 });

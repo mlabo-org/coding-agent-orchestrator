@@ -13,6 +13,17 @@ Coding Agents can be used without Agentic Runner, from specification consultatio
 
 Agentic Runner can also run without Coding Agents, using any other declared owners. The pair is an optional composition, not a set-only product.
 
+## Delivery Modes
+
+Coding Agents inherits the global delivery constitution and records the selected mode in task, assignment, handoff, audit, and runner state.
+
+- `ITERATIVE_DELIVERY` is the default for every coding/source task. The workflow drives first to a specification-consistent, user-usable release whose primary path actually runs end to end, performs minimum relevant smoke verification, and fixes observed critical blockers. It then uses real operation and short root-cause repair cycles to learn quickly.
+- Hypothetical rare failures, exhaustive failure-route enumeration, future abstraction, comprehensive defensive layers, and nonessential refactors do not block the first iterative release.
+- `ONE_SHOT_QUALITY` is an explicit task-local option for exhaustive in-scope hardening. Intake requires both `--delivery-mode ONE_SHOT_QUALITY` and `--one-shot-authority user_request:<task-local-ref>`. General phrases such as “complete it,” “production-ready,” or “high quality” do not activate it, and the mode never carries into a later task.
+- Ordinary iterative source edits do not automatically receive the exhaustive before/after and cross-feature completion gate. Observed debug/repair and source/cache/runtime contract mismatches still require concrete root-cause evidence; one-shot source work retains the broad gate.
+
+The normal evaluation target is `time to working release × speed of learning from real operation × accuracy of root-cause repair`, not first-pass perfection.
+
 ## Install
 
 The Agentic Runner repository publishes two independent entries in one shared marketplace. For a standalone Coding Agents install:
@@ -132,7 +143,7 @@ Selecting Coding Agents does not change the host model or intelligence level, an
 - [`a68c1b6`](https://github.com/mlabo-org/coding-agents/commit/a68c1b6585c79c11d0a5d89673659cd4d3c4c050) — removed the CLI-spawned Codex worker path and established official Codex subagents as the only worker-dispatch route.
 - [`678f9a9`](https://github.com/mlabo-org/coding-agents/commit/678f9a9224a562098f5909ee1037dd7677d79a96) — centralized shared scaffold contracts and reduced workflow-state overhead while retaining lifecycle, packet, and historical-compatibility checks.
 
-The current source suite contains 61 passing tests.
+The current source suite contains 66 passing tests.
 
 ## Platform
 

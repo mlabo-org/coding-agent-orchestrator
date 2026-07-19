@@ -1,7 +1,7 @@
 {
   "name": "coding-agents",
   "version": "0.1.0",
-  "description": "Coding Agents state-first continuation and new-task intake for named requests or strong continuation intent on valid .coding-agents state. Primary route: inspect active state and completion flags, semantically append and resume related work, and use fresh intake only for clearly unrelated work. Fallback: parent-side work when official subagents are unavailable; never launch codex exec or a custom process runner. Do not ask the user for a routine new-versus-continue mode.",
+  "description": "Coding Agents state-first continuation and new-task intake for named requests or strong continuation intent on valid .coding-agents state. Primary route: inspect active state, preserve related progress, and default coding/source work to ITERATIVE_DELIVERY; ONE_SHOT_QUALITY requires explicit task-local user authority. Fallback: parent-side work when official subagents are unavailable; never launch codex exec or a custom process runner. Do not ask the user for a routine new-versus-continue mode.",
   "homepage": "https://github.com/mlabo-org/coding-agents#readme",
   "repository": "https://github.com/mlabo-org/coding-agents",
   "license": "MIT",
@@ -21,7 +21,7 @@
   "interface": {
     "displayName": "Coding Agents",
     "shortDescription": "State-first continuation and new-task intake; official Codex spawn only for workers.",
-    "longDescription": "Select Coding Agents when named, when valid .coding-agents state accompanies strong continuation intent, or when its state or CLI is audited or repaired. Inspect task, active checklist, audit, runner, and handoff state before choosing a transition. Semantically related work preserves completed progress and appends from the first unfinished point; only clearly unrelated work gets a fresh task identity and regenerated active state. The user is not asked for a routine new-versus-continue mode. Historical runner packets remain readable, and actual workers are dispatched only through official Codex subagent spawn tools; the CLI never launches codex exec or a custom runner fallback.",
+    "longDescription": "Select Coding Agents when named, when valid .coding-agents state accompanies strong continuation intent, or when its state or CLI is audited or repaired. Inspect task, active checklist, audit, runner, and handoff state before choosing a transition. Semantically related work preserves completed progress and appends from the first unfinished point; only clearly unrelated work gets a fresh task identity and regenerated active state. Coding/source work defaults to ITERATIVE_DELIVERY: reach a runnable primary-path release, observe real operation, and repair concrete failures quickly. ONE_SHOT_QUALITY is task-local, non-sticky, and requires explicit user authority. Historical runner packets remain readable, and actual workers are dispatched only through official Codex subagent spawn tools; the CLI never launches codex exec or a custom runner fallback.",
     "developerName": "Makoto Suzuki",
     "category": "Developer Tools",
     "websiteURL": "https://github.com/mlabo-org/coding-agents",
@@ -33,7 +33,7 @@
       "Coding Agents Audit/Repair"
     ],
     "defaultPrompt": [
-      "Inspect .coding-agents state, infer related versus unrelated work, then resume or run fresh intake without asking me for a mode.",
+      "Inspect .coding-agents state; default to ITERATIVE_DELIVERY and use ONE_SHOT_QUALITY only when I explicitly requested it.",
       "Continue .coding-agents: preserve checked items, append related work, and use fresh intake only if clearly unrelated.",
       "Audit or repair Coding Agents state or its source CLI; dispatch workers only through official Codex subagent spawn tools."
     ],

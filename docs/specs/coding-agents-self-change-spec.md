@@ -104,7 +104,23 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
    - The parent retains policy, cancellation judgment, replacement assignment,
      final result acceptance, and final integration.
 
-6. Debugging integrity
+6. Global delivery mode inheritance
+   - All coding/source work defaults to `ITERATIVE_DELIVERY`. It must first
+     produce a specification-consistent, user-usable release whose primary path
+     runs end to end, pass minimum relevant smoke verification, and resolve
+     observed critical blockers.
+   - Hypothetical rare failures, exhaustive failure-route enumeration, future
+     abstraction, comprehensive defensive layers, and nonessential refactors
+     are not iterative first-release blockers.
+   - `ONE_SHOT_QUALITY` requires explicit current-task user authority, is
+     recorded by intake, and is non-sticky across later tasks. Generic quality
+     language does not activate it.
+   - Task, assignments, handoff, runner packets, planner guidance, and validators
+     must preserve the same mode. Ordinary iterative source changes do not
+     receive exhaustive context-impact completion requirements merely because
+     source is edited.
+
+7. Debugging integrity
    - Debug or repair work is complete only when the root cause is identified,
      fixed, and verified against the intended outcome.
    - Bug analysis must start from first principles: expected outcome, actual
@@ -125,11 +141,14 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
      debugging integrity gate. Validation must not be weakened to accept stale
      state; use an explicit normalization command or regenerate intake state.
 
-7. Meta-Cognitive Debug/Repair Gate
-   - Debug, repair, source-of-truth correction, plugin-contract correction,
+8. Meta-Cognitive Debug/Repair Gate
+   - Observed debug, repair, source-of-truth correction, plugin-contract correction,
      generated-artifact inconsistency investigation, generated state versus
      source mismatch, cache/runtime versus source mismatch, and stale contract
      repair are context-impact work, not only local patch work.
+   - Broad source-change context-impact review also applies when explicit
+     `ONE_SHOT_QUALITY` is active, but not solely from ordinary iterative source
+     paths or source-change wording.
    - Assignments, audits, handoffs, runner packets, and final reports for this
      gate must separate the intended contract, observed mismatch, affected
      source/generated/cache/runtime surfaces, changed assumptions, neighboring
@@ -148,7 +167,7 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
      inside the active scope, the skipped checks, reason, remaining risk, and
      next investigation must be recorded instead of treating the gate as passed.
 
-8. Coding Conduct Gate
+9. Coding Conduct Gate
    - Coding and debug work must carry a machine-visible Coding Conduct Gate in
      the shared assignment scaffold contract, every dispatched assignment and
      runner packet, handoff material, and validation for modern workflow state.
@@ -173,7 +192,7 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
      not completion, and must leave the failing main flow and removal condition
      visible.
 
-9. Worker-result collection and task finalization
+10. Worker-result collection and task finalization
    - `collect` records a `worker-result-collection` packet plus its
      workflow-state-only lifecycle disposition. Completed collection does not
      require complete task-wide D-*/C-*/source-spec coverage, and multiple
@@ -205,7 +224,7 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
      validation, and the strict lifecycle rules remain attached to modern
      worker-result collections rather than task-finalization packets.
 
-10. Nested Coding Agents preflight suppression
+11. Nested Coding Agents preflight suppression
    - Parent-managed child workers operate under a Coding Agents assignment that
      the parent already selected.
    - Generated assignments, runner packets, and handoff material
@@ -222,7 +241,7 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
      contract. They cannot broaden scope, depth, permissions, or cancellation
      authority.
 
-11. Same-repository sequential tasks
+12. Same-repository sequential tasks
    - A completed user-visible task, a `task-finalization` packet, or
      `state_retired` worker contexts must never lock the repository or forbid a
      later Coding Agents task.
@@ -251,7 +270,7 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
    - The skill invocation policy must permit model-visible natural-language
      routing; structured `$coding-agents` invocation remains available.
 
-12. Legacy migration and cleanup
+13. Legacy migration and cleanup
    - Existing legacy locations are cleaned through an explicit migration workflow,
      not by silent deletion or broad automatic rewriting.
    - The migration workflow must perform a preflight backup before destructive or
@@ -288,7 +307,8 @@ Future implementation work should preserve this split:
   concise worker-result and result-reference rules, parent-owned task
   finalization with typed Contract Coverage, the Coding Conduct Gate, debug
   root-cause completion requirements, and metacognitive context-impact checks
-  for gate-required work.
+  for evidence-backed or explicit one-shot gate-required work, plus the exact
+  inherited delivery mode.
 - Stale generated state must be normalized explicitly before verification is
   treated as current.
 - Legacy cleanup work may inspect external target repositories but must remain

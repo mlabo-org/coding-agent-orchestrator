@@ -17,6 +17,16 @@ const CHILD_RETURN_LIFECYCLE =
   "Return concise worker-result material and stop; do not stay open waiting for more work.";
 const DEBUG_INTEGRITY =
   "For debug or repair work, identify root cause and make the intended outcome succeed; log-only, fallback-only, skip-only, failure-output-only, or return-to-main-loop-only changes are not completion.";
+const DELIVERY_MODE_CONTRACT_VERSION = "delivery_mode_v1";
+const DEFAULT_DELIVERY_MODE = "ITERATIVE_DELIVERY";
+const ONE_SHOT_DELIVERY_MODE = "ONE_SHOT_QUALITY";
+const DELIVERY_MODES = [DEFAULT_DELIVERY_MODE, ONE_SHOT_DELIVERY_MODE];
+const ITERATIVE_DELIVERY_CONTRACT =
+  "Prioritize a specification-consistent first runnable release, real end-to-end use of the primary path, minimum relevant smoke verification, and repair of observed critical blockers. Hypothetical rare failures, exhaustive failure-route enumeration, future abstraction, comprehensive defensive layers, and nonessential refactors are not initial-release blockers. After real use exposes a failure, concentrate reasoning on its concrete evidence, fix the root cause, and rerun a short cut-and-try cycle while returning to the whole application.";
+const ONE_SHOT_QUALITY_CONTRACT =
+  "Only an explicit task-local user request may select ONE_SHOT_QUALITY. Exhaustive in-scope hardening, broad verification, and first-pass quality work may then precede release. The mode is never sticky and must not carry into another task or epoch without a new explicit user request.";
+const DELIVERY_MODE_EVALUATION =
+  "ITERATIVE_DELIVERY is evaluated by time to a working release, speed of learning from real operation, and accuracy of root-cause repair; it is not evaluated by first-pass perfection.";
 const CODING_CONDUCT_GATE_NAME = "Coding Conduct Gate";
 const CODING_CONDUCT_RULES = [
   "Reuse mature GitHub/npm OSS directly when it fits the requirement and dependency approval or scope permits it; do not reimplement mature solved problems.",
@@ -26,7 +36,7 @@ const CODING_CONDUCT_RULES = [
 const CODING_CONDUCT_CONTRACT = CODING_CONDUCT_RULES.join(" ");
 const METACOGNITIVE_GATE_NAME = "Meta-Cognitive Debug/Repair Gate";
 const METACOGNITIVE_GATE_CONTRACT =
-  "For gate-required source-change/debug/repair/SOT/plugin-contract/generated-artifact inconsistency work, explicitly capture before/after context effects, cross-feature consequences, root cause, fix, verification evidence, skipped checks, unresolved risks, and next investigation.";
+  "For observed debug/repair/SOT/plugin-contract/generated-artifact inconsistency work, and for broad source-change review only when ONE_SHOT_QUALITY is explicitly active, capture before/after context effects, cross-feature consequences, root cause, fix, verification evidence, skipped checks, unresolved risks, and next investigation.";
 const METACOGNITIVE_GATE_COMPLETION_PROMPT =
   "Assignment and skeleton packets expose this schema only; completed worker-result-collection packets and historical process-runner-result packets must fill every listed field with actual evidence.";
 const METACOGNITIVE_PRE_GATE_BLOCKER =
@@ -141,9 +151,9 @@ const FEATURE_PROFILE_GUIDANCE = {
 };
 const DEFAULT_FEATURE_PROFILE = "none";
 const WORK_TYPE_GUIDANCE = {
-  auto: "Infer gate classification from task text, packet text, and path-like scope. This preserves existing behavior.",
+  auto: "Infer observed debug/repair and explicit boundary-mismatch gates from task text and packet evidence. Ordinary source paths do not force exhaustive context-impact review in ITERATIVE_DELIVERY.",
   documentation: "Semantic metadata for docs-only work. Suppresses keyword/path metacognitive gate inference for this command, but does not downgrade gate-required workflow state.",
-  "source-change": "Semantic metadata for source/config/test/canonical editing. Forces the metacognitive source-change gate for this command.",
+  "source-change": "Semantic metadata for source/config/test/canonical editing. In ITERATIVE_DELIVERY it does not by itself force exhaustive context-impact review; in ONE_SHOT_QUALITY it does.",
   debug: "Semantic metadata for debugging or failure-correction work. Forces the metacognitive debug/root-cause gate for this command.",
 };
 const DEFAULT_WORK_TYPE = "auto";
@@ -328,7 +338,11 @@ function intake(args) {
       `--evidence-ref must contain a concrete typed reference (${CONTRACT_COVERAGE_TYPED_REFERENCE_FORMS})`,
     );
   }
-  const metacognitiveGate = classifyMetacognitiveGate({ task, scope }, commandContext.workType);
+  const metacognitiveGate = classifyMetacognitiveGate(
+    { task, scope },
+    commandContext.workType,
+    commandContext.deliveryMode,
+  );
   const state = resolveWorkflowState(commandContext.targetCwd);
   prepareStateWrite(state);
   mkdirSync(state.stateDir, { recursive: true });
@@ -343,6 +357,8 @@ function intake(args) {
     scope,
     evidenceRef,
     workType: commandContext.workType,
+    deliveryMode: commandContext.deliveryMode,
+    oneShotAuthority: commandContext.oneShotAuthority,
     stateDir: state.stateDir,
     gitRoot: state.gitRoot,
     timestamp: new Date().toISOString(),
@@ -360,6 +376,8 @@ function intake(args) {
   console.log(`ok scope: ${scope}`);
   console.log(`ok evidence_ref: ${evidenceRef}`);
   console.log(`ok work_type: ${workTypeId(commandContext)}`);
+  console.log(`ok delivery_mode: ${deliveryModeId(commandContext)}`);
+  console.log(`ok one_shot_authority: ${commandContext.oneShotAuthority}`);
   console.log(`ok metacognitive_gate_required: ${metacognitiveGate.required}`);
   if (metacognitiveGate.required) console.log(`ok metacognitive_gate_triggers: ${metacognitiveGate.triggers.join(", ")}`);
   printLegacyHints(state);
@@ -389,6 +407,7 @@ function assign(args) {
   console.log(`ok scope: ${packet.scope}`);
   console.log(`ok feature_profile: ${featureProfileId(packet)}`);
   console.log(`ok work_type: ${workTypeId(packet)}`);
+  console.log(`ok delivery_mode: ${deliveryModeId(packet)}`);
 }
 
 function collect(args) {
@@ -401,6 +420,7 @@ function collect(args) {
   console.log(`ok task_id: ${packet.taskId}`);
   console.log(`ok feature_profile: ${featureProfileId(packet)}`);
   console.log(`ok work_type: ${workTypeId(packet)}`);
+  console.log(`ok delivery_mode: ${deliveryModeId(packet)}`);
   console.log(`ok lifecycle_scope: ${packet.lifecycleScope}`);
   console.log(`ok lifecycle_disposition: ${packet.lifecycleDisposition}`);
   console.log(`ok cancel_reason: ${packet.cancelReason}`);
@@ -435,6 +455,7 @@ function finalize(args) {
   console.log(`ok epoch: ${packet.epoch}`);
   console.log(`ok scope: ${packet.scope}`);
   console.log(`ok work_type: ${workTypeId(packet)}`);
+  console.log(`ok delivery_mode: ${deliveryModeId(packet)}`);
   console.log(`ok todo: completed ${todoUpdate.entryCount} active task item(s)`);
 }
 
@@ -449,6 +470,7 @@ function run(args) {
   console.log("ok spawned: false");
   console.log(`ok feature_profile: ${featureProfileId(packet)}`);
   console.log(`ok work_type: ${workTypeId(packet)}`);
+  console.log(`ok delivery_mode: ${deliveryModeId(packet)}`);
   console.log("ok note: record-only; dispatch subagents through the official Codex spawn tools outside this CLI");
 }
 
@@ -629,6 +651,7 @@ Operational log:
 - ${SUPERVISION_NO_INTERRUPT}
 - ${CODING_CONDUCT_CONTRACT}
 - ${DEBUG_INTEGRITY}
+${renderDeliveryModeFields(context)}
 ${renderMetacognitiveGateState(context.metacognitiveGate)}
 - ${CONTRACT_COVERAGE_CONTRACT}
 `;
@@ -648,14 +671,25 @@ function renderProject(context) {
 - scope: ${context.scope}
 - evidence_ref: ${context.evidenceRef}
 - work_type: ${workTypeId(context)}
+${renderDeliveryModeFields(context)}
 `;
 }
 
 function taskCompletionConditions(context) {
   const prefix = `C-${context.taskId}`;
   return [
-    { id: `${prefix}-001`, text: `The requested task is completed within scope and outcome evidence addresses: ${context.task}` },
-    { id: `${prefix}-002`, text: "Task-relevant implementation and verification checks pass; skipped checks and remaining risks are recorded." },
+    {
+      id: `${prefix}-001`,
+      text: deliveryModeId(context) === ONE_SHOT_DELIVERY_MODE
+        ? `The requested one-shot scope is exhaustively hardened and completed with task-local authority evidence: ${context.task}`
+        : `A specification-consistent, user-usable first runnable release completes the primary path end to end: ${context.task}`,
+    },
+    {
+      id: `${prefix}-002`,
+      text: deliveryModeId(context) === ONE_SHOT_DELIVERY_MODE
+        ? "All declared one-shot verification and hardening checks pass; skipped checks and remaining risks are recorded."
+        : "Minimum task-relevant smoke verification passes and every observed critical release blocker is resolved; hypothetical unknown failures do not block release.",
+    },
     { id: `${prefix}-003`, text: "Source, generated-state, cache/runtime, external-side-effect, and Git-history boundaries are preserved or explicitly reported." },
     { id: `${prefix}-004`, text: "Every dispatched worker result has a workflow-state disposition, or the final evidence states that no workers were dispatched." },
     { id: `${prefix}-005`, text: "Task finalization maps the active decisions, completion conditions, and source/spec evidence with typed references, then verify-assignments and doctor pass." },
@@ -671,6 +705,7 @@ function renderTask(context) {
 - scope: ${context.scope}
 - evidence_ref: ${context.evidenceRef}
 - work_type: ${workTypeId(context)}
+${renderDeliveryModeFields(context)}
 - lifecycle_contract_version: ${LIFECYCLE_CONTRACT_VERSION}
 - lifecycle_contract_effective_at: ${context.timestamp}
 - task: ${context.task}
@@ -727,10 +762,14 @@ function renderDecisions(context) {
 
 ## D-${context.taskId}-004 Work Quality And Verification
 
-- accepted: use \`work_type=${workTypeId(context)}\` with \`metacognitive_gate_required=${context.metacognitiveGate.required}\`; prefer practical evidence, reuse mature OSS only when it fits, and do not hide main-flow errors behind fallback behavior.
+- accepted: use \`delivery_mode=${deliveryModeId(context)}\`, \`work_type=${workTypeId(context)}\`, and \`metacognitive_gate_required=${context.metacognitiveGate.required}\`; prefer practical evidence, reuse mature OSS only when it fits, and do not hide main-flow errors behind fallback behavior.
+- delivery_mode: ${deliveryModeId(context)}
+- one_shot_authority: ${context.oneShotAuthority}
 - work_type: ${workTypeId(context)}
 - triggers: ${formatTriggers(context.metacognitiveGate)}
-- impact: task completion requires task-relevant verification, the applicable metacognitive evidence, an OSS reuse/non-reuse rationale for coding work, and explicit skipped checks or residual risks.
+- impact: ${deliveryModeId(context) === ONE_SHOT_DELIVERY_MODE
+    ? "task completion may require exhaustive in-scope hardening and broad verification before release because explicit task-local one-shot authority is present."
+    : "task completion prioritizes the first runnable release, primary-path smoke evidence, and short observation-driven repair cycles; hypothetical rare routes, future abstractions, comprehensive defenses, and nonessential refactors do not block initial release."}
 - contract_coverage_required: evidence must reference the implementation, tests or measurements, skipped checks, and no-hidden-fallback status.
 `;
 }
@@ -750,6 +789,7 @@ function renderAudit(context) {
 - scope: ${context.scope}
 - evidence_ref: ${context.evidenceRef}
 - work_type: ${workTypeId(context)}
+${renderDeliveryModeFields(context)}
 - git_status: ${context.gitStatus.ok ? summarizeGit(context.gitStatus.output) : `unavailable (${context.gitStatus.error})`}
 - metacognitive_gate_required: ${context.metacognitiveGate.required}
 - metacognitive_gate_triggers: ${formatTriggers(context.metacognitiveGate)}
@@ -771,11 +811,15 @@ function renderAssignments(context) {
     Intake: ["scaffolded", "Confirm project instructions, cwd, task, existing workflow state, and whether this is debug or repair work.", "Intake summary with blockers and debug classification."],
     "Repo Mapper": ["scaffolded", "Map repository structure and likely edit boundaries.", "Repo map and source boundaries."],
     Requirements: ["scaffolded", "Extract explicit requirements, non-goals, expected outcome, actual failure when debugging, and whether mature GitHub/npm OSS already solves the requirement.", "Requirement list with ambiguity notes, OSS reuse decision, and failure contract if applicable."],
-    Planner: ["scaffolded", "Convert requirements into an executable task sequence.", "Plan with ordered checkpoints."],
-    Architect: ["scaffolded", "Identify design constraints, integration points, and likely failure point for debug work.", "Architecture notes, risk points, and failure-path notes."],
-    Implementer: ["scaffolded", "Make scoped code or document changes when requested; reuse mature OSS when approved and suitable, and for debug work fix the root cause instead of masking failure with fallback implementation.", "Changed files, OSS reuse or non-reuse rationale, implementation notes, and root-cause fix notes when applicable."],
-    "Test Runner": ["scaffolded", "Run allowed verification commands; for debug work, verify the intended outcome now succeeds.", "Verification output, skipped checks, and outcome evidence."],
-    Reviewer: ["scaffolded", "Review diffs for regressions, missing requirements, avoidable reimplementation of mature OSS, and fallback implementations that hide main-flow errors.", "Findings ordered by severity."],
+    Planner: ["scaffolded", deliveryModeId(context) === ONE_SHOT_DELIVERY_MODE
+      ? "Convert the explicit one-shot scope into an exhaustive but bounded hardening and verification sequence."
+      : "Plan the shortest coherent path to a specification-consistent runnable release, then explicit observation-and-repair checkpoints.", "Plan with ordered checkpoints and a clear first runnable release boundary."],
+    Architect: ["scaffolded", "Identify only the design constraints and integration points needed for the current release slice; for observed debug work, isolate the actual failure point.", "Architecture notes, primary-path integration points, and observed failure-path notes when applicable."],
+    Implementer: ["scaffolded", "Complete the scoped runnable release; avoid speculative abstraction, exhaustive defensive layers, and unrelated refactors in ITERATIVE_DELIVERY. Reuse mature OSS when approved and suitable, and for observed debug work fix the root cause instead of masking failure with fallback implementation.", "Changed files, runnable primary-path result, OSS reuse or non-reuse rationale, and root-cause fix notes when applicable."],
+    "Test Runner": ["scaffolded", deliveryModeId(context) === ONE_SHOT_DELIVERY_MODE
+      ? "Run the declared broad one-shot verification and hardening checks."
+      : "Run minimum relevant smoke verification on the actual primary path; for observed failures, verify the repaired outcome by rerunning it.", "Verification output, skipped checks, and outcome evidence."],
+    Reviewer: ["scaffolded", "Review the whole application against the declared delivery mode: release-block only confirmed specification or primary-path defects, and keep hypothetical hardening as follow-up unless ONE_SHOT_QUALITY is active.", "Findings ordered by release relevance and severity."],
     "Risk Guard": ["scaffolded", "Check destructive actions, external sending, secrets, and scope drift.", "Risk assessment and required stops."],
     "Docs Keeper": ["scaffolded", `Keep ${STATE_DIR_NAME} task, todo, decisions, and audit current.`, "Updated docs summary."],
     UX: ["scaffolded", "Assess user-facing workflow clarity.", "UX notes and friction points."],
@@ -788,6 +832,10 @@ function renderAssignments(context) {
 
 These 14 sections are stable validation and routing slots. They are not resident agents or spawned workers; actual child work begins only when a scoped assignment is issued through parent-managed subagents or runner packets.
 The shared contracts below apply once to every scaffold role. Actual dispatched assignment and runner packets still inline the complete machine-readable contract fields.
+
+Delivery Mode Contract:
+
+${renderDeliveryModeFields(context)}
 
 ## Debugging Integrity Gate
 
@@ -841,6 +889,7 @@ You are a coding-agents worker for task \`${context.taskId}\`.
 - scope: ${context.scope}
 - evidence_ref: ${context.evidenceRef}
 - work_type: ${workTypeId(context)}
+${renderDeliveryModeFields(context)}
 
 Read \`${STATE_DIR_NAME}/README.md\`, then \`project.md\`, \`task.md\`, \`todo.md\`, \`decisions.md\`, \`assignments.md\`, \`audit.md\`, and \`runner.md\` if present.
 Preserve unrelated edits. Work only inside scope. Update \`${STATE_DIR_NAME}/audit.md\` with verification results before handoff.
@@ -1415,6 +1464,8 @@ function requireAssignmentPacket(args, commandContext) {
     scope: requireIdentityArg(args.scope, "--scope"),
     featureProfile: resolveFeatureProfile(args.featureProfile),
     workType: commandContext.workType,
+    deliveryMode: commandContext.deliveryMode,
+    oneShotAuthority: commandContext.oneShotAuthority,
     hierarchyFields: resolveHierarchyFields(args),
     supervisionTimingFields: resolveSupervisionTimingFields(args),
     invocationCwd: commandContext.invocationCwd,
@@ -1440,6 +1491,8 @@ function requireIntegrationPacket(args, commandContext) {
     scope: requireIdentityArg(args.scope, "--scope"),
     featureProfile: resolveFeatureProfile(args.featureProfile),
     workType: commandContext.workType,
+    deliveryMode: commandContext.deliveryMode,
+    oneShotAuthority: commandContext.oneShotAuthority,
     hierarchyFields: resolveHierarchyFields(args),
     supervisionTimingFields: resolveSupervisionTimingFields(args),
     invocationCwd: commandContext.invocationCwd,
@@ -1470,6 +1523,8 @@ function requireTaskFinalizationPacket(args, commandContext) {
     epoch: requireIdentityArg(args.epoch, "--epoch"),
     scope: requireIdentityArg(args.scope, "--scope"),
     workType: commandContext.workType,
+    deliveryMode: commandContext.deliveryMode,
+    oneShotAuthority: commandContext.oneShotAuthority,
     invocationCwd: commandContext.invocationCwd,
     targetCwd: commandContext.targetCwd,
     contractCoverage: singleLine(args.contractCoverage || "required"),
@@ -1599,6 +1654,7 @@ function renderAssignmentPacket(packet) {
 - scope: ${packet.scope}
 - feature_profile: ${featureProfileId(packet)}
 - work_type: ${workTypeId(packet)}
+${renderDeliveryModeFields(packet)}
 - invocation_cwd: ${packet.invocationCwd}
 - target_cwd: ${packet.targetCwd}
 - assignment: ${packet.assignment}
@@ -1624,6 +1680,7 @@ function renderIntegrationPacket(packet) {
 - scope: ${packet.scope}
 - feature_profile: ${featureProfileId(packet)}
 - work_type: ${workTypeId(packet)}
+${renderDeliveryModeFields(packet)}
 - invocation_cwd: ${packet.invocationCwd}
 - target_cwd: ${packet.targetCwd}
 - findings: ${packet.findings}
@@ -1659,6 +1716,7 @@ function renderTaskFinalizationPacket(packet) {
 - epoch: ${packet.epoch}
 - scope: ${packet.scope}
 - work_type: ${workTypeId(packet)}
+${renderDeliveryModeFields(packet)}
 - invocation_cwd: ${packet.invocationCwd}
 - target_cwd: ${packet.targetCwd}
 ${renderContractCoveragePacketSchema(packet)}
@@ -1676,6 +1734,7 @@ function renderOrchestrationSkeleton(packet) {
 - scope: ${packet.scope}
 - feature_profile: ${featureProfileId(packet)}
 - work_type: ${workTypeId(packet)}
+${renderDeliveryModeFields(packet)}
 - invocation_cwd: ${packet.invocationCwd}
 - target_cwd: ${packet.targetCwd}
 - assignment: ${packet.assignment}
@@ -1706,6 +1765,7 @@ ${NESTED_CODING_AGENTS_PREFLIGHT}
 ${renderSupervisionFields()}
 ${DEBUG_INTEGRITY}
 ${renderCodingConductFields()}
+${renderDeliveryModeFields(commandContext)}
 ${renderContractCoveragePacketSchema(commandContext)}
 ${METACOGNITIVE_GATE_CONTRACT}
 `;
@@ -1748,6 +1808,23 @@ function validateAssignmentFiles(stateDir) {
   if (identity.errors.length) {
     results.push(["warn", `invalid workflow identity fields: ${identity.errors.join(", ")}`]);
     fatal = true;
+  }
+  const taskPath = path.join(stateDir, "task.md");
+  if (existsSync(taskPath)) {
+    const deliveryValidation = validateDeliveryModeFields(readFileSync(taskPath, "utf8"), {
+      allowLegacyDefault: true,
+    });
+    if (deliveryValidation.valid) {
+      results.push([
+        "ok",
+        deliveryValidation.legacyDefaulted
+          ? "legacy task delivery mode defaults non-sticky to ITERATIVE_DELIVERY"
+          : `task delivery mode valid (${deliveryValidation.mode})`,
+      ]);
+    } else {
+      results.push(["warn", `invalid task delivery mode: ${deliveryValidation.missing.join(", ")}`]);
+      fatal = true;
+    }
   }
 
   if (existsSync(assignmentPath)) {
@@ -1830,6 +1907,21 @@ function validateRoleAssignments(text, workflowGate = { required: false }) {
     fatal = true;
   }
 
+  const assignmentDelivery = validateDeliveryModeFields(text, {
+    allowLegacyDefault: workflowGate.deliveryMode?.id !== ONE_SHOT_DELIVERY_MODE,
+  });
+  if (assignmentDelivery.valid) {
+    results.push([
+      "ok",
+      assignmentDelivery.legacyDefaulted
+        ? "legacy assignment delivery mode defaults non-sticky to ITERATIVE_DELIVERY"
+        : `shared delivery mode present in assignments (${assignmentDelivery.mode})`,
+    ]);
+  } else {
+    results.push(["warn", `invalid assignment delivery mode: ${assignmentDelivery.missing.join(", ")}`]);
+    fatal = true;
+  }
+
   if (text.includes(DEBUG_INTEGRITY)) results.push(["ok", "debugging integrity gate present"]);
   else {
     results.push(["warn", "debugging integrity gate missing from assignments"]);
@@ -1858,6 +1950,7 @@ function validateRunnerPackets(text, workflowGate = { required: false }, contrac
   const invalidPackets = [];
   const invalidSupervisionPackets = [];
   const invalidCodingConductPackets = [];
+  const invalidDeliveryModePackets = [];
   const invalidMetacognitivePackets = [];
   const invalidContractCoveragePackets = [];
   const invalidLifecyclePackets = [];
@@ -1891,6 +1984,25 @@ function validateRunnerPackets(text, workflowGate = { required: false }, contrac
     const workType = getFieldValue(section, "work_type");
     if (workType && !isKnownWorkTypeId(workType)) {
       invalidPackets.push(`${packetLabel(section)}.work_type unknown (${workType})`);
+    }
+    const currentPacket = isCurrentWorkflowPacket(section, workflowGate);
+    const packetDelivery = validateDeliveryModeFields(section, {
+      allowLegacyDefault: !currentPacket || workflowGate.deliveryMode?.id !== ONE_SHOT_DELIVERY_MODE,
+    });
+    if (!packetDelivery.valid) {
+      for (const missing of packetDelivery.missing) {
+        invalidDeliveryModePackets.push(`${packetLabel(section)}.${missing}`);
+      }
+    } else if (
+      currentPacket
+      && packetDelivery.mode !== (workflowGate.deliveryMode?.id || DEFAULT_DELIVERY_MODE)
+    ) {
+      invalidDeliveryModePackets.push(`${packetLabel(section)}.delivery_mode does not match current task`);
+    } else if (
+      currentPacket
+      && packetDelivery.authority !== (workflowGate.oneShotAuthority || "none")
+    ) {
+      invalidDeliveryModePackets.push(`${packetLabel(section)}.one_shot_authority does not match current task`);
     }
     if (type === "assignment" || type === "process-orchestration-skeleton") {
       for (const field of ["assignment", "expected_output", "debugging_integrity", "lifecycle"]) {
@@ -1985,6 +2097,7 @@ function validateRunnerPackets(text, workflowGate = { required: false }, contrac
     invalidPackets.length === 0
     && invalidSupervisionPackets.length === 0
     && invalidCodingConductPackets.length === 0
+    && invalidDeliveryModePackets.length === 0
     && invalidMetacognitivePackets.length === 0
     && invalidContractCoveragePackets.length === 0
     && invalidLifecyclePackets.length === 0
@@ -2006,6 +2119,9 @@ function validateRunnerPackets(text, workflowGate = { required: false }, contrac
   }
   if (invalidCodingConductPackets.length) {
     results.push(["warn", `missing or incomplete coding conduct runner packet fields: ${invalidCodingConductPackets.join(", ")}`]);
+  }
+  if (invalidDeliveryModePackets.length) {
+    results.push(["warn", `invalid delivery mode runner packet fields: ${invalidDeliveryModePackets.join(", ")}`]);
   }
   if (invalidMetacognitivePackets.length) {
     results.push(["warn", `missing or incomplete metacognitive runner packet fields: ${invalidMetacognitivePackets.join(", ")}`]);
@@ -2106,7 +2222,9 @@ function sameRunnerIdentity(leftSection, rightSection) {
     if (getFieldValue(leftSection, field) !== getFieldValue(rightSection, field)) return false;
   }
   return featureProfileField(leftSection) === featureProfileField(rightSection)
-    && workTypeField(leftSection) === workTypeField(rightSection);
+    && workTypeField(leftSection) === workTypeField(rightSection)
+    && deliveryModeField(leftSection) === deliveryModeField(rightSection)
+    && oneShotAuthorityField(leftSection) === oneShotAuthorityField(rightSection);
 }
 
 function featureProfileField(section) {
@@ -2115,6 +2233,14 @@ function featureProfileField(section) {
 
 function workTypeField(section) {
   return getFieldValue(section, "work_type") || DEFAULT_WORK_TYPE;
+}
+
+function deliveryModeField(section) {
+  return getFieldValue(section, "delivery_mode") || DEFAULT_DELIVERY_MODE;
+}
+
+function oneShotAuthorityField(section) {
+  return getFieldValue(section, "one_shot_authority") || "none";
 }
 
 function packetTimestamp(section) {
@@ -2136,13 +2262,22 @@ function getModernRunnerPacketSections(text) {
   return sections;
 }
 
-function classifyMetacognitiveGate(parts, workType = { id: DEFAULT_WORK_TYPE }) {
+function classifyMetacognitiveGate(
+  parts,
+  workType = { id: DEFAULT_WORK_TYPE },
+  deliveryMode = { id: DEFAULT_DELIVERY_MODE },
+) {
   const workTypeIdValue = typeof workType === "string" ? workType : workType?.id || DEFAULT_WORK_TYPE;
+  const deliveryModeIdValue = typeof deliveryMode === "string"
+    ? deliveryMode
+    : deliveryMode?.id || DEFAULT_DELIVERY_MODE;
   if (workTypeIdValue === "documentation") {
     return { required: false, triggers: [] };
   }
   if (workTypeIdValue === "source-change") {
-    return { required: true, triggers: ["work_type: source-change"] };
+    return deliveryModeIdValue === ONE_SHOT_DELIVERY_MODE
+      ? { required: true, triggers: ["ONE_SHOT_QUALITY source-change"] }
+      : { required: false, triggers: [] };
   }
   if (workTypeIdValue === "debug") {
     return { required: true, triggers: ["work_type: debug"] };
@@ -2153,9 +2288,16 @@ function classifyMetacognitiveGate(parts, workType = { id: DEFAULT_WORK_TYPE }) 
     .join("\n");
   const triggers = [];
   for (const [label, pattern] of METACOGNITIVE_TRIGGER_PATTERNS) {
-    if (pattern.test(text)) triggers.push(label);
+    if (pattern.test(text) && (deliveryModeIdValue === ONE_SHOT_DELIVERY_MODE || label !== "source change")) {
+      triggers.push(label);
+    }
   }
-  if (hasSourceTestConfigPathScope(parts?.scope)) triggers.push("source/test/config path scope");
+  if (
+    deliveryModeIdValue === ONE_SHOT_DELIVERY_MODE
+    && hasSourceTestConfigPathScope(parts?.scope)
+  ) {
+    triggers.push("ONE_SHOT_QUALITY source/test/config path scope");
+  }
   return {
     required: triggers.length > 0,
     triggers: [...new Set(triggers)],
@@ -2191,12 +2333,17 @@ function readWorkflowMetacognitiveContext(stateDir) {
   const scope = identity.scope;
   const task = getFieldValue(text, "task");
   const workType = resolveWorkType(getFieldValue(text, "work_type") || DEFAULT_WORK_TYPE);
+  const deliveryContext = readWorkflowDeliveryContext(stateDir);
   const lifecycleContractVersion = getFieldValue(text, "lifecycle_contract_version");
   const lifecycleContractEffectiveAt = getFieldValue(text, "lifecycle_contract_effective_at");
   const gateSection = getMetacognitiveGateFieldSection(text);
   const declaredRequired = getFieldValue(gateSection, "metacognitive_gate_required") === "true";
   const declaredTriggers = splitList(getFieldValue(gateSection, "metacognitive_gate_triggers")).filter((item) => item !== "none");
-  const classified = classifyMetacognitiveGate({ task, scope }, workType);
+  const classified = classifyMetacognitiveGate(
+    { task, scope },
+    workType,
+    deliveryContext.deliveryMode,
+  );
   const gate = mergeMetacognitiveGates(
     classified,
     declaredRequired ? { required: true, triggers: declaredTriggers.length ? declaredTriggers : ["declared"] } : null,
@@ -2208,6 +2355,8 @@ function readWorkflowMetacognitiveContext(stateDir) {
     scope,
     task,
     workType,
+    deliveryMode: deliveryContext.deliveryMode,
+    oneShotAuthority: deliveryContext.oneShotAuthority,
     lifecycleContractVersion,
     lifecycleContractEffectiveAt,
     identityErrors: identity.errors,
@@ -2359,7 +2508,7 @@ function resolvePacketMetacognitiveGate(commandContext, packet) {
     verification: packet.verification,
     blockers: packet.blockers,
     next: packet.next,
-  }, packet.workType);
+  }, packet.workType, packet.deliveryMode);
   const currentTaskGate =
     workflowGate.required && (!workflowGate.taskId || !packet.taskId || workflowGate.taskId === packet.taskId)
       ? workflowGate
@@ -2781,7 +2930,11 @@ function runnerPacketMetacognitiveRequired(section, workflowGate) {
     expectedOutput: getFieldValue(section, "expected_output"),
     summary: getFieldValue(section, "summary"),
     failure: getFieldValue(section, "failure"),
-  }, getFieldValue(section, "work_type") || DEFAULT_WORK_TYPE);
+  }, getFieldValue(section, "work_type") || DEFAULT_WORK_TYPE, {
+    id: getFieldValue(section, "delivery_mode")
+      || workflowGate.deliveryMode?.id
+      || DEFAULT_DELIVERY_MODE,
+  });
   const currentTaskGate =
     workflowGate.required && (!workflowGate.taskId || getFieldValue(section, "task_id") === workflowGate.taskId)
       ? workflowGate
@@ -3213,10 +3366,85 @@ function printLegacyHints(state) {
 function resolveCommandContext(args) {
   const invocationCwd = args.cwd ? requireDirectory(args.cwd, "--cwd") : requireDirectory(process.cwd(), "process cwd");
   const targetCwd = args.targetCwd ? requireDirectory(args.targetCwd, "--target-cwd") : invocationCwd;
+  let deliveryContext;
+  if (args.command === "intake") {
+    deliveryContext = resolveDeliveryMode(args.deliveryMode, args.oneShotAuthority);
+  } else {
+    if (args.deliveryMode !== undefined || args.oneShotAuthority !== undefined) {
+      throw new CliError(
+        "--delivery-mode and --one-shot-authority are intake-only; later commands inherit the current task-local delivery mode",
+        1,
+      );
+    }
+    const state = resolveWorkflowState(targetCwd);
+    deliveryContext = readWorkflowDeliveryContext(state.stateDir);
+  }
   return {
     invocationCwd,
     targetCwd,
     workType: resolveWorkType(args.workType),
+    ...deliveryContext,
+  };
+}
+
+function resolveDeliveryMode(value, authorityValue) {
+  const deliveryMode = value === undefined || value === null || !String(value).trim()
+    ? DEFAULT_DELIVERY_MODE
+    : singleLine(value);
+  if (!DELIVERY_MODES.includes(deliveryMode)) {
+    throw new CliError(
+      `unknown delivery mode: ${deliveryMode}; expected ${DELIVERY_MODES.join(" or ")}`,
+      1,
+    );
+  }
+  const oneShotAuthority = authorityValue === undefined || authorityValue === null
+    ? "none"
+    : singleLine(authorityValue);
+  if (deliveryMode === DEFAULT_DELIVERY_MODE) {
+    if (oneShotAuthority !== "none") {
+      throw new CliError(
+        "ITERATIVE_DELIVERY rejects --one-shot-authority so one-shot state cannot leak from another task",
+        1,
+      );
+    }
+  } else if (!/^user_request:.+/i.test(oneShotAuthority)) {
+    throw new CliError(
+      "ONE_SHOT_QUALITY requires --one-shot-authority user_request:<task-local explicit request reference>",
+      1,
+    );
+  }
+  return {
+    deliveryMode: {
+      id: deliveryMode,
+      contract: deliveryMode === DEFAULT_DELIVERY_MODE
+        ? ITERATIVE_DELIVERY_CONTRACT
+        : ONE_SHOT_QUALITY_CONTRACT,
+    },
+    oneShotAuthority,
+    deliveryModeLegacyDefaulted: false,
+  };
+}
+
+function readWorkflowDeliveryContext(stateDir) {
+  const taskPath = path.join(stateDir, "task.md");
+  if (!existsSync(taskPath)) {
+    return {
+      ...resolveDeliveryMode(undefined, undefined),
+      deliveryModeLegacyDefaulted: true,
+    };
+  }
+  const text = readFileSync(taskPath, "utf8");
+  const declaredMode = getFieldValue(text, "delivery_mode");
+  const declaredAuthority = getFieldValue(text, "one_shot_authority");
+  if (!declaredMode) {
+    return {
+      ...resolveDeliveryMode(undefined, undefined),
+      deliveryModeLegacyDefaulted: true,
+    };
+  }
+  return {
+    ...resolveDeliveryMode(declaredMode, declaredAuthority || "none"),
+    deliveryModeLegacyDefaulted: false,
   };
 }
 
@@ -3352,6 +3580,45 @@ function workTypeId(packet) {
   return packet?.workType?.id || DEFAULT_WORK_TYPE;
 }
 
+function deliveryModeId(source) {
+  return source?.deliveryMode?.id || DEFAULT_DELIVERY_MODE;
+}
+
+function renderDeliveryModeFields(source = {}) {
+  const mode = deliveryModeId(source);
+  const authority = source.oneShotAuthority || "none";
+  const contract = mode === ONE_SHOT_DELIVERY_MODE
+    ? ONE_SHOT_QUALITY_CONTRACT
+    : ITERATIVE_DELIVERY_CONTRACT;
+  return `- delivery_mode_contract_version: ${DELIVERY_MODE_CONTRACT_VERSION}
+- delivery_mode: ${mode}
+- one_shot_authority: ${authority}
+- delivery_mode_contract: ${contract}
+- delivery_mode_evaluation: ${DELIVERY_MODE_EVALUATION}`;
+}
+
+function validateDeliveryModeFields(section, options = {}) {
+  const missing = [];
+  const mode = getFieldValue(section, "delivery_mode");
+  const authority = getFieldValue(section, "one_shot_authority") || "none";
+  if (!mode && options.allowLegacyDefault) {
+    return { valid: true, missing, mode: DEFAULT_DELIVERY_MODE, authority: "none", legacyDefaulted: true };
+  }
+  if (getFieldValue(section, "delivery_mode_contract_version") !== DELIVERY_MODE_CONTRACT_VERSION) {
+    missing.push("delivery_mode_contract_version");
+  }
+  if (!DELIVERY_MODES.includes(mode)) {
+    missing.push("delivery_mode");
+  } else if (mode === DEFAULT_DELIVERY_MODE && authority !== "none") {
+    missing.push("one_shot_authority.iterative_must_be_none");
+  } else if (mode === ONE_SHOT_DELIVERY_MODE && !/^user_request:.+/i.test(authority)) {
+    missing.push("one_shot_authority.explicit_user_request_required");
+  }
+  if (!getFieldValue(section, "delivery_mode_contract")) missing.push("delivery_mode_contract");
+  if (!getFieldValue(section, "delivery_mode_evaluation")) missing.push("delivery_mode_evaluation");
+  return { valid: missing.length === 0, missing, mode: mode || DEFAULT_DELIVERY_MODE, authority };
+}
+
 function renderFeatureProfilePacketGuidance(packet) {
   const id = featureProfileId(packet);
   if (id === DEFAULT_FEATURE_PROFILE) return "";
@@ -3380,7 +3647,7 @@ function printHelp() {
   console.log(`coding-agents MVP CLI
 
 Usage:
-  node bin/coding-agents.mjs intake [--cwd <path>] [--target-cwd <path>] [--work-type <id>] [--evidence-ref <typed-ref>] --task <text> --task-id <id> --epoch <epoch> --scope <scope>
+  node bin/coding-agents.mjs intake [--cwd <path>] [--target-cwd <path>] [--work-type <id>] [--delivery-mode ITERATIVE_DELIVERY|ONE_SHOT_QUALITY] [--one-shot-authority user_request:<task-local-ref>] [--evidence-ref <typed-ref>] --task <text> --task-id <id> --epoch <epoch> --scope <scope>
   node bin/coding-agents.mjs assign [--cwd <path>] [--target-cwd <path>] --role <role> --task-id <id> --epoch <epoch> --scope <scope> [--feature-profile <id>] [--work-type <id>] [--hierarchy-mode none|one_level|n_level] [--max-depth <n>] [--depth <n>] [--remaining-depth <n>] [--heartbeat-interval <ISO-8601 duration>] [--heartbeat-deadline <ISO-8601 duration>] [--max-silence <ISO-8601 duration>] [--soft-timeout <ISO-8601 duration>] [--hard-timeout <ISO-8601 duration>] [--no-interrupt-until <ISO-8601 duration>] --assignment <text> --expected-output <text>
   node bin/coding-agents.mjs collect [--cwd <path>] [--target-cwd <path>] --role <role> --task-id <id> --epoch <epoch> --scope <scope> [--feature-profile <id>] [--work-type <id>] --status <status> --lifecycle-disposition state_retired|continuation_expected [--cancel-reason <allowed-reason>] [--findings <text>] [--changed-files <text>] [--verification <text>] [--blockers <text>] [--assumptions <text>] [--next <text>] [--finalization-references <typed-refs>] [--expected-outcome <text>] [--actual-result <text>] [--reproduction-or-evidence <text>] [--failure-point <text>] [--hypothesis-branches <text>] [--source-of-truth-boundary <text>] [--plugin-contract-boundary <text>] [--generated-artifact-boundary <text>] [--before-context-effects <text>] [--after-context-effects <text>] [--cross-feature-consequences <text>] [--root-cause <text>] [--fix-summary <text>] [--verification-evidence <text>] [--skipped-checks <text>] [--unresolved-risks <text>] [--next-investigation <text>]
   node bin/coding-agents.mjs finalize [--cwd <path>] [--target-cwd <path>] --task-id <id> --epoch <epoch> --scope <scope> [--work-type <id>] [--contract-coverage required] --decision-coverage <text> --completion-coverage <text> --source-spec-coverage <text>
@@ -3422,14 +3689,16 @@ State:
   Optional --feature-profile overlays provide scoped assignment guidance only. Known ids: ${knownFeatureProfileIds().join(", ")}.
   Optional --work-type is semantic command metadata. Known ids: ${knownWorkTypeIds().join(", ")}.
   Optional intake --evidence-ref accepts one concrete typed reference and propagates it to project.md, task.md, audit.md, and handoff.md. Use it for source-local capability-improvement proposals and other externally owned evidence; it does not authorize dispatch or repair.
-  --work-type auto preserves keyword/path inference. --work-type source-change and --work-type debug force the metacognitive gate for that command.
+  Delivery mode defaults to ${DEFAULT_DELIVERY_MODE}. It prioritizes a runnable primary-path release, minimum relevant smoke verification, and evidence-driven cut-and-try repair; hypothetical rare routes, future abstractions, comprehensive defenses, and nonessential refactors do not block the initial release.
+  ${ONE_SHOT_DELIVERY_MODE} is intake-only, task-local, and non-sticky. It requires --one-shot-authority user_request:<task-local-ref>; words such as complete, production-ready, or high-quality do not activate it by themselves. Later commands inherit the current task mode and cannot override it.
+  --work-type auto keeps debug/repair and boundary-mismatch inference but does not turn ordinary source paths into an exhaustive gate under ${DEFAULT_DELIVERY_MODE}. --work-type source-change forces the broad metacognitive gate only under ${ONE_SHOT_DELIVERY_MODE}; --work-type debug still forces root-cause evidence.
   --work-type documentation suppresses keyword/path gate inference for that command only; it does not replace debug/root-cause gates and cannot downgrade existing gate-required workflow state.
   Optional hierarchy and supervision timing flags are packet metadata. Defaults: hierarchy_mode none, max_depth/depth/remaining_depth 0, heartbeat_interval PT15M, heartbeat_deadline PT30M, max_silence PT45M, soft_timeout PT60M, hard_timeout PT120M, and no_interrupt_until PT30M.
   --runner and --timeout-ms are rejected globally. This CLI never launches Codex workers or OS child-agent processes; use the official Codex subagent spawn tools.
   Historical process-runner-result packets remain readable for backward validation but cannot be emitted by current commands.
   ${CODING_CONDUCT_GATE_NAME}: ${CODING_CONDUCT_CONTRACT}
   Debug or repair work must identify root cause and verify the intended outcome; log-only, fallback-only, skip-only, failure-output-only, or return-to-main-loop-only changes are not completion.
-  Gate-required source-change/debug/repair/source-of-truth/plugin-contract/generated-artifact inconsistency work also carries ${METACOGNITIVE_GATE_NAME} fields and rejects completed worker collection without them.
+  Gate-required observed debug/repair/source-of-truth/plugin-contract/generated-artifact inconsistency work carries ${METACOGNITIVE_GATE_NAME} fields and rejects completed worker collection without them. Ordinary ${DEFAULT_DELIVERY_MODE} source work does not receive the exhaustive context-impact gate solely because it edits source.
   ${CONTRACT_COVERAGE_GATE_NAME} is enforced by finalize, not collect. Accepted typed references: ${CONTRACT_COVERAGE_TYPED_REFERENCE_FORMS}. Placeholder-only done/checked/ok values are rejected.
 `);
 }

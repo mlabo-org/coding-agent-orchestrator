@@ -4,7 +4,7 @@
   "capability_id": "coding-agents",
   "official_creator": "plugin-creator",
   "routing": {
-    "task_class": "Coding Agents state-first continuation, semantic new-task intake, evidence-bound capability repair handoff, state audit, and source CLI repair",
+    "task_class": "Coding Agents state-first continuation, semantic new-task intake, iterative delivery or explicit task-local one-shot planning, evidence-bound capability repair handoff, state audit, and source CLI repair",
     "natural_language_triggers": [
       "Coding Agents",
       "coding-agents",
@@ -13,7 +13,7 @@
       "repair this capability improvement proposal",
       "continue, audit, or repair .coding-agents state"
     ],
-    "primary_route": "Use Coding Agents when named or when valid .coding-agents state is paired with strong continuation intent. Inspect active state and completion flags first, semantically preserve and append related progress, and use fresh task_id/epoch/scope only for clearly unrelated work without asking the user for a routine mode. For a validated source-local capability-improvement proposal, pass its typed artifact reference through intake --evidence-ref so project, task, audit, and handoff state carry it. Preserve runner history and dispatch actual workers only through official Codex subagent spawn tools.",
+    "primary_route": "Use Coding Agents when named or when valid .coding-agents state is paired with strong continuation intent. Inspect active state and completion flags first, semantically preserve and append related progress, and use fresh task_id/epoch/scope only for clearly unrelated work without asking the user for a routine mode. Default coding/source work to ITERATIVE_DELIVERY, which prioritizes a runnable primary-path release and evidence-driven repair. Select non-sticky ONE_SHOT_QUALITY only from an explicit current-task user request and record typed one-shot authority. For a validated source-local capability-improvement proposal, pass its typed artifact reference through intake --evidence-ref. Preserve runner history and dispatch actual workers only through official Codex subagent spawn tools.",
     "fallback_conditions": [
       "When official Codex subagent tools are unavailable, keep execution in the parent thread and do not launch a CLI process runner."
     ],
@@ -53,7 +53,7 @@
             "interface": {
               "display_name": "Coding Agents",
               "short_description": "State-first Coding Agents continuation",
-              "default_prompt": "Use $coding-agents to inspect this valid .coding-agents state, semantically resume related work with completed progress preserved, and use fresh intake only for clearly unrelated work without asking me for a mode."
+              "default_prompt": "Use $coding-agents to inspect this valid .coding-agents state, semantically resume related work with completed progress preserved, use fresh intake only for clearly unrelated work without asking me for a mode, and default coding/source work to ITERATIVE_DELIVERY; use task-local ONE_SHOT_QUALITY only when I explicitly requested it."
             },
             "policy": {
               "allow_implicit_invocation": true
@@ -70,7 +70,7 @@
     },
     {
       "name": "Target repository and workflow identity",
-      "description": "The target Git worktree plus task_id, epoch, scope, and optional work type or assignment overlay."
+      "description": "The target Git worktree plus task_id, epoch, scope, delivery mode, optional task-local one-shot authority, and optional work type or assignment overlay."
     },
     {
       "name": "Optional typed evidence reference",
@@ -80,7 +80,7 @@
   "outputs": [
     {
       "name": "Workflow-state packets",
-      "description": "Validated .coding-agents intake, compact shared-contract scaffold, assignment, collection, finalization, orchestration-skeleton, audit, and handoff records."
+      "description": "Validated .coding-agents intake, compact shared-contract scaffold, assignment, collection, finalization, orchestration-skeleton, audit, and handoff records carrying the inherited delivery mode."
     },
     {
       "name": "Official subagent dispatch boundary",
@@ -104,7 +104,8 @@
         "workflow-state-preserved",
         "capability-improvement-evidence-link",
         "semantic-state-triage",
-        "active-checklist-finalization-consistency"
+        "active-checklist-finalization-consistency",
+        "delivery-mode-authority-and-propagation"
       ],
       "test_paths": [
         "tests/metacognitive-gate.test.mjs",
@@ -200,6 +201,18 @@
           "bin/coding-agents.mjs"
         ],
         "tests": [
+          "tests/workflow-state.test.mjs"
+        ]
+      },
+      {
+        "id": "delivery-mode-authority-and-propagation",
+        "description": "Coding/source work defaults non-sticky to ITERATIVE_DELIVERY; ONE_SHOT_QUALITY requires explicit task-local user-request authority, and task, assignment, handoff, runner, planner, and validator surfaces preserve the selected mode without turning ordinary iterative source changes into exhaustive release gates.",
+        "enforcement_points": [
+          "bin/coding-agents.mjs",
+          "skills/coding-agents/SKILL.md"
+        ],
+        "tests": [
+          "tests/metacognitive-gate.test.mjs",
           "tests/workflow-state.test.mjs"
         ]
       }
