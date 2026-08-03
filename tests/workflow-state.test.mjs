@@ -731,7 +731,7 @@ test("intake describes fixed roles as scaffold, not resident agents", () => {
     const decisions = readState(repo, "decisions.md");
     assert.equal([...taskState.matchAll(/^- C-role-scaffold-\d{3}:/gm)].length, 5);
     assert.equal([...decisions.matchAll(/^## D-role-scaffold-\d{3} /gm)].length, 4);
-    assert.match(taskState, /A specification-consistent, user-usable first runnable release completes the primary path end to end:/);
+    assert.match(taskState, /The first acceptance candidate integrates every known requirement in the declared iterative slice and completes the primary path end to end:/);
     assert.match(taskState, /delivery_mode: ITERATIVE_DELIVERY/);
 
     const verify = runCli(["verify-assignments", "--target-cwd", repo]);

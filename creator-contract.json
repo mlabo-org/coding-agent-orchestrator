@@ -206,7 +206,7 @@
       },
       {
         "id": "delivery-mode-authority-and-propagation",
-        "description": "Coding/source work defaults non-sticky to ITERATIVE_DELIVERY; ONE_SHOT_QUALITY requires explicit task-local user-request authority, and task, assignment, handoff, runner, planner, and validator surfaces preserve the selected mode without turning ordinary iterative source changes into exhaustive release gates.",
+        "description": "Coding/source work defaults non-sticky to ITERATIVE_DELIVERY; ONE_SHOT_QUALITY requires explicit task-local user-request authority; both modes integrate every known declared-slice requirement into the first acceptance candidate, iterative differs by scope and verification breadth, post-result audit only confirms quality, and repair after the candidate requires an observed failure.",
         "enforcement_points": [
           "bin/coding-agents.mjs",
           "skills/coding-agents/SKILL.md"

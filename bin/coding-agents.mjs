@@ -22,11 +22,11 @@ const DEFAULT_DELIVERY_MODE = "ITERATIVE_DELIVERY";
 const ONE_SHOT_DELIVERY_MODE = "ONE_SHOT_QUALITY";
 const DELIVERY_MODES = [DEFAULT_DELIVERY_MODE, ONE_SHOT_DELIVERY_MODE];
 const ITERATIVE_DELIVERY_CONTRACT =
-  "Prioritize a specification-consistent first runnable release, real end-to-end use of the primary path, minimum relevant smoke verification, and repair of observed critical blockers. Hypothetical rare failures, exhaustive failure-route enumeration, future abstraction, comprehensive defensive layers, and nonessential refactors are not initial-release blockers. After real use exposes a failure, concentrate reasoning on its concrete evidence, fix the root cause, and rerun a short cut-and-try cycle while returning to the whole application.";
+  "Build a specification-consistent first acceptance candidate that integrates every known requirement in the declared slice, runs the primary path end to end, passes minimum relevant smoke verification, and resolves observed critical blockers. Hypothetical rare failures, exhaustive failure-route enumeration, future abstraction, comprehensive defensive layers, and nonessential refactors are not initial-release blockers. After real use exposes an observed failure, concentrate reasoning on its concrete evidence, fix the root cause, and rerun a short cut-and-try cycle while returning to the whole application.";
 const ONE_SHOT_QUALITY_CONTRACT =
-  "Only an explicit task-local user request may select ONE_SHOT_QUALITY. Exhaustive in-scope hardening, broad verification, and first-pass quality work may then precede release. The mode is never sticky and must not carry into another task or epoch without a new explicit user request.";
+  "Only an explicit task-local user request may select ONE_SHOT_QUALITY. It uses broader declared-slice coverage and verification breadth for exhaustive in-scope hardening before release; it does not own first-candidate completeness, because both modes integrate every known declared-slice requirement before acceptance. The mode is never sticky and must not carry into another task or epoch without a new explicit user request.";
 const DELIVERY_MODE_EVALUATION =
-  "ITERATIVE_DELIVERY is evaluated by time to a working release, speed of learning from real operation, and accuracy of root-cause repair; it is not evaluated by first-pass perfection.";
+  "Both delivery modes require the first acceptance candidate to integrate every known requirement in the declared slice. ITERATIVE_DELIVERY differs from ONE_SHOT_QUALITY by scope and verification breadth, not by permission for knowingly incomplete output. Post-result audit only confirms the integrated candidate; it does not supply missing quality, and repair after the candidate is limited to observed failures.";
 const CODING_CONDUCT_GATE_NAME = "Coding Conduct Gate";
 const CODING_CONDUCT_RULES = [
   "Reuse mature GitHub/npm OSS directly when it fits the requirement and dependency approval or scope permits it; do not reimplement mature solved problems.",
@@ -681,8 +681,8 @@ function taskCompletionConditions(context) {
     {
       id: `${prefix}-001`,
       text: deliveryModeId(context) === ONE_SHOT_DELIVERY_MODE
-        ? `The requested one-shot scope is exhaustively hardened and completed with task-local authority evidence: ${context.task}`
-        : `A specification-consistent, user-usable first runnable release completes the primary path end to end: ${context.task}`,
+        ? `The first acceptance candidate integrates every known requirement in the declared one-shot slice, and that slice is exhaustively hardened with task-local authority evidence: ${context.task}`
+        : `The first acceptance candidate integrates every known requirement in the declared iterative slice and completes the primary path end to end: ${context.task}`,
     },
     {
       id: `${prefix}-002`,
@@ -762,14 +762,14 @@ function renderDecisions(context) {
 
 ## D-${context.taskId}-004 Work Quality And Verification
 
-- accepted: use \`delivery_mode=${deliveryModeId(context)}\`, \`work_type=${workTypeId(context)}\`, and \`metacognitive_gate_required=${context.metacognitiveGate.required}\`; prefer practical evidence, reuse mature OSS only when it fits, and do not hide main-flow errors behind fallback behavior.
+- accepted: use \`delivery_mode=${deliveryModeId(context)}\`, \`work_type=${workTypeId(context)}\`, and \`metacognitive_gate_required=${context.metacognitiveGate.required}\`; integrate every known requirement in the declared slice into the first acceptance candidate, prefer practical evidence, reuse mature OSS only when it fits, and do not hide main-flow errors behind fallback behavior.
 - delivery_mode: ${deliveryModeId(context)}
 - one_shot_authority: ${context.oneShotAuthority}
 - work_type: ${workTypeId(context)}
 - triggers: ${formatTriggers(context.metacognitiveGate)}
 - impact: ${deliveryModeId(context) === ONE_SHOT_DELIVERY_MODE
-    ? "task completion may require exhaustive in-scope hardening and broad verification before release because explicit task-local one-shot authority is present."
-    : "task completion prioritizes the first runnable release, primary-path smoke evidence, and short observation-driven repair cycles; hypothetical rare routes, future abstractions, comprehensive defenses, and nonessential refactors do not block initial release."}
+    ? "task completion uses broader declared-slice coverage and verification breadth before release because explicit task-local one-shot authority is present; audit confirms the integrated candidate rather than supplying missing quality."
+    : "task completion narrows declared-slice and verification breadth while still requiring a complete first acceptance candidate; audit confirms that candidate, and repair is limited to observed failures."}
 - contract_coverage_required: evidence must reference the implementation, tests or measurements, skipped checks, and no-hidden-fallback status.
 `;
 }
@@ -796,7 +796,7 @@ ${renderDeliveryModeFields(context)}
 
 ## Pending Audit
 
-- Run implementation checks for the active task.
+- Confirm that the first acceptance candidate integrates every known requirement in the declared slice; audit does not supply missing implementation quality.
 - Record skipped checks with reasons.
 - Record each collected result with \`lifecycle_disposition\`; \`state_retired\` requires exactly one reason from ${SUPERVISION_RETIRE_CANCEL_REASONS.join(", ")}, while \`continuation_expected\` records \`cancel_reason: none\`.
 - Record ${CODING_CONDUCT_GATE_NAME} checks, including OSS reuse decision, first-principles bug analysis when applicable, and no hidden fallback implementation.
@@ -812,20 +812,20 @@ function renderAssignments(context) {
     "Repo Mapper": ["scaffolded", "Map repository structure and likely edit boundaries.", "Repo map and source boundaries."],
     Requirements: ["scaffolded", "Extract explicit requirements, non-goals, expected outcome, actual failure when debugging, and whether mature GitHub/npm OSS already solves the requirement.", "Requirement list with ambiguity notes, OSS reuse decision, and failure contract if applicable."],
     Planner: ["scaffolded", deliveryModeId(context) === ONE_SHOT_DELIVERY_MODE
-      ? "Convert the explicit one-shot scope into an exhaustive but bounded hardening and verification sequence."
-      : "Plan the shortest coherent path to a specification-consistent runnable release, then explicit observation-and-repair checkpoints.", "Plan with ordered checkpoints and a clear first runnable release boundary."],
+      ? "Convert the broader explicit one-shot slice into a first acceptance candidate that integrates every known requirement, followed by exhaustive but bounded hardening and verification."
+      : "Plan the narrowest coherent declared slice whose first acceptance candidate integrates every known requirement and runs end to end; add repair checkpoints only for observed failures.", "Plan with ordered checkpoints and a clear first acceptance-candidate boundary."],
     Architect: ["scaffolded", "Identify only the design constraints and integration points needed for the current release slice; for observed debug work, isolate the actual failure point.", "Architecture notes, primary-path integration points, and observed failure-path notes when applicable."],
-    Implementer: ["scaffolded", "Complete the scoped runnable release; avoid speculative abstraction, exhaustive defensive layers, and unrelated refactors in ITERATIVE_DELIVERY. Reuse mature OSS when approved and suitable, and for observed debug work fix the root cause instead of masking failure with fallback implementation.", "Changed files, runnable primary-path result, OSS reuse or non-reuse rationale, and root-cause fix notes when applicable."],
+    Implementer: ["scaffolded", "Produce the first acceptance candidate with every known declared-slice requirement already integrated; do not defer missing quality to review or audit. Avoid speculative abstraction, exhaustive defensive layers, and unrelated refactors in ITERATIVE_DELIVERY. Reuse mature OSS when approved and suitable, and for observed debug work fix the root cause instead of masking failure with fallback implementation.", "Changed files, requirement-complete acceptance candidate, runnable primary-path result, OSS reuse or non-reuse rationale, and root-cause fix notes when applicable."],
     "Test Runner": ["scaffolded", deliveryModeId(context) === ONE_SHOT_DELIVERY_MODE
       ? "Run the declared broad one-shot verification and hardening checks."
-      : "Run minimum relevant smoke verification on the actual primary path; for observed failures, verify the repaired outcome by rerunning it.", "Verification output, skipped checks, and outcome evidence."],
-    Reviewer: ["scaffolded", "Review the whole application against the declared delivery mode: release-block only confirmed specification or primary-path defects, and keep hypothetical hardening as follow-up unless ONE_SHOT_QUALITY is active.", "Findings ordered by release relevance and severity."],
+      : "Confirm the integrated candidate with minimum relevant smoke verification on the actual primary path; only an observed failure opens a repair cycle.", "Verification output, skipped checks, and outcome evidence."],
+    Reviewer: ["scaffolded", "Confirm the whole application's first acceptance candidate against the declared slice and delivery mode; do not treat review as the phase that supplies missing known requirements. Release-block confirmed specification or primary-path defects, and keep hypothetical hardening as follow-up unless ONE_SHOT_QUALITY is active.", "Confirmation findings ordered by release relevance and severity."],
     "Risk Guard": ["scaffolded", "Check destructive actions, external sending, secrets, and scope drift.", "Risk assessment and required stops."],
     "Docs Keeper": ["scaffolded", `Keep ${STATE_DIR_NAME} task, todo, decisions, and audit current.`, "Updated docs summary."],
     UX: ["scaffolded", "Assess user-facing workflow clarity.", "UX notes and friction points."],
     Dependency: ["scaffolded", "Check whether mature GitHub/npm OSS should be reused directly, verify dependency approval and scope boundaries, and avoid unapproved installs.", "Dependency impact notes and OSS reuse recommendation."],
     DevOps: ["scaffolded", "Check runnable commands, Git state, and release boundaries.", "Operational readiness notes."],
-    Auditor: ["scaffolded", `Compare outcomes against task_id, epoch, scope, accepted decisions, completion conditions, the ${CONTRACT_COVERAGE_GATE_NAME}, the ${CODING_CONDUCT_GATE_NAME}, and the debugging integrity gate.`, "Final audit result with D-*/C-* contract coverage evidence, OSS reuse decision, no-hidden-fallback status, and debug root-cause status when applicable."],
+    Auditor: ["scaffolded", `Confirm, without supplying missing implementation quality, that the first acceptance candidate satisfies task_id, epoch, scope, accepted decisions, completion conditions, the ${CONTRACT_COVERAGE_GATE_NAME}, the ${CODING_CONDUCT_GATE_NAME}, and the debugging integrity gate.`, "Final confirmation result with D-*/C-* contract coverage evidence, OSS reuse decision, no-hidden-fallback status, and debug root-cause status when applicable."],
   };
 
   return `# Role Assignment Scaffold
@@ -3689,7 +3689,7 @@ State:
   Optional --feature-profile overlays provide scoped assignment guidance only. Known ids: ${knownFeatureProfileIds().join(", ")}.
   Optional --work-type is semantic command metadata. Known ids: ${knownWorkTypeIds().join(", ")}.
   Optional intake --evidence-ref accepts one concrete typed reference and propagates it to project.md, task.md, audit.md, and handoff.md. Use it for source-local capability-improvement proposals and other externally owned evidence; it does not authorize dispatch or repair.
-  Delivery mode defaults to ${DEFAULT_DELIVERY_MODE}. It prioritizes a runnable primary-path release, minimum relevant smoke verification, and evidence-driven cut-and-try repair; hypothetical rare routes, future abstractions, comprehensive defenses, and nonessential refactors do not block the initial release.
+  Delivery mode defaults to ${DEFAULT_DELIVERY_MODE}. Its first acceptance candidate must integrate every known requirement in the declared slice and run the primary path end to end. Iterative mode narrows scope and verification breadth, not implementation completeness; post-result audit confirms only, and repair starts only from observed failures.
   ${ONE_SHOT_DELIVERY_MODE} is intake-only, task-local, and non-sticky. It requires --one-shot-authority user_request:<task-local-ref>; words such as complete, production-ready, or high-quality do not activate it by themselves. Later commands inherit the current task mode and cannot override it.
   --work-type auto keeps debug/repair and boundary-mismatch inference but does not turn ordinary source paths into an exhaustive gate under ${DEFAULT_DELIVERY_MODE}. --work-type source-change forces the broad metacognitive gate only under ${ONE_SHOT_DELIVERY_MODE}; --work-type debug still forces root-cause evidence.
   --work-type documentation suppresses keyword/path gate inference for that command only; it does not replace debug/root-cause gates and cannot downgrade existing gate-required workflow state.

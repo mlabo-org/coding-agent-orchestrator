@@ -17,12 +17,12 @@ Agentic Runner can also run without Coding Agents, using any other declared owne
 
 Coding Agents inherits the global delivery constitution and records the selected mode in task, assignment, handoff, audit, and runner state.
 
-- `ITERATIVE_DELIVERY` is the default for every coding/source task. The workflow drives first to a specification-consistent, user-usable release whose primary path actually runs end to end, performs minimum relevant smoke verification, and fixes observed critical blockers. It then uses real operation and short root-cause repair cycles to learn quickly.
+- `ITERATIVE_DELIVERY` is the default for every coding/source task. The workflow drives first to a specification-consistent, user-usable acceptance candidate that integrates every known requirement in the declared slice, runs the primary path end to end, performs minimum relevant smoke verification, and fixes observed critical blockers. It then uses real operation and short root-cause repair cycles to learn quickly.
 - Hypothetical rare failures, exhaustive failure-route enumeration, future abstraction, comprehensive defensive layers, and nonessential refactors do not block the first iterative release.
-- `ONE_SHOT_QUALITY` is an explicit task-local option for exhaustive in-scope hardening. Intake requires both `--delivery-mode ONE_SHOT_QUALITY` and `--one-shot-authority user_request:<task-local-ref>`. General phrases such as “complete it,” “production-ready,” or “high quality” do not activate it, and the mode never carries into a later task.
+- `ONE_SHOT_QUALITY` is an explicit task-local option for broader declared-slice coverage and exhaustive in-scope hardening. Intake requires both `--delivery-mode ONE_SHOT_QUALITY` and `--one-shot-authority user_request:<task-local-ref>`. General phrases such as “complete it,” “production-ready,” or “high quality” do not activate it, and the mode never carries into a later task.
 - Ordinary iterative source edits do not automatically receive the exhaustive before/after and cross-feature completion gate. Observed debug/repair and source/cache/runtime contract mismatches still require concrete root-cause evidence; one-shot source work retains the broad gate.
 
-The normal evaluation target is `time to working release × speed of learning from real operation × accuracy of root-cause repair`, not first-pass perfection.
+Both modes require the first acceptance candidate to integrate every known requirement in their declared slice. Iterative delivery differs by scope and verification breadth, not by permission for knowingly incomplete output. Post-result audit only confirms the integrated candidate; it does not supply missing quality, and repair after the candidate is limited to observed failures.
 
 ## Install
 
@@ -101,7 +101,7 @@ Then execute that contract explicitly:
 
 > Use Coding Agents explicitly. Treat `docs/implementation-brief.md` as the implementation contract. Create the intake and bounded assignments, dispatch workers only through official Codex subagent tools, implement within the declared scope, run every listed validation, and do not commit until I approve.
 
-Coding Agents records confirmed decisions, converts them into actionable specification, and audits the implementation against the source/spec contract before task finalization. This creates a direct path from an early design conversation to verified implementation without losing the decisions made along the way.
+Coding Agents records confirmed decisions, converts them into actionable specification and implementation input, and requires the first acceptance candidate to integrate them. Audit then confirms the candidate against the source/spec contract before task finalization; it is not a later quality-construction phase. This creates a direct path from an early design conversation to verified implementation without losing the decisions made along the way.
 
 ## Execution Boundary
 

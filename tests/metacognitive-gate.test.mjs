@@ -556,8 +556,11 @@ test("iterative source-change work does not force exhaustive metacognitive compl
     assert.equal(intake.status, 0, intake.stderr);
     assert.match(intake.stdout, /ok delivery_mode: ITERATIVE_DELIVERY/);
     assert.match(intake.stdout, /ok metacognitive_gate_required: false/);
-    assert.match(readState(repo, "task.md"), /delivery_mode: ITERATIVE_DELIVERY/);
-    assert.match(readState(repo, "task.md"), /metacognitive_gate_triggers: none/);
+    const taskState = readState(repo, "task.md");
+    assert.match(taskState, /delivery_mode: ITERATIVE_DELIVERY/);
+    assert.match(taskState, /first acceptance candidate to integrate every known requirement in the declared slice/i);
+    assert.match(taskState, /Post-result audit only confirms the integrated candidate/i);
+    assert.match(taskState, /metacognitive_gate_triggers: none/);
 
     const collected = runCli([
       "collect",
@@ -641,7 +644,12 @@ test("one-shot source change requires explicit task-local user authority and act
       const state = readState(repo, file);
       assert.match(state, /delivery_mode: ONE_SHOT_QUALITY/);
       assert.match(state, /one_shot_authority: user_request:ワンショット品質で頼む/);
+      assert.match(state, /first acceptance candidate to integrate every known requirement in the declared slice/i);
+      assert.match(state, /Post-result audit only confirms the integrated candidate/i);
     }
+
+    const auditState = readState(repo, "audit.md");
+    assert.match(auditState, /audit does not supply missing implementation quality/i);
 
     const assigned = runCli([
       "assign",

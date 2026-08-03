@@ -105,16 +105,21 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
      final result acceptance, and final integration.
 
 6. Global delivery mode inheritance
-   - All coding/source work defaults to `ITERATIVE_DELIVERY`. It must first
-     produce a specification-consistent, user-usable release whose primary path
-     runs end to end, pass minimum relevant smoke verification, and resolve
-     observed critical blockers.
+   - All coding/source work defaults to `ITERATIVE_DELIVERY`. Its first
+     acceptance candidate must integrate every known requirement in the declared
+     slice, run the primary path end to end, pass minimum relevant smoke
+     verification, and resolve observed critical blockers.
    - Hypothetical rare failures, exhaustive failure-route enumeration, future
      abstraction, comprehensive defensive layers, and nonessential refactors
      are not iterative first-release blockers.
    - `ONE_SHOT_QUALITY` requires explicit current-task user authority, is
      recorded by intake, and is non-sticky across later tasks. Generic quality
      language does not activate it.
+   - Both modes construct quality in the first acceptance candidate.
+     `ITERATIVE_DELIVERY` differs by scope and verification breadth, not by
+     permission for knowingly incomplete output. Post-result audit confirms the
+     integrated candidate only, and repair after it is limited to observed
+     failures.
    - Task, assignments, handoff, runner packets, planner guidance, and validators
      must preserve the same mode. Ordinary iterative source changes do not
      receive exhaustive context-impact completion requirements merely because
