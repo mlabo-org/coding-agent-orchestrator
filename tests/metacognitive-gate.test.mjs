@@ -146,6 +146,10 @@ test("collect rejects completed gate-required packets without metacognitive fiel
 
     assert.notEqual(rejected.status, 0);
     assert.match(rejected.stderr, /collect --status completed rejected/);
+    assert.match(
+      rejected.stderr,
+      /accepted verification evidence forms: command or CLI flag, source\/file path, test\/result, exit status, log, or explicit manual observation marker/,
+    );
     assert.equal(existsSync(path.join(repo, ".coding-agents", "runner.md")), false);
 
     const placeholderEvidence = runCli([
@@ -313,6 +317,98 @@ test("collect rejects completed gate-required packets without metacognitive fiel
     assert.match(runner, /status: completed/);
     assert.match(runner, /expected_outcome: completed gate-required work records the intended outcome/);
     assert.equal(runCli(["verify-assignments", "--target-cwd", repo]).status, 0);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("root cause and fix prose use Unicode narrative detail without lexical workflow markers", () => {
+  const repo = makeTempGitRepo();
+  try {
+    intakeGateRequired(repo, "meta-unicode-narrative");
+    const baseCollect = [
+      "collect",
+      "--target-cwd",
+      repo,
+      "--role",
+      "Implementer",
+      "--task-id",
+      "meta-unicode-narrative",
+      "--epoch",
+      "e1",
+      "--scope",
+      "bin/coding-agents.mjs",
+      "--status",
+      "completed",
+      "--findings",
+      "causal evidence recorded",
+      "--changed-files",
+      "bin/coding-agents.mjs",
+      "--verification",
+      "node --test",
+    ];
+
+    for (const placeholder of ["done", "ok", "fixed", "I reviewed the work carefully"]) {
+      const rejected = runCli([
+        ...baseCollect,
+        ...metaArgsWith({ root_cause: placeholder }),
+      ]);
+      assert.notEqual(rejected.status, 0, `${placeholder} unexpectedly passed`);
+      assert.match(rejected.stderr, /root_cause/);
+      assert.equal(existsSync(path.join(repo, ".coding-agents", "runner.md")), false);
+    }
+
+    const pathInflation = runCli([
+      ...baseCollect,
+      ...metaArgsWith({
+        root_cause: "bin/one.mjs src/two.mjs tests/three.mjs lib/four.mjs app/five.mjs",
+      }),
+    ]);
+    assert.notEqual(pathInflation.status, 0);
+    assert.match(pathInflation.stderr, /root_cause/);
+    assert.equal(existsSync(path.join(repo, ".coding-agents", "runner.md")), false);
+
+    const markerFreeCause =
+      "The earlier boolean survives because the later classification is discarded while both values are combined.";
+    const strictFields = runCli([
+      ...baseCollect,
+      ...metaArgsWith({
+        reproduction_or_evidence: markerFreeCause,
+        source_of_truth_boundary: markerFreeCause,
+        before_context_effects: markerFreeCause,
+        verification_evidence: markerFreeCause,
+      }),
+    ]);
+    assert.notEqual(strictFields.status, 0);
+    assert.match(strictFields.stderr, /reproduction_or_evidence/);
+    assert.match(strictFields.stderr, /source_of_truth_boundary/);
+    assert.match(strictFields.stderr, /before_context_effects/);
+    assert.match(strictFields.stderr, /verification_evidence/);
+    assert.equal(existsSync(path.join(repo, ".coding-agents", "runner.md")), false);
+
+    const english = runCli([
+      ...baseCollect,
+      ...metaArgsWith({
+        root_cause: markerFreeCause,
+        fix_summary:
+          "Combine both classifications first, then replace the earlier boolean so subsequent operations inherit the corrected decision.",
+      }),
+    ]);
+    assert.equal(english.status, 0, english.stderr);
+
+    const japanese = runCli([
+      ...baseCollect,
+      "--role",
+      "Reviewer",
+      ...metaArgsWith({
+        root_cause: "先の真偽値が残る原因は後の分類結果を統合前に捨てていたためです",
+        fix_summary: "両方の分類結果を先に統合してから既存の真偽値を正しい判断へ置き換えます",
+      }),
+    ]);
+    assert.equal(japanese.status, 0, japanese.stderr);
+    const runner = readState(repo, "runner.md");
+    assert.match(runner, /root_cause: The earlier boolean survives/);
+    assert.match(runner, /root_cause: 先の真偽値が残る原因/);
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
@@ -1116,6 +1212,164 @@ test("verify-assignments does not accept fenced fake metacognitive gate heading"
   }
 });
 
+test("normalize debug work type promotes the persisted gate in place and keeps it sticky", () => {
+  const repo = makeTempGitRepo();
+  try {
+    const help = runCli(["--help"]);
+    assert.equal(help.status, 0, help.stderr);
+    assert.match(
+      help.stdout,
+      /normalize-debugging-integrity .*\[--work-type auto\|documentation\|source-change\|debug\] \[--execute\]/,
+    );
+
+    const intake = runCli([
+      "intake",
+      "--target-cwd",
+      repo,
+      "--work-type",
+      "documentation",
+      "--task",
+      "Write a bland current note",
+      "--task-id",
+      "meta-normalize-debug",
+      "--epoch",
+      "e1",
+      "--scope",
+      "README.md",
+    ]);
+    assert.equal(intake.status, 0, intake.stderr);
+    assert.match(intake.stdout, /ok metacognitive_gate_required: false/);
+
+    const dryRun = runCli([
+      "normalize-debugging-integrity",
+      "--target-cwd",
+      repo,
+      "--work-type",
+      "debug",
+    ]);
+    assert.equal(dryRun.status, 0, dryRun.stderr);
+    assert.match(dryRun.stdout, /Would update: task.md/);
+    assert.match(dryRun.stdout, /Would update: assignments.md/);
+
+    const normalized = runCli([
+      "normalize-debugging-integrity",
+      "--target-cwd",
+      repo,
+      "--work-type",
+      "debug",
+      "--execute",
+    ]);
+    assert.equal(normalized.status, 0, normalized.stderr);
+    const task = readState(repo, "task.md");
+    const assignments = readState(repo, "assignments.md");
+    const handoff = readState(repo, "handoff.md");
+    for (const text of [task, assignments, handoff]) {
+      assert.match(text, /metacognitive_gate_required: true/);
+      assert.match(text, /metacognitive_gate_triggers: work_type: debug/);
+    }
+    assert.equal((task.match(/^## Meta-Cognitive Debug\/Repair Gate$/gm) || []).length, 1);
+    assert.equal((assignments.match(/^## Meta-Cognitive Debug\/Repair Gate$/gm) || []).length, 1);
+    assert.equal((handoff.match(/^Meta-Cognitive Debug\/Repair Gate:$/gm) || []).length, 1);
+
+    const cleanDryRun = runCli([
+      "normalize-debugging-integrity",
+      "--target-cwd",
+      repo,
+      "--work-type",
+      "debug",
+    ]);
+    assert.equal(cleanDryRun.status, 0, cleanDryRun.stderr);
+    assert.match(cleanDryRun.stdout, /No debugging integrity or metacognitive gate normalization needed/);
+
+    const assigned = runCli([
+      "assign",
+      "--target-cwd",
+      repo,
+      "--work-type",
+      "debug",
+      "--role",
+      "Implementer",
+      "--task-id",
+      "meta-normalize-debug",
+      "--epoch",
+      "e1",
+      "--scope",
+      "README.md",
+      "--assignment",
+      "isolate the observed mismatch and restore the expected result",
+      "--expected-output",
+      "root cause, source repair, and outcome evidence",
+    ]);
+    assert.equal(assigned.status, 0, assigned.stderr);
+    const assignedRunner = readState(repo, "runner.md");
+    assert.match(assignedRunner, /work_type: debug/);
+    assert.match(assignedRunner, /metacognitive_gate_required: true/);
+
+    const downgradedCollect = runCli([
+      "collect",
+      "--target-cwd",
+      repo,
+      "--work-type",
+      "documentation",
+      "--role",
+      "Implementer",
+      "--task-id",
+      "meta-normalize-debug",
+      "--epoch",
+      "e1",
+      "--scope",
+      "README.md",
+      "--status",
+      "completed",
+      "--findings",
+      "documentation metadata supplied",
+      "--changed-files",
+      "README.md",
+      "--verification",
+      "not run",
+    ]);
+    assert.notEqual(downgradedCollect.status, 0);
+    assert.match(downgradedCollect.stderr, /collect --status completed rejected/);
+    assert.equal(readState(repo, "runner.md"), assignedRunner, "rejected collect must not append a downgraded packet");
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("ordinary normalization preserves a documentation task as ungated", () => {
+  const repo = makeTempGitRepo();
+  try {
+    const intake = runCli([
+      "intake",
+      "--target-cwd",
+      repo,
+      "--work-type",
+      "documentation",
+      "--task",
+      "Document debug and test failure vocabulary without changing behavior",
+      "--task-id",
+      "meta-normalize-docs",
+      "--epoch",
+      "e1",
+      "--scope",
+      "README.md",
+    ]);
+    assert.equal(intake.status, 0, intake.stderr);
+    assert.match(intake.stdout, /ok metacognitive_gate_required: false/);
+
+    const dryRun = runCli(["normalize-debugging-integrity", "--target-cwd", repo]);
+    assert.equal(dryRun.status, 0, dryRun.stderr);
+    assert.doesNotMatch(dryRun.stdout, /metacognitive_gate_required: true/);
+
+    const normalized = runCli(["normalize-debugging-integrity", "--target-cwd", repo, "--execute"]);
+    assert.equal(normalized.status, 0, normalized.stderr);
+    assert.match(readState(repo, "task.md"), /metacognitive_gate_required: false/);
+    assert.match(readState(repo, "assignments.md"), /metacognitive_gate_required: false/);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
 test("normalization recovers stale pre-gate state without faking completed evidence", () => {
   const repo = makeTempGitRepo();
   try {
@@ -1210,6 +1464,70 @@ test("normalization recovers stale pre-gate state without faking completed evide
   }
 });
 
+test("normalization preserves audit and handoff appendices outside generated marker ownership", () => {
+  const repo = makeTempGitRepo();
+  try {
+    intakeGateRequired(repo, "meta-owned-appendices");
+    const cases = [
+      {
+        file: "audit.md",
+        prefix: "AUDIT-PREFIX-SENTINEL\nbytes stay exactly here\n\n",
+        suffix: "\nAUDIT-SUFFIX-SENTINEL\nbytes stay exactly here\n",
+        makeStale: (text) => text
+          .replace(/^- metacognitive_gate_required: true$/m, "- metacognitive_gate_required: false")
+          .replace(/^- metacognitive_gate_triggers: .*$/m, "- metacognitive_gate_triggers: none")
+          .replace(/^- For debug or repair work, record root cause.*\n/m, "")
+          .replace(/^- If metacognitive_gate_required is true, record .*\n/m, ""),
+        restored: /For debug or repair work, record root cause/,
+      },
+      {
+        file: "handoff.md",
+        prefix: "HANDOFF-PREFIX-SENTINEL\nbytes stay exactly here\n\n",
+        suffix: "\nHANDOFF-SUFFIX-SENTINEL\nbytes stay exactly here\n",
+        makeStale: (text) => text
+          .replace(/^- metacognitive_gate_required: true$/m, "- metacognitive_gate_required: false")
+          .replace(/^- metacognitive_gate_triggers: .*$/m, "- metacognitive_gate_triggers: none")
+          .replace(/^Debugging integrity:\n(?:- .*\n){4}\n/m, ""),
+        restored: /^Debugging integrity:$/m,
+      },
+    ];
+
+    for (const item of cases) {
+      const filePath = path.join(repo, ".coding-agents", item.file);
+      const generated = item.makeStale(readFileSync(filePath, "utf8")).trimEnd();
+      writeFileSync(filePath, item.prefix + generated + item.suffix, "utf8");
+    }
+
+    const normalized = runCli(["normalize-debugging-integrity", "--target-cwd", repo, "--execute"]);
+    assert.equal(normalized.status, 0, normalized.stderr);
+    assert.match(normalized.stdout, /Updated: audit.md/);
+    assert.match(normalized.stdout, /Updated: handoff.md/);
+
+    for (const item of cases) {
+      const text = readState(repo, item.file);
+      const start = text.indexOf("<!-- coding-agents-mvp:start -->");
+      const endMarker = "<!-- coding-agents-mvp:end -->";
+      const end = text.indexOf(endMarker, start);
+      assert.notEqual(start, -1);
+      assert.notEqual(end, -1);
+      assert.equal(text.slice(0, start), item.prefix);
+      assert.equal(text.slice(end + endMarker.length), item.suffix);
+      const generated = text.slice(start, end + endMarker.length);
+      assert.match(generated, /metacognitive_gate_required: true/);
+      assert.match(generated, /metacognitive_gate_triggers: .*debug|metacognitive_gate_triggers: .*source-of-truth/);
+      assert.match(generated, item.restored);
+      assert.doesNotMatch(item.prefix + item.suffix, /metacognitive_gate_required|Debugging integrity|record root cause/);
+    }
+
+    const cleanDryRun = runCli(["normalize-debugging-integrity", "--target-cwd", repo]);
+    assert.equal(cleanDryRun.status, 0, cleanDryRun.stderr);
+    assert.match(cleanDryRun.stdout, /No debugging integrity or metacognitive gate normalization needed/);
+    assert.doesNotMatch(cleanDryRun.stdout, /Would update:/);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
 test("normalization and intake strip stale active-looking preamble from generated workflow state", () => {
   const repo = makeTempGitRepo();
   try {
@@ -1224,15 +1542,19 @@ test("normalization and intake strip stale active-looking preamble from generate
     assert.match(dryRun.stdout, /Would update: task.md/);
     assert.match(dryRun.stdout, /Would update: project.md/);
     assert.match(dryRun.stdout, /Would update: decisions.md/);
-    assert.match(dryRun.stdout, /Would update: handoff.md/);
+    assert.doesNotMatch(dryRun.stdout, /Would update: handoff.md/);
 
     const normalized = runCli(["normalize-debugging-integrity", "--target-cwd", repo, "--execute"]);
     assert.equal(normalized.status, 0, normalized.stderr);
-    for (const file of ["task.md", "project.md", "decisions.md", "handoff.md"]) {
+    for (const file of ["task.md", "project.md", "decisions.md"]) {
       const text = readState(repo, file);
       assert.match(text, /^<!-- coding-agents-mvp:start -->/);
       assert.doesNotMatch(text, /T-007\.5|docs\/codex active state|CA-RUNNER-DOCS-FINALIZE-001/);
     }
+    const normalizedHandoff = readState(repo, "handoff.md");
+    assert.match(normalizedHandoff, /^# Stale handoff\.md docs\/codex active state/);
+    assert.match(normalizedHandoff, /T-007\.5|CA-RUNNER-DOCS-FINALIZE-001/);
+    assert.match(normalizedHandoff, /<!-- coding-agents-mvp:start -->/);
 
     for (const file of ["task.md", "project.md", "decisions.md", "handoff.md"]) {
       const filePath = path.join(repo, ".coding-agents", file);
@@ -1463,6 +1785,16 @@ function withoutMetaArgs(...omittedFlags) {
   for (let i = 0; i < META_ARGS.length; i += 2) {
     if (omitted.has(META_ARGS[i])) continue;
     result.push(META_ARGS[i], META_ARGS[i + 1]);
+  }
+  return result;
+}
+
+function metaArgsWith(overrides = {}) {
+  const result = [];
+  for (let i = 0; i < META_ARGS.length; i += 2) {
+    const flag = META_ARGS[i];
+    const field = flag.slice(2).replaceAll("-", "_");
+    result.push(flag, overrides[field] ?? META_ARGS[i + 1]);
   }
   return result;
 }
