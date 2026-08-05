@@ -2,16 +2,7 @@
 
 Coding Agents is an intent-bound Codex plugin for inspectable coding workflow state. It records intake, bounded assignments, collection, finalization, audit, and handoff packets under `.coding-agents/`. Actual workers are dispatched only through official Codex subagent tools; the source CLI is record-only and never launches `codex exec` or a custom process runner.
 
-Coding Agents can be used without Agentic Runner, from specification consultation through bounded implementation and verification. "Standalone" here means that Agentic Runner is optional; execution still belongs to the Codex main thread and, when available, official Codex subagents. The Coding Agents CLI records and validates workflow state but does not execute workers itself.
-
-[Agentic Runner](https://github.com/mlabo-org/agentic-runner) is an optional upper control plane for work that spans multiple owners or outputs; neither plugin requires the other to be installed or invoked.
-
-## Standalone Or Paired
-
-- **Coding Agents alone** — discuss a new code specification, turn confirmed decisions into an instruction document, execute bounded assignments, and verify the result against that contract.
-- **With Agentic Runner** — keep the same coding workflow while Agentic Runner owns shared constraints, cross-owner routing, supervision, resume checkpoints, and final convergence.
-
-Agentic Runner can also run without Coding Agents, using any other declared owners. The pair is an optional composition, not a set-only product.
+Coding Agents covers the workflow from specification consultation through bounded implementation and verification. Execution belongs to the Codex main thread and, when available, official Codex subagents. The Coding Agents CLI records and validates workflow state but does not execute workers itself.
 
 ## Delivery Modes
 
@@ -26,17 +17,11 @@ Both modes require the first acceptance candidate to integrate every known requi
 
 ## Install
 
-The Agentic Runner repository publishes two independent entries in one shared marketplace. For a standalone Coding Agents install:
+Add the Coding Agents repository as its own marketplace, then install the plugin from that marketplace:
 
 ```sh
-codex plugin marketplace add mlabo-org/agentic-runner --ref main
-codex plugin add coding-agents@agentic-control-plane
-```
-
-That is a complete standalone install. To add the optional upper control plane and form the pair:
-
-```sh
-codex plugin add agentic-runner@agentic-control-plane
+codex plugin marketplace add mlabo-org/coding-agents --ref main
+codex plugin add coding-agents@coding-agents-marketplace
 ```
 
 Restart Codex or start a new task after installation.
@@ -57,9 +42,9 @@ max_concurrent_threads_per_session = 30
 max_depth = 2
 ```
 
-`max_concurrent_threads_per_session = 30` caps concurrently open agent threads for the whole session; it is not a 30-thread allocation per plugin or a requirement to fill every slot. `max_depth = 2` counts the root task as depth 0. A standalone Coding Agents run can dispatch bounded workers at depth 1. When the coding branch is itself delegated under Agentic Runner, that depth-1 branch may dispatch one bounded worker layer at depth 2.
+`max_concurrent_threads_per_session = 30` caps concurrently open agent threads for the whole session; it is not a 30-thread allocation per plugin or a requirement to fill every slot. `max_depth = 2` counts the root task as depth 0. A Coding Agents run can dispatch bounded workers at depth 1, and any deeper delegation remains subject to the host limit and the assigned responsibility boundary.
 
-Agentic Runner remains the optional upper cross-output controller, Coding Agents owns the coding workflow branch, and official Codex subagents perform the bounded assignments. Neither plugin bypasses the host limits, and either plugin can still be used alone with a shallower topology. Restart Codex or begin a fresh task after changing `config.toml`.
+Coding Agents owns the coding workflow state, and official Codex subagents perform bounded assignments. The plugin does not bypass host limits. Restart Codex or begin a fresh task after changing `config.toml`.
 
 ## State-First Start Or Continue
 
@@ -134,11 +119,11 @@ npm run test:cli
 
 The workflow baseline existed before the 2026 OpenAI Build Week eligibility window. The submission asks judges to evaluate only these later extensions:
 
-Agentic Runner and Coding Agents had been under development long before OpenAI Build Week. With the arrival of GPT-5.6, we used GPT-5.6 Sol ULTRA to carry out a large-scale refactor so both plugins would operate correctly in the new Codex environment. GPT-5.6 Sol ULTRA accelerated architecture inspection, specification discussion, cross-file implementation and review, test execution, and the conversion of accepted decisions into public documentation. This was a modernization of a mature baseline, not a claim that the entire project was created during Build Week.
+Coding Agents had been under development long before OpenAI Build Week. With the arrival of GPT-5.6, we used GPT-5.6 Sol ULTRA to carry out a large-scale refactor for the new Codex environment. GPT-5.6 Sol ULTRA accelerated architecture inspection, specification discussion, cross-file implementation and review, test execution, and the conversion of accepted decisions into public documentation. This was a modernization of a mature baseline, not a claim that the entire project was created during Build Week.
 
 The explicit plugin path adds inspectable workflow state and executable validation gates that ULTRA mode does not define by itself. ULTRA and Coding Agents can coexist in one installation, and the plugin does not detect, disable, or claim technical exclusivity with the host's selected intelligence level. To keep orchestration ownership predictable, choose one primary orchestration route for each task: either rely on ULTRA's proactive delegation, or explicitly select Coding Agents so its intake, scope, lifecycle, collection, and finalization contract governs the coding workflow. When Coding Agents is selected, actual workers are still dispatched only through official Codex subagents.
 
-Selecting Coding Agents does not change the host model or intelligence level, and selecting ULTRA does not by itself apply the Coding Agents workflow contract. Agentic Runner and Coding Agents remain independently installable and usable, may optionally be paired within the explicit plugin route, and keep source repositories separate from disposable plugin cache. Using GPT-5.6 Sol ULTRA for the refactor described above is distinct from choosing the primary orchestration route for a later task.
+Selecting Coding Agents does not change the host model or intelligence level, and selecting ULTRA does not by itself apply the Coding Agents workflow contract. The source repository remains separate from disposable plugin cache. Using GPT-5.6 Sol ULTRA for the refactor described above is distinct from choosing the primary orchestration route for a later task.
 
 - [`a68c1b6`](https://github.com/mlabo-org/coding-agents/commit/a68c1b6585c79c11d0a5d89673659cd4d3c4c050) — removed the CLI-spawned Codex worker path and established official Codex subagents as the only worker-dispatch route.
 - [`678f9a9`](https://github.com/mlabo-org/coding-agents/commit/678f9a9224a562098f5909ee1037dd7677d79a96) — centralized shared scaffold contracts and reduced workflow-state overhead while retaining lifecycle, packet, and historical-compatibility checks.
