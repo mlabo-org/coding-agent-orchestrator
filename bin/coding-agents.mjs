@@ -157,6 +157,17 @@ const WORK_TYPE_GUIDANCE = {
   debug: "Semantic metadata for debugging or failure-correction work. Forces the metacognitive debug/root-cause gate for this command.",
 };
 const DEFAULT_WORK_TYPE = "auto";
+const JOB_ROUTING_CONTRACT_VERSION = "model_neutral_job_v1";
+const JOB_ROUTING_LEVELS = ["low", "medium", "high"];
+const JOB_ROUTING_INPUT_FIELDS = [
+  "required_capabilities",
+  "ambiguity",
+  "consequence",
+  "coupling",
+  "acceptance_characteristics",
+];
+const JOB_ROUTING_CONTRACT =
+  "Root Sol alone selects the official worker model and reasoning effort at official spawn time, classifies blocker or failure causes, and may reassign only the affected scope at a higher sufficient profile or take ownership. Workers may return blockers or failures with evidence but cannot choose successors. The Coding Agents CLI owns workflow state and records model-neutral assignment and orchestration packets; it never launches workers. No inferred routing default, wrapper fallback, or automatic review or repair loop is permitted.";
 
 const METACOGNITIVE_GATE_FIELDS = [
   "expected_outcome",
@@ -264,6 +275,11 @@ const REQUIRED_FILES = [
 
 function main() {
   const args = parseArgs(process.argv.slice(2));
+  for (const field of ["model", "modelName", "workerModel", "reasoning", "reasoningEffort"]) {
+    if (args[field] !== undefined) {
+      fail("model and reasoning-effort selection are owned by root Sol at official spawn time and cannot be recorded by this CLI", 1);
+    }
+  }
   if (args.runtimeThreadClosed !== undefined) {
     fail("--runtime-thread-closed is unsupported by every command: the workflow CLI cannot close or reclaim runtime threads", 1);
   }
@@ -722,6 +738,8 @@ function renderTask(context) {
 ${renderDeliveryModeFields(context)}
 - lifecycle_contract_version: ${LIFECYCLE_CONTRACT_VERSION}
 - lifecycle_contract_effective_at: ${context.timestamp}
+- job_routing_contract_version: ${JOB_ROUTING_CONTRACT_VERSION}
+- job_routing_contract_effective_at: ${context.timestamp}
 - task: ${context.task}
 
 ## ${CODING_CONDUCT_GATE_NAME}
@@ -851,6 +869,10 @@ Delivery Mode Contract:
 
 ${renderDeliveryModeFields(context)}
 
+Model-Neutral Job Routing Contract:
+
+${renderJobRoutingContractFields()}
+
 ## Debugging Integrity Gate
 
 - ${DEBUG_INTEGRITY}
@@ -904,6 +926,9 @@ You are a coding-agents worker for task \`${context.taskId}\`.
 - evidence_ref: ${context.evidenceRef}
 - work_type: ${workTypeId(context)}
 ${renderDeliveryModeFields(context)}
+
+Model-Neutral job routing:
+${renderJobRoutingContractFields()}
 
 Read \`${STATE_DIR_NAME}/README.md\`, then \`project.md\`, \`task.md\`, \`todo.md\`, \`decisions.md\`, \`assignments.md\`, \`audit.md\`, and \`runner.md\` if present.
 Preserve unrelated edits. Work only inside scope. Update \`${STATE_DIR_NAME}/audit.md\` with verification results before handoff.
@@ -1497,6 +1522,7 @@ function requireAssignmentPacket(args, commandContext) {
     targetCwd: commandContext.targetCwd,
     assignment: singleLine(requireArg(args.assignment, "--assignment")),
     expectedOutput: singleLine(requireArg(args.expectedOutput, "--expected-output")),
+    jobRoutingFields: requireJobRoutingInputs(args),
   };
   packet.metacognitiveGate = resolvePacketMetacognitiveGate(commandContext, packet);
   if (packet.metacognitiveGate.required) {
@@ -1684,6 +1710,7 @@ ${renderDeliveryModeFields(packet)}
 - target_cwd: ${packet.targetCwd}
 - assignment: ${packet.assignment}
 - expected_output: ${packet.expectedOutput}
+${renderJobRoutingPacketFields(packet)}
 ${renderFeatureProfilePacketGuidance(packet)}
 - nested_coding_agents_preflight: ${NESTED_CODING_AGENTS_PREFLIGHT}
 - debugging_integrity: ${DEBUG_INTEGRITY}
@@ -1764,6 +1791,7 @@ ${renderDeliveryModeFields(packet)}
 - target_cwd: ${packet.targetCwd}
 - assignment: ${packet.assignment}
 - expected_output: ${packet.expectedOutput}
+${renderJobRoutingPacketFields(packet)}
 - spawned: false
 - next: dispatch this assignment only through the official Codex subagent spawn tools exposed to the parent
 ${renderFeatureProfilePacketGuidance(packet)}
@@ -1976,6 +2004,7 @@ function validateRunnerPackets(text, workflowGate = { required: false }, contrac
   const invalidSupervisionPackets = [];
   const invalidCodingConductPackets = [];
   const invalidDeliveryModePackets = [];
+  const invalidJobRoutingPackets = [];
   const invalidMetacognitivePackets = [];
   const invalidContractCoveragePackets = [];
   const invalidLifecyclePackets = [];
@@ -2033,6 +2062,12 @@ function validateRunnerPackets(text, workflowGate = { required: false }, contrac
       for (const field of ["assignment", "expected_output", "debugging_integrity", "lifecycle"]) {
         if (!getFieldValue(section, field)) {
           invalidPackets.push(`${section.split("\n")[0].replace(/^### /, "")}.${field}`);
+        }
+      }
+      if (!runnerPacketPredatesJobRoutingContract(section, workflowGate)) {
+        const routing = validateJobRoutingPacketFields(section);
+        for (const missing of routing.missing) {
+          invalidJobRoutingPackets.push(`${packetLabel(section)}.${missing}`);
         }
       }
     }
@@ -2123,6 +2158,7 @@ function validateRunnerPackets(text, workflowGate = { required: false }, contrac
     && invalidSupervisionPackets.length === 0
     && invalidCodingConductPackets.length === 0
     && invalidDeliveryModePackets.length === 0
+    && invalidJobRoutingPackets.length === 0
     && invalidMetacognitivePackets.length === 0
     && invalidContractCoveragePackets.length === 0
     && invalidLifecyclePackets.length === 0
@@ -2147,6 +2183,9 @@ function validateRunnerPackets(text, workflowGate = { required: false }, contrac
   }
   if (invalidDeliveryModePackets.length) {
     results.push(["warn", `invalid delivery mode runner packet fields: ${invalidDeliveryModePackets.join(", ")}`]);
+  }
+  if (invalidJobRoutingPackets.length) {
+    results.push(["warn", `missing or invalid model-neutral job routing runner packet fields: ${invalidJobRoutingPackets.join(", ")}`]);
   }
   if (invalidMetacognitivePackets.length) {
     results.push(["warn", `missing or incomplete metacognitive runner packet fields: ${invalidMetacognitivePackets.join(", ")}`]);
@@ -2361,6 +2400,8 @@ function readWorkflowMetacognitiveContext(stateDir) {
   const deliveryContext = readWorkflowDeliveryContext(stateDir);
   const lifecycleContractVersion = getFieldValue(text, "lifecycle_contract_version");
   const lifecycleContractEffectiveAt = getFieldValue(text, "lifecycle_contract_effective_at");
+  const jobRoutingContractVersion = getFieldValue(text, "job_routing_contract_version");
+  const jobRoutingContractEffectiveAt = getFieldValue(text, "job_routing_contract_effective_at");
   const gateSection = getMetacognitiveGateFieldSection(text);
   const declaredRequired = getFieldValue(gateSection, "metacognitive_gate_required") === "true";
   const declaredTriggers = splitList(getFieldValue(gateSection, "metacognitive_gate_triggers")).filter((item) => item !== "none");
@@ -2384,6 +2425,8 @@ function readWorkflowMetacognitiveContext(stateDir) {
     oneShotAuthority: deliveryContext.oneShotAuthority,
     lifecycleContractVersion,
     lifecycleContractEffectiveAt,
+    jobRoutingContractVersion,
+    jobRoutingContractEffectiveAt,
     identityErrors: identity.errors,
   };
 }
@@ -2942,6 +2985,13 @@ function runnerPacketRequiresSupervision(section) {
 function runnerPacketUsesLegacySchema(section) {
   // Packets without work_type predate the modern runner schema; keep that narrow exemption explicit.
   return !getFieldValue(section, "work_type");
+}
+
+function runnerPacketPredatesJobRoutingContract(section, workflowGate = {}) {
+  if (workflowGate.jobRoutingContractVersion !== JOB_ROUTING_CONTRACT_VERSION) return true;
+  const observedAt = Date.parse(packetTimestamp(section));
+  const effectiveAt = Date.parse(workflowGate.jobRoutingContractEffectiveAt || "");
+  return Number.isFinite(observedAt) && observedAt < effectiveAt;
 }
 
 function hasAnySupervisionField(section) {
@@ -3567,6 +3617,66 @@ function resolveWorkType(value) {
   };
 }
 
+function requireJobRoutingInputs(args = {}) {
+  const fields = {
+    required_capabilities: singleLine(requireArg(args.requiredCapabilities, "--required-capabilities")),
+    ambiguity: singleLine(requireArg(args.ambiguity, "--ambiguity")),
+    consequence: singleLine(requireArg(args.consequence, "--consequence")),
+    coupling: singleLine(requireArg(args.coupling, "--coupling")),
+    acceptance_characteristics: singleLine(requireArg(args.acceptanceCharacteristics, "--acceptance-characteristics")),
+  };
+  const validation = validateJobRoutingPacketFields(renderJobRoutingPacketFields({ jobRoutingFields: fields }));
+  if (!validation.valid) {
+    throw new CliError(`invalid model-neutral job routing inputs: ${validation.missing.join(", ")}`, 1);
+  }
+  return fields;
+}
+
+function renderJobRoutingContractFields() {
+  return `- job_routing_contract_version: ${JOB_ROUTING_CONTRACT_VERSION}
+- job_routing_contract: ${JOB_ROUTING_CONTRACT}
+- job_routing_required_inputs: ${JOB_ROUTING_INPUT_FIELDS.join(", ")}`;
+}
+
+function renderJobRoutingPacketFields(source = {}) {
+  const fields = source.jobRoutingFields || {};
+  return `${renderJobRoutingContractFields()}
+${renderFieldLines(fields)}`;
+}
+
+function validateJobRoutingPacketFields(section) {
+  const missing = [];
+  if (getFieldValue(section, "job_routing_contract_version") !== JOB_ROUTING_CONTRACT_VERSION) {
+    missing.push("job_routing_contract_version");
+  }
+  if (getFieldValue(section, "job_routing_contract") !== JOB_ROUTING_CONTRACT) {
+    missing.push("job_routing_contract");
+  }
+  const requiredInputs = splitList(getFieldValue(section, "job_routing_required_inputs"));
+  for (const field of JOB_ROUTING_INPUT_FIELDS) {
+    if (!requiredInputs.includes(field)) missing.push(`job_routing_required_inputs.${field}`);
+  }
+  const requiredCapabilities = getFieldValue(section, "required_capabilities");
+  if (!isConcreteJobRoutingValue(requiredCapabilities)) missing.push("required_capabilities");
+  for (const field of ["ambiguity", "consequence", "coupling"]) {
+    if (!JOB_ROUTING_LEVELS.includes(getFieldValue(section, field))) missing.push(field);
+  }
+  if (!isConcreteJobRoutingValue(getFieldValue(section, "acceptance_characteristics"))) {
+    missing.push("acceptance_characteristics");
+  }
+  for (const forbidden of ["model", "model_name", "worker_model", "reasoning", "reasoning_effort"]) {
+    if (getFieldValue(section, forbidden)) missing.push(`${forbidden}.forbidden`);
+  }
+  return { valid: missing.length === 0, missing };
+}
+
+function isConcreteJobRoutingValue(value) {
+  const normalized = normalizeEvidenceValue(value);
+  return Boolean(normalized)
+    && !/^<[^>]+>$/u.test(normalized)
+    && !/^(?:none|unknown|auto|default|inferred|n\/a|na|todo|tbd|placeholder|not provided)$/iu.test(normalized);
+}
+
 function resolveHierarchyFields(args = {}) {
   const mode = args.hierarchyMode === undefined || args.hierarchyMode === null || !String(args.hierarchyMode).trim()
     ? DEFAULT_HIERARCHY_FIELDS.hierarchy_mode
@@ -3712,10 +3822,10 @@ function printHelp() {
 
 Usage:
   node bin/coding-agents.mjs intake [--cwd <path>] [--target-cwd <path>] [--work-type <id>] [--delivery-mode ITERATIVE_DELIVERY|ONE_SHOT_QUALITY] [--one-shot-authority user_request:<task-local-ref>] [--evidence-ref <typed-ref>] --task <text> --task-id <id> --epoch <epoch> --scope <scope>
-  node bin/coding-agents.mjs assign [--cwd <path>] [--target-cwd <path>] --role <role> --task-id <id> --epoch <epoch> --scope <scope> [--feature-profile <id>] [--work-type <id>] [--hierarchy-mode none|one_level|n_level] [--max-depth <n>] [--depth <n>] [--remaining-depth <n>] [--heartbeat-interval <ISO-8601 duration>] [--heartbeat-deadline <ISO-8601 duration>] [--max-silence <ISO-8601 duration>] [--soft-timeout <ISO-8601 duration>] [--hard-timeout <ISO-8601 duration>] [--no-interrupt-until <ISO-8601 duration>] --assignment <text> --expected-output <text>
+  node bin/coding-agents.mjs assign [--cwd <path>] [--target-cwd <path>] --role <role> --task-id <id> --epoch <epoch> --scope <scope> [--feature-profile <id>] [--work-type <id>] [--hierarchy-mode none|one_level|n_level] [--max-depth <n>] [--depth <n>] [--remaining-depth <n>] [--heartbeat-interval <ISO-8601 duration>] [--heartbeat-deadline <ISO-8601 duration>] [--max-silence <ISO-8601 duration>] [--soft-timeout <ISO-8601 duration>] [--hard-timeout <ISO-8601 duration>] [--no-interrupt-until <ISO-8601 duration>] --required-capabilities <text> --ambiguity low|medium|high --consequence low|medium|high --coupling low|medium|high --acceptance-characteristics <text> --assignment <text> --expected-output <text>
   node bin/coding-agents.mjs collect [--cwd <path>] [--target-cwd <path>] --role <role> --task-id <id> --epoch <epoch> --scope <scope> [--feature-profile <id>] [--work-type <id>] --status <status> --lifecycle-disposition state_retired|continuation_expected [--cancel-reason <allowed-reason>] [--findings <text>] [--changed-files <text>] [--verification <text>] [--blockers <text>] [--assumptions <text>] [--next <text>] [--finalization-references <typed-refs>] [--expected-outcome <text>] [--actual-result <text>] [--reproduction-or-evidence <text>] [--failure-point <text>] [--hypothesis-branches <text>] [--source-of-truth-boundary <text>] [--plugin-contract-boundary <text>] [--generated-artifact-boundary <text>] [--before-context-effects <text>] [--after-context-effects <text>] [--cross-feature-consequences <text>] [--root-cause <text>] [--fix-summary <text>] [--verification-evidence <text>] [--skipped-checks <text>] [--unresolved-risks <text>] [--next-investigation <text>]
   node bin/coding-agents.mjs finalize [--cwd <path>] [--target-cwd <path>] --task-id <id> --epoch <epoch> --scope <scope> [--work-type <id>] [--contract-coverage required] --decision-coverage <text> --completion-coverage <text> --source-spec-coverage <text>
-  node bin/coding-agents.mjs run|orchestrate [--cwd <path>] [--target-cwd <path>] --role <role> --task-id <id> --epoch <epoch> --scope <scope> [--feature-profile <id>] [--work-type <id>] [--hierarchy-mode none|one_level|n_level] [--max-depth <n>] [--depth <n>] [--remaining-depth <n>] [--heartbeat-interval <ISO-8601 duration>] [--heartbeat-deadline <ISO-8601 duration>] [--max-silence <ISO-8601 duration>] [--soft-timeout <ISO-8601 duration>] [--hard-timeout <ISO-8601 duration>] [--no-interrupt-until <ISO-8601 duration>] --assignment <text> --expected-output <text>
+  node bin/coding-agents.mjs run|orchestrate [--cwd <path>] [--target-cwd <path>] --role <role> --task-id <id> --epoch <epoch> --scope <scope> [--feature-profile <id>] [--work-type <id>] [--hierarchy-mode none|one_level|n_level] [--max-depth <n>] [--depth <n>] [--remaining-depth <n>] [--heartbeat-interval <ISO-8601 duration>] [--heartbeat-deadline <ISO-8601 duration>] [--max-silence <ISO-8601 duration>] [--soft-timeout <ISO-8601 duration>] [--hard-timeout <ISO-8601 duration>] [--no-interrupt-until <ISO-8601 duration>] --required-capabilities <text> --ambiguity low|medium|high --consequence low|medium|high --coupling low|medium|high --acceptance-characteristics <text> --assignment <text> --expected-output <text>
   node bin/coding-agents.mjs verify-assignments [--cwd <path>] [--target-cwd <path>]
   node bin/coding-agents.mjs normalize-debugging-integrity [--cwd <path>] [--target-cwd <path>] [--work-type auto|documentation|source-change|debug] [--execute]
   node bin/coding-agents.mjs handoff [--cwd <path>] [--target-cwd <path>] --task-id <id>
@@ -3758,6 +3868,8 @@ State:
   --work-type auto keeps debug/repair and boundary-mismatch inference but does not turn ordinary source paths into an exhaustive gate under ${DEFAULT_DELIVERY_MODE}. --work-type source-change forces the broad metacognitive gate only under ${ONE_SHOT_DELIVERY_MODE}; --work-type debug still forces root-cause evidence.
   --work-type documentation suppresses keyword/path gate inference for that command only; it does not replace debug/root-cause gates and cannot downgrade existing gate-required workflow state.
   Optional hierarchy and supervision timing flags are packet metadata. Defaults: hierarchy_mode none, max_depth/depth/remaining_depth 0, heartbeat_interval PT15M, heartbeat_deadline PT30M, max_silence PT45M, soft_timeout PT60M, hard_timeout PT120M, and no_interrupt_until PT30M.
+  assign, run, and orchestrate require the model-neutral ${JOB_ROUTING_CONTRACT_VERSION} inputs: --required-capabilities, --ambiguity, --consequence, --coupling, and --acceptance-characteristics. No routing input is inferred. ${JOB_ROUTING_CONTRACT}
+  Fresh intake records job_routing_contract_effective_at. Assignment and orchestration packets predating that task-local activation, or packets in workflows without the modern contract marker, remain readable only at that explicit pre-contract boundary. Post-activation packets missing the model-neutral job contract are invalid.
   --runner and --timeout-ms are rejected globally. This CLI never launches Codex workers or OS child-agent processes; use the official Codex subagent spawn tools.
   Historical process-runner-result packets remain readable for backward validation but cannot be emitted by current commands.
   ${CODING_CONDUCT_GATE_NAME}: ${CODING_CONDUCT_CONTRACT}

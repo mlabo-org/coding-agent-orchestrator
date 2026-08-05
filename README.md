@@ -1,6 +1,6 @@
 # Coding Agents
 
-Coding Agents is an intent-bound Codex plugin for inspectable coding workflow state. It records intake, bounded assignments, collection, finalization, audit, and handoff packets under `.coding-agents/`. Actual workers are dispatched only through official Codex subagent tools; the source CLI is record-only and never launches `codex exec` or a custom process runner.
+Coding Agents is an intent-bound Codex plugin for inspectable coding workflow state. It records intake, bounded model-neutral job requirements, assignments, collection, finalization, audit, and handoff packets under `.coding-agents/`. Actual workers are dispatched only through official Codex subagent tools; the source CLI is record-only and never launches `codex exec` or a custom process runner.
 
 Coding Agents covers the workflow from specification consultation through bounded implementation and verification. Execution belongs to the Codex main thread and, when available, official Codex subagents. The Coding Agents CLI records and validates workflow state but does not execute workers itself.
 
@@ -28,7 +28,7 @@ Restart Codex or start a new task after installation.
 
 ## Configure Official Codex Subagents
 
-Coding Agents dispatches work only through the official Codex subagent surface, so actual concurrency and nesting come from the host Codex configuration. The Build Week demo used the current GPT-5.6-era V2 format in `~/.codex/config.toml`:
+Coding Agents dispatches work only through the official Codex subagent surface, so actual concurrency, nesting, and exposed worker profiles come from the host Codex configuration. The Build Week demo used the current GPT-5.6-era V2 format in `~/.codex/config.toml`:
 
 ```toml
 [features]
@@ -44,7 +44,13 @@ max_depth = 2
 
 `max_concurrent_threads_per_session = 30` caps concurrently open agent threads for the whole session; it is not a 30-thread allocation per plugin or a requirement to fill every slot. `max_depth = 2` counts the root task as depth 0. A Coding Agents run can dispatch bounded workers at depth 1, and any deeper delegation remains subject to the host limit and the assigned responsibility boundary.
 
-Coding Agents owns the coding workflow state, and official Codex subagents perform bounded assignments. The plugin does not bypass host limits. Restart Codex or begin a fresh task after changing `config.toml`.
+Coding Agents owns the coding workflow state and model-neutral job requirements, while official Codex subagents perform bounded assignments. Root Sol chooses the actual model and reasoning effort from the exposed spawn surface for each job; the plugin does not make or persist that choice and does not bypass host limits. Restart Codex or begin a fresh task after changing `config.toml`.
+
+## Model-Neutral Worker Routing
+
+Every modern assignment and record-only orchestration packet carries `job_routing_contract_version: model_neutral_job_v1` plus explicit `required_capabilities`, `ambiguity`, `consequence`, `coupling`, and `acceptance_characteristics`. These fields describe the job without naming a model, fixing a reasoning-effort value, preferring a strongest profile, or inheriting a previous worker profile.
+
+Root Sol consumes that contract and selects a sufficient official worker profile only at spawn time. A worker may report a blocker or failure with evidence, but it cannot choose a successor. Root Sol classifies the cause and may reassign only the affected scope at a higher sufficient profile or take ownership. An accepted successful result does not trigger a stronger-profile review or an automatic repair loop.
 
 ## State-First Start Or Continue
 
@@ -91,7 +97,8 @@ Coding Agents records confirmed decisions, converts them into actionable specifi
 ## Execution Boundary
 
 - The Codex main thread owns decomposition, policy, safety, integration, verification, and the final response.
-- Coding Agents records task identity, epoch, declared scope, scaffold contracts, assignments, results, lifecycle, and handoff state.
+- Coding Agents records task identity, epoch, declared scope, model-neutral routing requirements, scaffold contracts, assignments, results, lifecycle, and handoff state.
+- Root Sol exclusively owns worker model/reasoning selection at official spawn time and cause-bound affected-scope reassignment or ownership transfer after a blocker or failure.
 - Official Codex subagent tools are the only worker-dispatch route.
 - If official subagents are unavailable, execution remains in the parent thread. The CLI does not fall back to an OS child Codex process.
 - Runtime state and installed plugin cache are not source.
@@ -128,7 +135,7 @@ Selecting Coding Agents does not change the host model or intelligence level, an
 - [`a68c1b6`](https://github.com/mlabo-org/coding-agents/commit/a68c1b6585c79c11d0a5d89673659cd4d3c4c050) — removed the CLI-spawned Codex worker path and established official Codex subagents as the only worker-dispatch route.
 - [`678f9a9`](https://github.com/mlabo-org/coding-agents/commit/678f9a9224a562098f5909ee1037dd7677d79a96) — centralized shared scaffold contracts and reduced workflow-state overhead while retaining lifecycle, packet, and historical-compatibility checks.
 
-The current source suite contains 66 passing tests.
+The source suite includes focused state, routing-metadata, lifecycle, and official-spawn-only contract coverage.
 
 ## Platform
 

@@ -32,6 +32,21 @@ function contractCoverageArgs(taskId) {
   ];
 }
 
+function jobRoutingArgs() {
+  return [
+    "--required-capabilities",
+    "Node ESM CLI/state-schema design, focused black-box tests",
+    "--ambiguity",
+    "medium",
+    "--consequence",
+    "high",
+    "--coupling",
+    "high",
+    "--acceptance-characteristics",
+    "The scoped acceptance path is explicit, executable, model-neutral, and preserves existing workflow contracts.",
+  ];
+}
+
 test("runner commands require matching intake state before writing runner state", () => {
   const repo = makeTempGitRepo();
   try {
@@ -740,6 +755,167 @@ test("intake describes fixed roles as scaffold, not resident agents", () => {
     const doctor = runCli(["doctor", "--target-cwd", repo]);
     assert.equal(doctor.status, 0, doctor.stdout + doctor.stderr);
     assert.match(doctor.stdout, /14 role assignment scaffold sections present/);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("model-neutral job routing is explicit in scaffold, handoff, assignment, and orchestration packets", () => {
+  const repo = makeTempGitRepo();
+  try {
+    intake(repo, { taskId: "model-neutral-routing", epoch: "e1", scope: "README.md" });
+    const taskState = readState(repo, "task.md");
+    assert.match(taskState, /job_routing_contract_version: model_neutral_job_v1/);
+    assert.match(taskState, /job_routing_contract_effective_at: \d{4}-\d{2}-\d{2}T/);
+
+    for (const file of ["assignments.md", "handoff.md"]) {
+      const text = readState(repo, file);
+      assert.match(text, /job_routing_contract_version: model_neutral_job_v1/);
+      assert.match(text, /Root Sol alone selects the official worker model and reasoning effort at official spawn time/);
+      assert.match(text, /classifies blocker or failure causes/);
+      assert.match(text, /reassign only the affected scope at a higher sufficient profile or take ownership/);
+      assert.match(text, /Workers may return blockers or failures with evidence but cannot choose successors/);
+      assert.match(text, /CLI owns workflow state and records model-neutral assignment and orchestration packets; it never launches workers/);
+      assert.match(text, /No inferred routing default, wrapper fallback, or automatic review or repair loop is permitted/);
+      assert.match(text, /job_routing_required_inputs: required_capabilities, ambiguity, consequence, coupling, acceptance_characteristics/);
+    }
+
+    const missing = runCli([
+      "assign",
+      "--target-cwd",
+      repo,
+      "--role",
+      "Implementer",
+      "--task-id",
+      "model-neutral-routing",
+      "--epoch",
+      "e1",
+      "--scope",
+      "README.md",
+      "--assignment",
+      "record an incomplete routing packet",
+      "--expected-output",
+      "no packet",
+    ], { jobRouting: false });
+    assert.notEqual(missing.status, 0);
+    assert.match(missing.stderr, /missing required argument: --required-capabilities/);
+    assert.equal(existsSync(path.join(repo, ".coding-agents", "runner.md")), false);
+
+    const assigned = runCli([
+      "assign",
+      "--target-cwd",
+      repo,
+      "--role",
+      "Implementer",
+      "--task-id",
+      "model-neutral-routing",
+      "--epoch",
+      "e1",
+      "--scope",
+      "README.md",
+      "--assignment",
+      "record a model-neutral assignment",
+      "--expected-output",
+      "assignment packet",
+    ]);
+    assert.equal(assigned.status, 0, assigned.stderr);
+
+    const orchestrated = runCli([
+      "orchestrate",
+      "--target-cwd",
+      repo,
+      "--role",
+      "Test Runner",
+      "--task-id",
+      "model-neutral-routing",
+      "--epoch",
+      "e1",
+      "--scope",
+      "README.md",
+      "--assignment",
+      "record a model-neutral orchestration skeleton",
+      "--expected-output",
+      "record-only orchestration packet",
+    ]);
+    assert.equal(orchestrated.status, 0, orchestrated.stderr);
+
+    const runner = readState(repo, "runner.md");
+    for (const type of ["assignment", "process-orchestration-skeleton"]) {
+      const packetPattern = new RegExp(`type: ${type}[\\s\\S]*job_routing_contract_version: model_neutral_job_v1[\\s\\S]*required_capabilities: Node ESM CLI/state-schema design, focused black-box tests[\\s\\S]*ambiguity: medium[\\s\\S]*consequence: high[\\s\\S]*coupling: high[\\s\\S]*acceptance_characteristics: The scoped acceptance path is explicit, executable, model-neutral, and preserves existing workflow contracts\\.`);
+      assert.match(runner, packetPattern);
+    }
+    assert.doesNotMatch(runner, /^- (?:model|model_name|worker_model|reasoning|reasoning_effort):/m);
+    assert.equal(runCli(["verify-assignments", "--target-cwd", repo]).status, 0);
+
+    const runnerPath = path.join(repo, ".coding-agents", "runner.md");
+    writeFileSync(
+      runnerPath,
+      runner.replace(/^- acceptance_characteristics:.*\n/gm, ""),
+      "utf8",
+    );
+    const invalid = runCli(["verify-assignments", "--target-cwd", repo]);
+    assert.notEqual(invalid.status, 0);
+    assert.match(invalid.stdout, /model-neutral job routing runner packet fields: .*acceptance_characteristics/);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("job routing rejects unknown levels and model or reasoning selection before runner writes", () => {
+  const repo = makeTempGitRepo();
+  try {
+    intake(repo, { taskId: "routing-boundary", epoch: "e1", scope: "README.md" });
+    const base = [
+      "assign",
+      "--target-cwd",
+      repo,
+      "--role",
+      "Implementer",
+      "--task-id",
+      "routing-boundary",
+      "--epoch",
+      "e1",
+      "--scope",
+      "README.md",
+      "--required-capabilities",
+      "Node ESM CLI",
+      "--ambiguity",
+      "medium",
+      "--consequence",
+      "high",
+      "--coupling",
+      "high",
+      "--acceptance-characteristics",
+      "The focused primary path succeeds with explicit routing inputs.",
+      "--assignment",
+      "record an assignment",
+      "--expected-output",
+      "assignment packet",
+    ];
+    for (const args of [
+      base.map((value) => value === "medium" ? "unknown" : value),
+      [...base, "--model", "named-worker-model"],
+      [...base, "--reasoning-effort", "named-effort"],
+    ]) {
+      const rejected = runCli(args, { jobRouting: false });
+      assert.notEqual(rejected.status, 0);
+    }
+    assert.equal(existsSync(path.join(repo, ".coding-agents", "runner.md")), false);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("pre-contract modern runner packets remain readable only before the explicit routing boundary", () => {
+  const repo = makeTempGitRepo();
+  try {
+    intake(repo, { taskId: "routing-pre-contract", epoch: "e1", scope: "README.md" });
+    const historical = modernRunnerPacket("routing-pre-contract");
+    assert.match(historical, /2026-06-13T00:00:00\.000Z/);
+    assert.doesNotMatch(historical, /job_routing_contract_version|required_capabilities|acceptance_characteristics/);
+    writeFileSync(path.join(repo, ".coding-agents", "runner.md"), historical, "utf8");
+    const verified = runCli(["verify-assignments", "--target-cwd", repo]);
+    assert.equal(verified.status, 0, verified.stdout + verified.stderr);
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
@@ -1993,7 +2169,10 @@ function makeTempGitRepo() {
 }
 
 function runCli(args, options = {}) {
-  return spawnSync(process.execPath, [CLI, ...args], {
+  const commandArgs = ["assign", "run", "orchestrate"].includes(args[0]) && options.jobRouting !== false
+    ? [...args, ...jobRoutingArgs()]
+    : args;
+  return spawnSync(process.execPath, [CLI, ...commandArgs], {
     cwd: options.cwd || REPO_ROOT,
     env: options.env || process.env,
     encoding: "utf8",

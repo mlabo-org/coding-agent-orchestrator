@@ -15,6 +15,18 @@ const RETIRED_LIFECYCLE_ARGS = [
   "completed_retire",
 ];
 const CONTINUATION_LIFECYCLE_ARGS = ["--lifecycle-disposition", "continuation_expected"];
+const JOB_ROUTING_ARGS = [
+  "--required-capabilities",
+  "Node ESM CLI state contracts and focused black-box verification",
+  "--ambiguity",
+  "medium",
+  "--consequence",
+  "high",
+  "--coupling",
+  "high",
+  "--acceptance-characteristics",
+  "The scoped packet preserves metacognitive and model-neutral routing contracts.",
+];
 
 const META_ARGS = [
   "--expected-outcome",
@@ -1748,7 +1760,10 @@ function makeTempGitRepo() {
 }
 
 function runCli(args, options = {}) {
-  const commandArgs = withCollectLifecycle(args);
+  const routingArgs = ["assign", "run", "orchestrate"].includes(args[0])
+    ? [...args, ...JOB_ROUTING_ARGS]
+    : args;
+  const commandArgs = withCollectLifecycle(routingArgs);
   return spawnSync(process.execPath, [CLI, ...commandArgs], {
     cwd: options.cwd || REPO_ROOT,
     env: options.env || process.env,

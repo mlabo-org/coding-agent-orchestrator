@@ -6,7 +6,7 @@ behavior. It is not workflow state and must not be treated as a generated
 
 ## Confirmed Boundary
 
-Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
+Items 1-13 are Coding Agents self changes. Item 14 is external legacy cleanup.
 
 1. State directory
    - Coding Agents runtime/workflow state belongs under `<git-root>/.coding-agents/`.
@@ -104,7 +104,34 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
    - The parent retains policy, cancellation judgment, replacement assignment,
      final result acceptance, and final integration.
 
-6. Global delivery mode inheritance
+6. Model-neutral official-subagent job routing
+   - Coding Agents owns complete durable job requirements, not worker-profile
+     selection. Every modern assignment and record-only orchestration packet
+     records `job_routing_contract_version: model_neutral_job_v1`, non-empty
+     `required_capabilities`, one of `low`, `medium`, or `high` for each of
+     `ambiguity`, `consequence`, and `coupling`, and non-empty
+     `acceptance_characteristics`.
+   - `assign`, `run`, and `orchestrate` require explicit
+     `--required-capabilities`, `--ambiguity`, `--consequence`, `--coupling`,
+     and `--acceptance-characteristics` before any runner write. The CLI must
+     reject model/reasoning selection flags and must not infer routing defaults
+     or add a compatibility wrapper.
+   - Fresh intake records the routing contract and its activation boundary in
+     generated state. Modern scaffold and handoff material state the required
+     fields. Historical runner packets remain readable only when the executable
+     pre-contract boundary proves that they predate activation; normalization
+     must not synthesize missing job characteristics.
+   - Root Sol exclusively selects the actual worker model and reasoning effort
+     from the exposed official spawn surface at spawn time. Coding Agents,
+     delivery mode, feature profile, role, and prior worker profile do not make
+     or constrain that choice.
+   - A worker may return a blocked or failed result with concrete evidence, but
+     it must not select a successor. Root Sol classifies the cause and may
+     reassign only the affected scope at a higher sufficient profile or take
+     ownership. An accepted successful result does not trigger a stronger-profile
+     review or an automatic repair loop.
+
+7. Global delivery mode inheritance
    - All coding/source work defaults to `ITERATIVE_DELIVERY`. Its first
      acceptance candidate must integrate every known requirement in the declared
      slice, run the primary path end to end, pass minimum relevant smoke
@@ -125,7 +152,7 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
      receive exhaustive context-impact completion requirements merely because
      source is edited.
 
-7. Debugging integrity
+8. Debugging integrity
    - Debug or repair work is complete only when the root cause is identified,
      fixed, and verified against the intended outcome.
    - Bug analysis must start from first principles: expected outcome, actual
@@ -146,7 +173,7 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
      debugging integrity gate. Validation must not be weakened to accept stale
      state; use an explicit normalization command or regenerate intake state.
 
-8. Meta-Cognitive Debug/Repair Gate
+9. Meta-Cognitive Debug/Repair Gate
    - Observed debug, repair, source-of-truth correction, plugin-contract correction,
      generated-artifact inconsistency investigation, generated state versus
      source mismatch, cache/runtime versus source mismatch, and stale contract
@@ -172,7 +199,7 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
      inside the active scope, the skipped checks, reason, remaining risk, and
      next investigation must be recorded instead of treating the gate as passed.
 
-9. Coding Conduct Gate
+10. Coding Conduct Gate
    - Coding and debug work must carry a machine-visible Coding Conduct Gate in
      the shared assignment scaffold contract, every dispatched assignment and
      runner packet, handoff material, and validation for modern workflow state.
@@ -197,7 +224,7 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
      not completion, and must leave the failing main flow and removal condition
      visible.
 
-10. Worker-result collection and task finalization
+11. Worker-result collection and task finalization
    - `collect` records a `worker-result-collection` packet plus its
      workflow-state-only lifecycle disposition. Completed collection does not
      require complete task-wide D-*/C-*/source-spec coverage, and multiple
@@ -229,7 +256,7 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
      validation, and the strict lifecycle rules remain attached to modern
      worker-result collections rather than task-finalization packets.
 
-11. Nested Coding Agents preflight suppression
+12. Nested Coding Agents preflight suppression
    - Parent-managed child workers operate under a Coding Agents assignment that
      the parent already selected.
    - Generated assignments, runner packets, and handoff material
@@ -246,7 +273,7 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
      contract. They cannot broaden scope, depth, permissions, or cancellation
      authority.
 
-12. Same-repository sequential tasks
+13. Same-repository sequential tasks
    - A completed user-visible task, a `task-finalization` packet, or
      `state_retired` worker contexts must never lock the repository or forbid a
      later Coding Agents task.
@@ -275,7 +302,7 @@ Items 1-11 are Coding Agents self changes. Item 12 is external legacy cleanup.
    - The skill invocation policy must permit model-visible natural-language
      routing; structured `$coding-agents` invocation remains available.
 
-13. Legacy migration and cleanup
+14. Legacy migration and cleanup
    - Existing legacy locations are cleaned through an explicit migration workflow,
      not by silent deletion or broad automatic rewriting.
    - The migration workflow must perform a preflight backup before destructive or
@@ -305,15 +332,17 @@ Future implementation work should preserve this split:
   target repository's generated `.coding-agents/` state. Running the source CLI
   from the plugin repository does not make the plugin repository the state owner
   when `--target-cwd` or an explicit target points elsewhere.
-- Generated job state must preserve nested Coding Agents preflight suppression,
-  finite delegation depth, subagent supervision and cancellation rules through
-  one shared scaffold contract plus complete dispatched packet fields,
+- Generated job state must preserve model-neutral `model_neutral_job_v1`
+  requirements with root-Sol-only spawn-time worker selection, nested Coding
+  Agents preflight suppression, finite delegation depth, subagent supervision
+  and cancellation rules through one shared scaffold contract plus complete
+  dispatched packet fields,
   workflow-state lifecycle disposition without runtime-thread closure claims,
   concise worker-result and result-reference rules, parent-owned task
   finalization with typed Contract Coverage, the Coding Conduct Gate, debug
   root-cause completion requirements, and metacognitive context-impact checks
   for evidence-backed or explicit one-shot gate-required work, plus the exact
-  inherited delivery mode.
+  recorded delivery mode.
 - Stale generated state must be normalized explicitly before verification is
   treated as current.
 - Legacy cleanup work may inspect external target repositories but must remain

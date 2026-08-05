@@ -4,16 +4,17 @@
   "capability_id": "coding-agents",
   "official_creator": "plugin-creator",
   "routing": {
-    "task_class": "Coding Agents state-first continuation, semantic new-task intake, iterative delivery or explicit task-local one-shot planning, evidence-bound capability repair handoff, state audit, and source CLI repair",
+    "task_class": "Coding Agents state-first continuation, semantic new-task intake, model-neutral official-subagent job-contract recording, iterative delivery or explicit task-local one-shot planning, evidence-bound capability repair handoff, state audit, and source CLI repair",
     "natural_language_triggers": [
       "Coding Agents",
       "coding-agents",
       "continue this same repository with a new purpose",
       "the next stage in this repo",
+      "record model-neutral worker routing requirements",
       "repair this capability improvement proposal",
       "continue, audit, or repair .coding-agents state"
     ],
-    "primary_route": "Use Coding Agents when named or when valid .coding-agents state is paired with strong continuation intent. Inspect active state and completion flags first, semantically preserve and append related progress, and use fresh task_id/epoch/scope only for clearly unrelated work without asking the user for a routine mode. Default coding/source work to ITERATIVE_DELIVERY, which prioritizes a runnable primary-path release and evidence-driven repair. Select non-sticky ONE_SHOT_QUALITY only from an explicit current-task user request and record typed one-shot authority. For a validated source-local capability-improvement proposal, pass its typed artifact reference through intake --evidence-ref. Preserve runner history and dispatch actual workers only through official Codex subagent spawn tools.",
+    "primary_route": "Use Coding Agents when named or when valid .coding-agents state is paired with strong continuation intent. Inspect active state and completion flags first, preserve and append related progress, and use fresh task_id/epoch/scope only for clearly unrelated work without asking the user for a routine mode. Record modern official-subagent jobs as model_neutral_job_v1 requirements: required capabilities plus ambiguity, consequence, coupling, and acceptance characteristics. Root Sol exclusively selects the actual worker model and reasoning effort at official spawn time, classifies blocker or failure causes, and may reassign only the affected scope at a higher sufficient profile or take ownership. Default coding/source work to ITERATIVE_DELIVERY and select non-sticky ONE_SHOT_QUALITY only from an explicit current-task user request. Preserve runner history; the CLI never dispatches a worker, infers a worker profile, or creates an automatic review or repair loop.",
     "fallback_conditions": [
       "When official Codex subagent tools are unavailable, keep execution in the parent thread and do not launch a CLI process runner."
     ],
@@ -26,11 +27,13 @@
         "same-repo continuation",
         "new-task intake",
         "semantic state triage",
+        "model-neutral subagent job contract",
         "capability improvement handoff"
       ],
       "trigger_phrases": [
         "strong continuation intent",
         "resume related work",
+        "root Sol worker routing",
         "audit or repair"
       ],
       "artifact_or_tool_terms": [
@@ -38,6 +41,7 @@
         "task_id",
         "epoch",
         "runner.md",
+        "model_neutral_job_v1",
         "evidence_ref"
       ],
       "aliases": [
@@ -52,8 +56,8 @@
           "document": {
             "interface": {
               "display_name": "Coding Agents",
-              "short_description": "State-first Coding Agents continuation",
-              "default_prompt": "Use $coding-agents to inspect this valid .coding-agents state, semantically resume related work with completed progress preserved, use fresh intake only for clearly unrelated work without asking me for a mode, and default coding/source work to ITERATIVE_DELIVERY; use task-local ONE_SHOT_QUALITY only when I explicitly requested it."
+              "short_description": "State-first tasks and model-neutral worker contracts",
+              "default_prompt": "Use $coding-agents to inspect state first, preserve related progress, and record model-neutral jobs for root Sol to route at spawn time."
             },
             "policy": {
               "allow_implicit_invocation": true
@@ -73,6 +77,10 @@
       "description": "The target Git worktree plus task_id, epoch, scope, delivery mode, optional task-local one-shot authority, and optional work type or assignment overlay."
     },
     {
+      "name": "Model-neutral job routing requirements",
+      "description": "Required capabilities, low/medium/high ambiguity, consequence, and coupling characteristics, plus acceptance characteristics; no model name or reasoning-effort value is accepted or persisted."
+    },
+    {
       "name": "Optional typed evidence reference",
       "description": "One Coding Agents-compatible typed reference, such as a source-local capability-improvement proposal, propagated into standard intake state without granting repair or dispatch authority."
     }
@@ -80,11 +88,11 @@
   "outputs": [
     {
       "name": "Workflow-state packets",
-      "description": "Validated .coding-agents intake, compact shared-contract scaffold, assignment, collection, finalization, orchestration-skeleton, audit, and handoff records carrying the inherited delivery mode."
+      "description": "Validated .coding-agents intake, compact shared-contract scaffold, model-neutral assignment, collection, finalization, orchestration-skeleton, audit, and handoff records carrying the recorded delivery mode."
     },
     {
       "name": "Official subagent dispatch boundary",
-      "description": "Actual workers are dispatched only through official Codex subagent spawn tools; the CLI emits no Codex child process."
+      "description": "Actual workers are dispatched only through official Codex subagent spawn tools. Root Sol selects model and reasoning effort at spawn time and owns cause-bound affected-scope reassignment or ownership transfer; the CLI emits no Codex child process and workers do not choose successors."
     },
     {
       "name": "Evidence-linked standard state",
@@ -101,6 +109,7 @@
       ],
       "covers": [
         "official-spawn-only",
+        "model-neutral-worker-routing",
         "workflow-state-preserved",
         "capability-improvement-evidence-link",
         "semantic-state-triage",
@@ -153,6 +162,19 @@
         "description": "The source CLI records assignments and orchestration skeletons but never launches Codex workers; actual dispatch uses only official Codex subagent spawn tools.",
         "enforcement_points": [
           "bin/coding-agents.mjs"
+        ],
+        "tests": [
+          "tests/routing-metadata.test.mjs",
+          "tests/workflow-state.test.mjs"
+        ]
+      },
+      {
+        "id": "model-neutral-worker-routing",
+        "description": "Modern assignment and record-only orchestration packets require model_neutral_job_v1 capabilities, ambiguity, consequence, coupling, and acceptance characteristics; root Sol alone selects model/reasoning at official spawn, classifies blocker/failure causes, and limits any escalation to affected scope without automatic success review or repair loops.",
+        "enforcement_points": [
+          "bin/coding-agents.mjs",
+          "skills/coding-agents/SKILL.md",
+          "docs/specs/coding-agents-self-change-spec.md"
         ],
         "tests": [
           "tests/routing-metadata.test.mjs",
