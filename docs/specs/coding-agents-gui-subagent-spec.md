@@ -6,7 +6,9 @@ This is the active Coding Agents design. Its purpose is to minimize wall-clock t
 
 Coding Agents operates only inside the parent GUI Codex task through official collaboration tools. There is no CLI, script, external executable, child Codex session, or hidden automation route for delegation, coordination, state management, or acceptance.
 
-The workflow activates only when the user explicitly selects `Coding Agents` or invokes `$coding-agents`. Generic coding, a generic subagent request, repository contents, and `.coding-agents/` state do not activate it. Continuation is permitted only within an already active, explicitly selected Coding Agents task.
+The workflow activates for a coding objective only when the user directly invokes `$coding-agents`, explicitly selects the bundled Coding Agents skill, or selects the Coding Agents plugin and explicitly requests the Coding Agents workflow. A bare plugin attachment, plugin inspection, discovery question, troubleshooting request, generic coding request, generic subagent request, repository contents, and `.coding-agents/` state do not activate it. Continuation is permitted only within an already active, explicitly selected Coding Agents task.
+
+The bundled skill keeps `policy.allow_implicit_invocation: false`. Its absence from ordinary model skill context is therefore intentional and preserves the explicit-only activation boundary; it is not evidence of source/cache drift.
 
 If the official collaboration surface is unavailable, the parent stops the affected workflow and reports the missing capability. It does not emulate delegation by another route.
 

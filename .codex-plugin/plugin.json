@@ -1,7 +1,7 @@
 {
   "name": "coding-agents",
-  "version": "0.1.0",
-  "description": "Minimize coding time-to-completion in GUI Codex through official subagents. Trigger only when the user explicitly names Coding Agents or invokes $coding-agents; continuation is limited to that active workflow. Generic subagent coordination and .coding-agents presence do not trigger it.",
+  "version": "0.1.0+codex.20260811195749",
+  "description": "Explicit-only GUI Codex coding coordination with official subagents. Activate for a coding objective only through $coding-agents, explicit bundled-skill selection, or explicit use of the selected Coding Agents plugin; bare plugin attachment, generic subagent requests, and .coding-agents presence do not activate it.",
   "homepage": "https://github.com/mlabo-org/coding-agents#readme",
   "repository": "https://github.com/mlabo-org/coding-agents",
   "license": "MIT",
@@ -20,7 +20,7 @@
   ],
   "interface": {
     "displayName": "Coding Agents",
-    "shortDescription": "Faster GUI coding with official subagents.",
+    "shortDescription": "Explicit GUI coding with official subagents.",
     "longDescription": "Coding Agents minimizes total coding wall-clock time by mapping dependencies and the critical path before the parent GUI Codex task dispatches work. Ready, independent, sufficiently large responsibilities whose benefit exceeds coordination and integration cost start in the same parallel wave without serial delay. Tightly coupled, dependency-blocked, overlapping, or too-small work stays parent-owned or ordered. The parent retains decomposition, authority, safety, worker routing, conflict resolution, integration, acceptance, and final reporting; each worker owns one exclusive complete output. State and verification remain minimal implementation support.",
     "developerName": "Makoto Suzuki",
     "category": "Developer Tools",
@@ -36,9 +36,9 @@
       "Optional Task Continuity"
     ],
     "defaultPrompt": [
-      "Use Coding Agents explicitly: map dependencies and the critical path, then spawn ready independent work in one parallel wave.",
-      "Use $coding-agents explicitly to minimize time-to-completion, not agent count; keep tightly coupled work parent-owned.",
-      "Continue this Coding Agents workflow with parent integration, exclusive worker outputs, and minimal state and verification."
+      "Use $coding-agents for this coding objective: map dependencies and the critical path, then parallelize ready independent work.",
+      "Use $coding-agents to minimize time-to-completion, not agent count; keep tightly coupled work parent-owned.",
+      "Continue the active $coding-agents workflow with parent integration, exclusive worker outputs, and minimal verification."
     ],
     "brandColor": "#2563EB"
   },

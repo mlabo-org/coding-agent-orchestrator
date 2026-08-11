@@ -6,7 +6,9 @@ There is no CLI, script, child session, external executable, or hidden automatio
 
 ## When To Use It
 
-Invoke `$coding-agents` only when you explicitly want this workflow. It is not selected for ordinary coding, a generic request for subagents, an explanation, a review, or merely because `.coding-agents/` exists. Once explicitly selected, it may continue within that active Coding Agents task.
+Activate the workflow for a coding objective by invoking `$coding-agents`, explicitly selecting the bundled Coding Agents skill, or selecting the Coding Agents plugin and explicitly asking it to use the Coding Agents workflow. A bare plugin attachment, plugin inspection, discovery question, or troubleshooting request does not activate the coding workflow.
+
+The bundled skill intentionally sets `allow_implicit_invocation: false`, so it is not injected into the model's ordinary skill context. This preserves the explicit-only boundary; direct skill invocation or an explicit Coding Agents coding request through the selected plugin is required. Once activated, the workflow may continue within that active Coding Agents task. Ordinary coding, a generic request for subagents, an explanation, a review, and `.coding-agents/` presence do not activate it.
 
 ## The Scheduling Goal
 

@@ -1,7 +1,7 @@
 ---
 name: coding-agents
 description: >-
-  Coordinate coding work in GUI Codex with official subagents to minimize total time-to-completion. Trigger only when the user explicitly names Coding Agents or invokes $coding-agents; continuation is limited to that active workflow. Generic subagent requests and .coding-agents presence never trigger.
+  Run explicit-only Coding Agents coordination in GUI Codex with official subagents. Trigger via $coding-agents, bundled-skill selection, or explicit use of the selected plugin for coding; bare attachment, generic subagent requests, and .coding-agents presence do not trigger.
 ---
 
 # Coding Agents
@@ -14,7 +14,9 @@ This file does not override system instructions, developer instructions, explici
 
 Use Coding Agents to minimize total wall-clock time for coding work by giving bounded responsibilities to official GUI Codex subagents while the parent retains task control and integration. Optimize time-to-completion, not agent count.
 
-Select this skill only when the user explicitly names `Coding Agents` or invokes `$coding-agents` in the current workflow. After that explicit selection, a continuation request may proceed inside the same active workflow without repeating the name.
+Select this skill only for a coding objective when the current request directly invokes `$coding-agents`, explicitly selects the bundled Coding Agents skill, or selects the Coding Agents plugin and explicitly asks to use the Coding Agents workflow. A bare plugin attachment, plugin inspection, discovery question, or troubleshooting request does not activate the coding workflow.
+
+Treat `policy.allow_implicit_invocation: false` as intentional. The skill is not injected for ordinary prompts; direct skill invocation or an explicit Coding Agents coding request through the selected plugin is required. After activation, a continuation request may proceed inside the same active workflow without repeating the name.
 
 Do not select it for generic coding, debugging, review, explanation, subagent decomposition, multi-agent coordination, team coordination, or continuation outside an already active explicitly selected Coding Agents workflow. Never infer activation from repository contents or the presence of `.coding-agents/`.
 

@@ -6,18 +6,19 @@
   "routing": {
     "task_class": "Explicitly selected GUI Codex coding coordination that minimizes total wall-clock time through dependency-aware official-subagent waves, parent integration, and optional task continuity",
     "natural_language_triggers": [
-      "Coding Agents",
       "$coding-agents",
-      "coding-agents",
-      "Use Coding Agents",
+      "select the bundled Coding Agents skill",
+      "Use the selected Coding Agents plugin for this coding objective",
+      "Use Coding Agents for this coding objective",
       "continue this already active Coding Agents workflow"
     ],
-    "primary_route": "After the user explicitly names Coding Agents or invokes $coding-agents, the parent maps dependencies, the critical path, readiness, concurrency, and coordination or integration cost. It spawns every ready, independent, sufficiently large responsibility in the same parallel wave when doing so reduces total time-to-completion; tightly coupled, dependency-blocked, overlapping, or too-small work remains parent-owned or ordered. The parent retains authority, safety, conflicts, integration, and acceptance. Continuation without repeating the name is limited to that active workflow.",
+    "primary_route": "For a coding objective, activate only after the user directly invokes $coding-agents, explicitly selects the bundled Coding Agents skill, or selects the Coding Agents plugin and explicitly requests the Coding Agents workflow. The parent then maps dependencies, the critical path, readiness, concurrency, and coordination or integration cost. It spawns every ready, independent, sufficiently large responsibility in the same parallel wave when doing so reduces total time-to-completion; tightly coupled, dependency-blocked, overlapping, or too-small work remains parent-owned or ordered. The parent retains authority, safety, conflicts, integration, and acceptance. Continuation without repeating the name is limited to that active workflow.",
     "fallback_conditions": [
       "When official collaboration tools are unavailable, stop this workflow and report the unavailable boundary without emulating delegation."
     ],
     "non_use_conditions": [
-      "Do not select Coding Agents for generic coding, debugging, review, explanation, subagent decomposition, multi-agent coordination, or team coordination without explicit Coding Agents naming.",
+      "Do not treat a bare Coding Agents plugin attachment, plugin inspection, discovery question, or troubleshooting request as activation of the coding workflow.",
+      "Do not select Coding Agents for generic coding, debugging, review, explanation, subagent decomposition, multi-agent coordination, or team coordination without explicit workflow selection for a coding objective.",
       "Do not select Coding Agents from .coding-agents directory presence or prior state alone.",
       "Do not treat a continuation outside an already active explicitly selected Coding Agents workflow as a trigger."
     ],
@@ -30,8 +31,8 @@
         "Coding Agents parent integration"
       ],
       "trigger_phrases": [
-        "use Coding Agents",
-        "Use Coding Agents to split across subagents",
+        "Use the selected Coding Agents plugin for this coding objective",
+        "Select the bundled Coding Agents skill",
         "Use $coding-agents to coordinate coding workers"
       ],
       "artifact_or_tool_terms": [
@@ -55,8 +56,8 @@
           "document": {
             "interface": {
               "display_name": "Coding Agents",
-              "short_description": "Faster GUI coding with official subagents",
-              "default_prompt": "Use $coding-agents explicitly to minimize time-to-completion: map dependencies and the critical path, spawn ready independent work in the same parallel wave, and keep parent control of integration."
+              "short_description": "Explicit GUI coding with official subagents",
+              "default_prompt": "Use the bundled $coding-agents skill for this coding objective: map dependencies and the critical path, spawn ready independent work in the same parallel wave, and keep parent control of integration."
             },
             "policy": {
               "allow_implicit_invocation": false
