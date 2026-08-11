@@ -1,56 +1,52 @@
 # Coding Agents
 
-Coding Agents is a GUI Codex plugin for coordinating coding work with official subagents. The parent task decomposes the outcome, dispatches bounded responsibilities, integrates completed worker outputs, and makes the final acceptance decision.
+Coding Agents is a GUI Codex plugin for minimizing the wall-clock time to complete a coding objective through dependency-aware delegation to official GUI subagents. It has exactly one operating path: the parent GUI Codex task uses its official collaboration tools directly.
 
-Coding Agents has one operating path: the official collaboration tools exposed to the parent GUI Codex task.
+There is no CLI, script, child session, external executable, or hidden automation path. If the official collaboration tools are unavailable, Coding Agents stops and reports that boundary.
 
-## What It Owns
+## When To Use It
 
-The parent owns decomposition, task-control decisions, authority and safety, worker model and reasoning selection, conflict resolution, integration, acceptance, and final reporting.
+Invoke `$coding-agents` only when you explicitly want this workflow. It is not selected for ordinary coding, a generic request for subagents, an explanation, a review, or merely because `.coding-agents/` exists. Once explicitly selected, it may continue within that active Coding Agents task.
 
-Each worker owns one bounded independent output end to end. A worker receives exact source ownership, authoritative inputs, expected completed output, allowed and forbidden actions, stop conditions, acceptance evidence, and a finite descendant-delegation boundary. It returns concise integration material instead of an internal transcript.
+## The Scheduling Goal
 
-Coding Agents creates worker boundaries only for bounded, independently completable responsibilities. Tightly coupled policy and integration decisions remain with the parent, and the plugin does not preallocate a roster.
+The parent optimizes time to a complete integrated result, not worker count or a formal-looking division of work. Before it delegates, it evaluates:
 
-## Typical Use
+- the dependency graph and its critical path;
+- which work is ready now;
+- whether each ready responsibility is independent and has exclusive ownership; and
+- whether the expected time saved exceeds coordination and integration cost.
 
-Invoke `$coding-agents` when you want Codex to:
+Ready responsibilities that are independent and expected to reduce elapsed time are spawned immediately in the same parallel wave. Work that is tightly coupled, too small to repay its coordination cost, or blocked by an unfinished dependency stays with the parent or runs in dependency order. Available worker slots never justify artificial splitting or a fixed roster.
 
-- split a coding objective into independent repository responsibilities;
-- dispatch those responsibilities directly through official subagents;
-- integrate results without overlapping file ownership; or
-- continue a prior Coding Agents task from useful context.
+## Ownership And Safe Parallelism
 
-Ordinary single-owner edits, explanations, and reviews do not need this plugin. The existence of `.coding-agents/` by itself does not activate it.
+The parent owns the user-visible outcome, declared slice, dependency and critical-path analysis, delegation decisions, authority and safety, worker-profile choices, conflict avoidance and resolution, integration, the one task-level acceptance decision, optional continuity, and final reporting.
+
+Each worker owns one independently completable output end to end. Before spawning it, the parent provides an exact source or artifact scope with exclusive ownership, authoritative inputs, a complete expected output, stop conditions, allowed and forbidden actions, and acceptance evidence. Workers return a complete first handoff with concise integration notes; they do not alter another worker's scope, broaden policy, choose successors, or claim task-wide completion.
+
+The plugin never creates workers solely to validate, review, or format records. It does not assign fixed roles, duplicate work, run candidate tournaments, or recheck a successful result. The parent keeps tightly coupled policy and integration decisions, preventing ownership overlap before work begins.
 
 ## Execution Shape
 
-1. The parent resolves the repository, applicable instructions, source boundaries, current Git state, requested outcome, and prior continuity material.
-2. It models human responsibility boundaries and keeps task-control and integration decisions in the parent.
-3. It dispatches selected bounded responsibilities directly through the official collaboration surface.
-4. Workers return complete bounded outputs with evidence and short integration notes.
-5. The parent integrates against authoritative inputs, resolves conflicts, and performs one task-sized semantic acceptance bundle.
-6. A successful bundle ends verification and produces the user handoff. A concrete failure returns only the affected scope to the responsible owner.
+1. The parent resolves the requested outcome, repository, applicable instructions, source boundaries, current Git state, and any useful continuity context.
+2. It models the dependency graph, identifies the critical path and ready work, and compares expected elapsed-time savings with coordination and integration cost.
+3. It immediately spawns the independent, exclusive-ownership ready work that shortens completion time in one parallel wave. It retains or sequences the rest.
+4. Workers produce their complete bounded responsibilities through official GUI collaboration tools only.
+5. The parent integrates outputs once their dependencies are satisfied and resolves only real integration boundaries.
+6. The declared slice uses one semantic acceptance bundle. When it passes, verification ends and the parent hands off the result. An observed defect returns only the affected scope to its responsible owner.
 
-The normal successful path has no candidate tournament, critique-to-rewrite cycle, stronger-worker recheck, or validator-driven completion. Known quality belongs in each producer's first handoff.
+Known requirements belong in each producer's first handoff. The normal path has no draft-to-critique-to-rewrite loop, validator-driven completion, automatic repair, stronger-worker double-check, or post-success review.
 
-## Optional Continuity
+## Minimal Continuity State
 
-The GUI task is the live coordination surface. File-backed state is optional and useful only for a genuine pause, handoff, or later continuation.
+The GUI task is the live coordination surface. A concise `.coding-agents/context.md` is optional and used only for a real pause, handoff, or later continuation. It may record the current outcome and scope, accepted decisions, completed work, remaining dependencies, worker outcomes, blockers, and a safe resume point. It is not a required protocol, workflow state machine, or acceptance gate.
 
-When persistence materially helps, the parent may maintain a concise `.coding-agents/context.md` containing the current outcome, scope, decisions, completed work, remaining dependencies, worker outcomes, blockers, and safe resume point. This file is a memory aid, not a protocol, required schema, or acceptance gate. Existing state is interpreted semantically; stale fields do not create compatibility obligations.
-
-Generated local state stays outside tracked source unless the user explicitly requests repository-owned documentation. Tracked ignore policy is not changed implicitly.
+Generated local state remains outside tracked source unless the user explicitly asks for repository-owned documentation. Coding Agents does not implicitly change ignore policy.
 
 ## Source, Cache, Activation, And Git
 
-This repository is the authoritative plugin source. Installed cache copies are runtime artifacts and are not edited as source. Source editing, cache refresh, activation, publication, commit, and push are separate actions; perform only the actions the current user request authorizes.
-
-Changing source does not prove installed activation. Activation, when requested, follows the source-first plugin refresh boundary and may require a fresh Codex task.
-
-## Availability Boundary
-
-If official collaboration tools are unavailable, Coding Agents stops and reports that boundary. It does not substitute external executables, scripts, child sessions, or hidden automation.
+This repository is the authoritative plugin source. Installed cache copies are runtime artifacts, not source. Source editing, refresh, activation, publication, commit, and push are separate actions and occur only with current authority. Source completion does not prove installed activation.
 
 ## License
 

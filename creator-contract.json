@@ -4,7 +4,7 @@
   "capability_id": "coding-agents",
   "official_creator": "plugin-creator",
   "routing": {
-    "task_class": "GUI Codex coding-task decomposition, official-subagent coordination, parent integration, and optional task continuity",
+    "task_class": "Explicitly selected GUI Codex coding coordination that minimizes total wall-clock time through dependency-aware official-subagent waves, parent integration, and optional task continuity",
     "natural_language_triggers": [
       "Coding Agents",
       "$coding-agents",
@@ -12,7 +12,7 @@
       "Use Coding Agents",
       "continue this already active Coding Agents workflow"
     ],
-    "primary_route": "After the user explicitly names Coding Agents or invokes $coding-agents, the parent GUI Codex task decomposes the requested outcome, retains task control and integration decisions, dispatches bounded responsibilities directly through official collaboration tools, and integrates concise complete worker outputs. Continuation without repeating the name is limited to that already active workflow.",
+    "primary_route": "After the user explicitly names Coding Agents or invokes $coding-agents, the parent maps dependencies, the critical path, readiness, concurrency, and coordination or integration cost. It spawns every ready, independent, sufficiently large responsibility in the same parallel wave when doing so reduces total time-to-completion; tightly coupled, dependency-blocked, overlapping, or too-small work remains parent-owned or ordered. The parent retains authority, safety, conflicts, integration, and acceptance. Continuation without repeating the name is limited to that active workflow.",
     "fallback_conditions": [
       "When official collaboration tools are unavailable, stop this workflow and report the unavailable boundary without emulating delegation."
     ],
@@ -23,11 +23,11 @@
     ],
     "discovery": {
       "task_terms": [
-        "GUI Codex",
-        "coding task decomposition",
-        "official subagents",
-        "parent integration",
-        "task continuity"
+        "Coding Agents GUI Codex",
+        "Coding Agents critical path",
+        "$coding-agents parallel wave",
+        "Coding Agents wall-clock optimization",
+        "Coding Agents parent integration"
       ],
       "trigger_phrases": [
         "use Coding Agents",
@@ -55,8 +55,8 @@
           "document": {
             "interface": {
               "display_name": "Coding Agents",
-              "short_description": "GUI coding coordination with official subagents",
-              "default_prompt": "Use $coding-agents explicitly to decompose this coding task, dispatch bounded work through official subagents, preserve parent control, and integrate the result."
+              "short_description": "Faster GUI coding with official subagents",
+              "default_prompt": "Use $coding-agents explicitly to minimize time-to-completion: map dependencies and the critical path, spawn ready independent work in the same parallel wave, and keep parent control of integration."
             },
             "policy": {
               "allow_implicit_invocation": false
@@ -72,8 +72,8 @@
       "description": "The user-visible coding result, target repository, applicable instructions, authority boundary, and current source state."
     },
     {
-      "name": "Responsibility and ownership map",
-      "description": "Bounded responsibilities, dependencies, exclusive source ownership, and the parent integration boundary."
+      "name": "Scheduling and ownership map",
+      "description": "Bounded responsibilities, dependencies, critical path, readiness, expected duration, simultaneous-execution safety, coordination and integration cost, exclusive source ownership, and the parent integration boundary."
     },
     {
       "name": "Worker job characteristics",
@@ -86,8 +86,8 @@
   ],
   "outputs": [
     {
-      "name": "Official-subagent work",
-      "description": "Bounded worker jobs dispatched directly by the parent through the official GUI collaboration surface."
+      "name": "Time-saving official-subagent waves",
+      "description": "Ready, independent, sufficiently large worker jobs dispatched without serial delay in the same wave when their expected elapsed-time saving exceeds coordination and integration cost."
     },
     {
       "name": "Integrated coding result",
@@ -115,6 +115,8 @@
   "workflow_contract": {
     "parent_owner": [
       "decomposition",
+      "dependency graph and critical path",
+      "parallel-wave scheduling",
       "task-control decisions",
       "authority and safety",
       "worker model and reasoning routing",
@@ -129,6 +131,8 @@
       "acceptance evidence for the owned output",
       "concise integration material"
     ],
+    "scheduling_rule": "Minimize total time-to-completion rather than agent count. Spawn all ready independent work in the same wave only when each responsibility is large enough to save real elapsed time after coordination and integration cost; keep tightly coupled, blocked, overlapping, or too-small work parent-owned or ordered.",
+    "non_role_rule": "Do not create validator-only, reviewer-only, state-formatting, or duplicate-investigation roles. State and verification remain the minimum support needed for implementation and task acceptance.",
     "acceptance_rule": "Use one task-sized semantic acceptance bundle; success ends verification, and a concrete failure returns only the affected scope to its owner."
   }
 }

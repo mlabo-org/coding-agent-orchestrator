@@ -1,6 +1,6 @@
 interface:
   display_name: "Coding Agents"
-  short_description: "GUI coding coordination with official subagents"
-  default_prompt: "Use $coding-agents explicitly to decompose this coding task, dispatch bounded work through official subagents, preserve parent control, and integrate the result."
+  short_description: "Faster GUI coding with official subagents"
+  default_prompt: "Use $coding-agents explicitly to minimize time-to-completion: map dependencies and the critical path, spawn ready independent work in the same parallel wave, and keep parent control of integration."
 policy:
   allow_implicit_invocation: false

@@ -1,7 +1,7 @@
 {
   "name": "coding-agents",
   "version": "0.1.0",
-  "description": "Coordinate coding work in GUI Codex with official subagents. Trigger only when the user explicitly names Coding Agents or invokes $coding-agents; continuation is allowed only inside that already active workflow. Generic subagent coordination and .coding-agents presence do not trigger it.",
+  "description": "Minimize coding time-to-completion in GUI Codex through official subagents. Trigger only when the user explicitly names Coding Agents or invokes $coding-agents; continuation is limited to that active workflow. Generic subagent coordination and .coding-agents presence do not trigger it.",
   "homepage": "https://github.com/mlabo-org/coding-agents#readme",
   "repository": "https://github.com/mlabo-org/coding-agents",
   "license": "MIT",
@@ -10,6 +10,9 @@
     "coding-agents",
     "gui-codex",
     "official-subagents",
+    "wall-clock-optimization",
+    "critical-path",
+    "parallel-wave",
     "task-decomposition",
     "worker-ownership",
     "multi-agent-integration",
@@ -17,22 +20,25 @@
   ],
   "interface": {
     "displayName": "Coding Agents",
-    "shortDescription": "GUI coding coordination with official subagents.",
-    "longDescription": "Coding Agents lets the parent GUI Codex task decompose coding work and dispatch bounded responsibilities directly to official subagents. The parent retains task control, authority and safety decisions, worker routing, conflict resolution, integration, acceptance, and final reporting. Each worker owns one bounded independent output end to end and returns concise integration material. Optional file-backed state preserves only useful continuity and never controls completion.",
+    "shortDescription": "Faster GUI coding with official subagents.",
+    "longDescription": "Coding Agents minimizes total coding wall-clock time by mapping dependencies and the critical path before the parent GUI Codex task dispatches work. Ready, independent, sufficiently large responsibilities whose benefit exceeds coordination and integration cost start in the same parallel wave without serial delay. Tightly coupled, dependency-blocked, overlapping, or too-small work stays parent-owned or ordered. The parent retains decomposition, authority, safety, worker routing, conflict resolution, integration, acceptance, and final reporting; each worker owns one exclusive complete output. State and verification remain minimal implementation support.",
     "developerName": "Makoto Suzuki",
     "category": "Developer Tools",
     "websiteURL": "https://github.com/mlabo-org/coding-agents",
     "capabilities": [
       "GUI Codex Task Decomposition",
       "Official Subagent Dispatch",
+      "Dependency And Critical-Path Analysis",
+      "Time-Saving Parallel Waves",
+      "Wall-Clock Minimization",
       "Bounded Worker Ownership",
       "Parent Integration",
       "Optional Task Continuity"
     ],
     "defaultPrompt": [
-      "Use Coding Agents explicitly to decompose this coding task and dispatch bounded responsibilities through official subagents.",
-      "Use Coding Agents explicitly; keep parent control, give each worker exclusive scope, and integrate concise completed outputs.",
-      "Continue this active Coding Agents workflow from relevant context; state formatting must not gate completion."
+      "Use Coding Agents explicitly: map dependencies and the critical path, then spawn ready independent work in one parallel wave.",
+      "Use $coding-agents explicitly to minimize time-to-completion, not agent count; keep tightly coupled work parent-owned.",
+      "Continue this Coding Agents workflow with parent integration, exclusive worker outputs, and minimal state and verification."
     ],
     "brandColor": "#2563EB"
   },

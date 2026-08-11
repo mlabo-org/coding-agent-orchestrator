@@ -1,102 +1,96 @@
 # Coding Agents GUI Official-Subagent Specification
 
-This specification defines the active Coding Agents architecture. It replaces the earlier state-machine design rather than preserving compatibility with it.
+This is the active Coding Agents design. Its purpose is to minimize wall-clock time to a complete coding result through dependency-aware parallel delegation, while preserving clear ownership and a single acceptance decision. It replaces earlier state-machine and CLI-assisted designs; no compatibility route is retained.
 
-## 1. Product Boundary
+## 1. Product And Activation Boundary
 
-Coding Agents coordinates coding work inside the parent GUI Codex task. It uses the official collaboration surface for all worker creation, communication, waiting, interruption, and status inspection.
+Coding Agents operates only inside the parent GUI Codex task through official collaboration tools. There is no CLI, script, external executable, child Codex session, or hidden automation route for delegation, coordination, state management, or acceptance.
 
-There is no alternate operating path. External executables, scripts, child Codex sessions, and hidden automation do not perform Coding Agents delegation. If the official collaboration surface is unavailable, the workflow stops and reports the missing capability.
+The workflow activates only when the user explicitly selects `Coding Agents` or invokes `$coding-agents`. Generic coding, a generic subagent request, repository contents, and `.coding-agents/` state do not activate it. Continuation is permitted only within an already active, explicitly selected Coding Agents task.
 
-## 2. Outcome And Ownership
+If the official collaboration surface is unavailable, the parent stops the affected workflow and reports the missing capability. It does not emulate delegation by another route.
 
-The product goal is to coordinate coding work through official subagents without diluting ownership.
+## 2. Scheduling Objective
+
+The scheduling objective is minimum time to a complete integrated outcome, not maximum agent count, utilization, or formal decomposition.
+
+Before any dispatch, the parent evaluates the coding objective as a dependency graph. It identifies the critical path, ready work, exclusive ownership boundaries, and the integration point for each candidate responsibility. For every ready candidate, the parent compares its expected wall-clock savings with its coordination and integration cost.
+
+The dispatch rule is:
+
+1. Spawn all ready responsibilities in the same parallel wave when they are independent, exclusively owned, and expected to reduce total completion time after their coordination and integration cost.
+2. Spawn those responsibilities immediately through the official GUI collaboration surface; do not serialize independent beneficial work to preserve an artificial phase order.
+3. Keep work in the parent, or execute it after its dependencies, when it is tightly coupled, too small to repay coordination cost, dependent on an unfinished result, or would create an ownership conflict.
+
+Worker availability never creates a reason to divide coherent work, create a fixed team, or add a worker whose output does not shorten time to completion.
+
+## 3. Parent And Worker Responsibilities
 
 The parent/root owns:
 
 - the user-visible outcome and declared delivery slice;
-- repository and instruction resolution;
-- decomposition and integration order;
-- authority, safety, scope, and external-effect decisions;
-- decomposition and every official worker-profile choice;
-- conflict resolution and cross-worker integration;
-- task-level acceptance, optional continuity state, and final reporting.
+- repository, instruction, and authoritative-source resolution;
+- the dependency graph, critical-path analysis, ready-work decision, and parallel-wave composition;
+- authority, safety, scope, external-effect decisions, and user consultation;
+- every worker model, reasoning-effort, context-inheritance, and finite descendant-delegation choice;
+- exclusive ownership allocation, conflict avoidance, integration order, and conflict resolution;
+- the task-level semantic acceptance bundle, optional continuity state, and final reporting.
 
-Each worker owns one bounded independent output from authoritative inputs to a complete first handoff. It owns acceptance evidence for that output but not task-wide acceptance. Simultaneous workers never share source ownership.
+Each worker owns one bounded, independently completable output from its authoritative inputs to a complete first handoff. A worker may edit only its exclusive source or artifact scope and returns concise integration material with evidence already required for its output. A worker does not make policy decisions, change another worker's files, broaden scope, choose successors, or claim task-wide completion.
 
-## 3. Work Decomposition
+The parent remains the owner of tightly coupled policy, cross-worker integration, and any work whose dependency or coordination cost makes delegation slower.
 
-Before dispatch, the parent models competent human responsibility boundaries and identifies dependencies. It creates a worker boundary only when the responsibility:
+## 4. Official GUI Collaboration Surface
 
-1. can be completed independently;
-2. has exclusive source or artifact ownership;
-3. has a stable handoff into the parent integration point; and
-4. does not transfer parent-owned policy, authority, conflict-resolution, or task-acceptance decisions.
+The parent uses the official collaboration tools directly according to their exposed contracts:
 
-The parent dispatches each selected responsibility directly through the official collaboration surface. Available worker slots do not create artificial work or justify fragmenting one coherent responsibility. The plugin does not define a fixed team.
+- `spawn_agent` creates a bounded worker for a ready responsibility;
+- `wait_agent` receives lifecycle updates without ceremonial polling;
+- `send_message` supplies newly relevant information to an active worker;
+- `followup_task` gives an idle or completed worker a new separately bounded responsibility only when it is ready and beneficial;
+- `interrupt_agent` stops work only for supersession, authority, or scope reasons; and
+- `list_agents` is used only when worker state changes a coordination decision.
 
-## 4. Official Collaboration Boundary
+The parent chooses worker profile and context independently for each actual responsibility. Coding Agents has no predefined roster, fixed role, or alternate operating path.
 
-The parent uses the official collaboration tools according to their exposed contracts:
+## 5. Worker Job Contract And Parallel Safety
 
-- `spawn_agent` creates a direct worker with a bounded job contract;
-- `wait_agent` receives lifecycle updates without busy polling;
-- `send_message` supplies relevant information to an active worker;
-- `followup_task` gives a completed or idle worker a new bounded responsibility;
-- `interrupt_agent` stops work only for an actual supersession, authority issue, or scope problem; and
-- `list_agents` inspects current worker state when that information changes a coordination decision.
+Before production, every worker receives:
 
-The parent alone selects model, reasoning effort, context inheritance, and finite descendant permission for every spawn. Coding Agents does not encode a predefined worker roster.
-
-## 5. Worker Job Contract
-
-Every worker receives, before production:
-
-- objective;
-- exact source scope and exclusive ownership;
-- authoritative inputs and necessary context;
-- expected completed output;
+- objective and exact exclusive source or artifact scope;
+- authoritative inputs and decision-relevant context;
+- expected complete output and integration boundary;
 - allowed and forbidden actions;
 - stop conditions;
-- acceptance evidence; and
+- acceptance evidence already required for that output; and
 - explicit finite descendant-delegation permission.
 
-The worker returns completed outcome, owned paths or artifacts, evidence already produced, concrete blockers or unresolved decisions, and concise integration notes. It does not return a rough draft for routine parent repair, select another worker, broaden scope, or claim task-wide completion.
+No two simultaneous workers receive overlapping ownership. The parent expresses dependencies in the assignment and only spawns work whose required inputs are ready. This preserves conflict-free parallelism without an extra coordination worker or record-formatting stage.
 
-## 6. Integration And Acceptance
+Workers are producers, not validators, reviewers, or record-formatters. The workflow does not create a worker solely to inspect another candidate, reformat coordination records, rank alternatives, or duplicate another worker's responsibility. A successful worker receives no stronger-worker recheck or post-success confirmation.
 
-The parent integrates worker outputs when their dependencies are satisfied. It resolves conflicts against authoritative inputs and does not create a separate evaluator to choose a preferred candidate.
+## 6. Integration And One Acceptance Bundle
 
-Each producer incorporates every known requirement into its first acceptance candidate. The ordinary success path contains one task-sized semantic acceptance bundle and no critique-to-rewrite, ranking, automatic fixer, stronger-worker recheck, or post-success review.
+The parent integrates a worker output when its dependencies are satisfied. It resolves a real cross-worker conflict against authoritative inputs itself; it does not create a reviewer to select a candidate.
 
-After an observed failure, the parent identifies the cause and responsible owner, repairs only the affected scope, and repeats only the invalidated evidence boundary. Success ends verification.
+Each producer incorporates known requirements into its first acceptance candidate. The declared slice has one semantic acceptance bundle containing only the evidence required for the release decision. Verification confirms completed work; it does not finish, rewrite, normalize, decorate, rank, or choose it.
 
-## 7. Optional State
+On an observed defect, the parent identifies the smallest cause and responsible owner, returns only the affected scope, and repeats only invalidated evidence. When the acceptance bundle passes, verification ends and the parent proceeds directly to handoff or the next unconditional construction stage already in the declared slice.
 
-The active GUI Codex task is the live coordination surface. Persistent state is optional and is created only when a genuine pause, handoff, or later continuation makes it useful.
+## 7. Minimal Continuity State
 
-A minimal `.coding-agents/context.md` may contain:
+The active GUI task is the live coordination surface. Persistent state is optional and is used only when a genuine pause, handoff, or later continuation materially benefits from it.
 
-- current outcome and scope;
-- accepted decisions;
-- completed work;
-- remaining dependencies;
-- worker outcomes;
-- blockers; and
-- safe resume point.
+A concise `.coding-agents/context.md` may contain the current outcome and scope, accepted decisions, completed work, remaining dependencies, worker outcomes, blockers, and a safe resume point. The parent maintains it directly. It is not a required schema, protocol, state machine, worker packet, formatting target, or acceptance gate. Existing material is read semantically: useful current facts are preserved and stale material is replaced.
 
-The parent maintains this file directly. It is not a protocol, state machine, formatting requirement, or acceptance gate. Existing material is read semantically; current useful facts are preserved and stale facts are replaced. No predefined roster, packet family, lifecycle-field ceremony, or compatibility layer is retained.
+Generated local state remains outside tracked source unless the user explicitly requests repository-owned documentation. The workflow does not change tracked ignore policy implicitly.
 
-Generated local state remains outside tracked source unless the user explicitly requests repository-owned documentation. The workflow does not modify tracked ignore policy implicitly.
+## 8. Delivery, Blocking, And Recovery
 
-## 8. Delivery And Recovery
+Coding/source work defaults to `ITERATIVE_DELIVERY`. `ONE_SHOT_QUALITY` applies only when the current user explicitly selects that named mode and never carries into another goal. Both modes require a complete first candidate for the declared slice.
 
-Coding/source work defaults to `ITERATIVE_DELIVERY`. `ONE_SHOT_QUALITY` activates only from the current user's explicit selection and does not carry to another task. Both modes require a complete first candidate for the declared slice; they differ in authorized scope and verification breadth.
-
-A blocker in one independent branch does not stop other safe work. Missing authority, unresolved source ownership, overlapping unrelated edits, unavailable official collaboration tools, or an unsafe external effect stops only the affected action and is reported to the user.
+A blocked dependent branch does not stop independently ready work. The parent stops and reports only the affected action when source ownership is unresolved, unrelated edits overlap an owned file, authority is missing, the official collaboration surface is unavailable, or an unsafe external effect would be required.
 
 ## 9. Source And Activation Boundaries
 
-Authoritative plugin source, installed cache, activation, publication, and Git history are distinct. Source edits target this repository. Installed cache copies are never maintained as source. Refresh, activation, commit, push, and publication require their own current authority and are not implied by a source change.
-
-Source completion does not prove installed activation. When activation is separately requested, use the source-first plugin refresh boundary and report whether a fresh GUI task is required.
+Authoritative plugin source, installed cache, activation, publication, and Git history are distinct. Source changes target this repository; installed cache copies are not edited as source. Refresh, activation, commit, push, and publication require their own current authority and are not implied by source completion.

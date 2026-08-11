@@ -1,7 +1,7 @@
 ---
 name: coding-agents
 description: >-
-  Coordinate coding work in GUI Codex with official subagents. Trigger only when the user explicitly names Coding Agents or invokes $coding-agents; continuation is allowed only inside that already active workflow. Never trigger from generic subagent requests or .coding-agents presence.
+  Coordinate coding work in GUI Codex with official subagents to minimize total time-to-completion. Trigger only when the user explicitly names Coding Agents or invokes $coding-agents; continuation is limited to that active workflow. Generic subagent requests and .coding-agents presence never trigger.
 ---
 
 # Coding Agents
@@ -12,7 +12,7 @@ This file does not override system instructions, developer instructions, explici
 
 ## Purpose And Trigger Boundary
 
-Use Coding Agents to coordinate coding work by giving bounded responsibilities to official GUI Codex subagents while the parent retains task control and integration.
+Use Coding Agents to minimize total wall-clock time for coding work by giving bounded responsibilities to official GUI Codex subagents while the parent retains task control and integration. Optimize time-to-completion, not agent count.
 
 Select this skill only when the user explicitly names `Coding Agents` or invokes `$coding-agents` in the current workflow. After that explicit selection, a continuation request may proceed inside the same active workflow without repeating the name.
 
@@ -30,7 +30,7 @@ Do not select it for generic coding, debugging, review, explanation, subagent de
 
 The parent/root owns:
 
-- the user-visible outcome, declared slice, decomposition, and integration order;
+- the user-visible outcome, declared slice, dependency graph, critical path, scheduling waves, and integration order;
 - responsibility decomposition and the decision to keep tightly coupled work parent-owned;
 - authority, safety, scope, external effects, and user consultation;
 - every worker model, reasoning-effort, context-inheritance, and descendant-delegation choice exposed by the official spawn surface;
@@ -38,15 +38,19 @@ The parent/root owns:
 
 Each worker owns one bounded, independently completable output end to end. Its first handoff must be complete for that responsibility and concise enough to integrate directly. A worker does not choose policy, broaden scope, select a successor, alter another worker's files, or claim task-wide completion.
 
-Do not give the same source ownership to multiple workers. Keep tightly coupled policy and integration decisions in the parent.
+Do not give the same source ownership to multiple workers. Keep tightly coupled policy and integration decisions in the parent. A worker boundary is justified only when its completed output remains independently ownable and the expected elapsed-time saving exceeds coordination and integration cost.
 
 ## GUI Subagent Workflow
 
 1. Resolve the target repository, applicable instruction chain, requested outcome, source-of-truth paths, current Git state, and any relevant prior continuity material before edits or delegation.
-2. Model how competent humans would divide the work. Identify responsibility owners, authoritative inputs, complete outputs, handoff boundaries, dependencies, and the parent integration point.
-3. Keep policy, authority, conflict resolution, and tightly coupled integration decisions in the parent. Create worker boundaries only for independently completable responsibilities with exclusive ownership.
-4. Dispatch each selected worker directly with `spawn_agent`. Do not preallocate a fixed team or create placeholder roles.
-5. Give each worker a complete job contract containing:
+2. Model how competent humans would divide the work. Identify responsibility owners, authoritative inputs, complete outputs, handoff boundaries, dependencies, and the parent integration point. Build the dependency graph and identify the current critical path before delegation.
+3. For each candidate responsibility, evaluate readiness, independence, size, expected duration, source overlap, coordination cost, integration cost, and whether delegation changes the critical-path finish time.
+4. Classify work before dispatch:
+   - Put ready, independent, sufficiently large work in the same parallel wave when concurrent execution is expected to reduce total elapsed time.
+   - Keep tightly coupled, dependency-blocked, overlapping, or too-small work in the parent or execute it in dependency order.
+   - Do not split work merely to occupy available agent slots.
+5. Dispatch every selected item in the current ready wave through `spawn_agent` without serial delay between independent items. Do not preallocate a roster or create placeholder roles.
+6. Give each worker a complete job contract containing:
    - objective and exact source scope;
    - exclusive file or artifact ownership;
    - authoritative inputs and required context;
@@ -54,16 +58,18 @@ Do not give the same source ownership to multiple workers. Keep tightly coupled 
    - allowed and forbidden actions;
    - stop conditions and acceptance evidence;
    - whether descendant delegation is permitted and its finite bound.
-6. Select the minimum sufficient exposed worker model and reasoning effort from ambiguity, consequence, coupling, context breadth, capability needs, transformation complexity, and acceptance determinism. Choose context inheritance independently and pass only what the worker needs.
-7. Use lifecycle tools to receive results, provide decision-relevant context, or address a concrete blocker. Do not poll ceremonially or create work merely to keep workers busy.
-8. Integrate successful worker outputs once their dependencies are satisfied. Resolve overlap or conflicting conclusions in the parent against authoritative inputs; do not create a reviewer worker to choose between them.
-9. If a worker is blocked or fails, classify the cause and return only the affected responsibility to a suitable owner. Do not recheck a successful worker with a stronger worker or create an automatic repair cycle.
-10. Execute one task-sized semantic acceptance bundle containing only checks required by the request, owning source contract, primary path, or an observed distinct failure. Success ends verification and moves directly to handoff.
+7. Select the minimum sufficient exposed worker model and reasoning effort from ambiguity, consequence, coupling, context breadth, capability needs, transformation complexity, and acceptance determinism. Choose context inheritance independently and pass only what the worker needs.
+8. While a wave is active, advance parent-owned critical-path work and prepare known integration boundaries. Use lifecycle tools to receive results, provide decision-relevant context, or address a concrete blocker; do not poll ceremonially or create work merely to keep workers busy.
+9. As dependencies complete, update readiness and dispatch the next time-saving wave without waiting for unrelated work. Integrate successful outputs once their actual dependencies are satisfied.
+10. Resolve overlap or conflicting conclusions in the parent against authoritative inputs. Do not create validator-only, reviewer-only, state-formatting, or duplicate-investigation roles; state and verification remain the minimum needed to support implementation and the final acceptance decision.
+11. If a worker is blocked or fails, classify the cause and return only the affected responsibility to a suitable owner. Do not recheck a successful worker with a stronger worker or create an automatic repair cycle.
+12. Execute one task-sized semantic acceptance bundle containing only checks required by the request, owning source contract, primary path, or an observed distinct failure. Success ends verification and moves directly to handoff.
 
 ## First-Pass Quality
 
 - Give every worker all known decision-relevant requirements before production.
 - Require the first returned artifact to satisfy its complete responsibility; do not plan a draft, critique, rewrite, ranking, or validator-driven completion path.
+- Do not spend a worker slot on routine review, validation, state bookkeeping, formatting conformity, or duplicated research. Keep these parent-owned and minimal unless they are themselves an independently requested implementation deliverable.
 - Verification confirms a completed candidate. It does not invent requirements, finish semantic work, or trigger post-success review.
 - Repair only an observed defect, explicit user feedback, or a higher-priority requirement, and repeat only the invalidated evidence boundary.
 - Default coding/source work to `ITERATIVE_DELIVERY`. Use `ONE_SHOT_QUALITY` only when the current user explicitly selects that named mode; it is task-local and non-sticky.
