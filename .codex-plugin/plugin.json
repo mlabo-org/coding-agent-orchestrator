@@ -1,6 +1,6 @@
 {
   "name": "coding-agents",
-  "version": "0.1.0+codex.20260811195749",
+  "version": "0.1.0",
   "description": "Explicit-only GUI Codex coding coordination with official subagents. Activate for a coding objective only through $coding-agents, explicit bundled-skill selection, or explicit use of the selected Coding Agents plugin; bare plugin attachment, generic subagent requests, and .coding-agents presence do not activate it.",
   "homepage": "https://github.com/mlabo-org/coding-agents#readme",
   "repository": "https://github.com/mlabo-org/coding-agents",
