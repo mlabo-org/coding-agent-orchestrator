@@ -4,45 +4,44 @@
   "capability_id": "coding-agents",
   "official_creator": "plugin-creator",
   "routing": {
-    "task_class": "Coding Agents state-first continuation, semantic new-task intake, model-neutral official-subagent job-contract recording, iterative delivery or explicit task-local one-shot planning, evidence-bound capability repair handoff, state audit, and source CLI repair",
+    "task_class": "GUI Codex coding-task decomposition, official-subagent coordination, parent integration, and optional task continuity",
     "natural_language_triggers": [
       "Coding Agents",
+      "$coding-agents",
       "coding-agents",
-      "continue this same repository with a new purpose",
-      "the next stage in this repo",
-      "record model-neutral worker routing requirements",
-      "repair this capability improvement proposal",
-      "continue, audit, or repair .coding-agents state"
+      "Use Coding Agents",
+      "continue this already active Coding Agents workflow"
     ],
-    "primary_route": "Use Coding Agents when named or when valid .coding-agents state is paired with strong continuation intent. Inspect active state and completion flags first, preserve and append related progress, and use fresh task_id/epoch/scope only for clearly unrelated work without asking the user for a routine mode. Record modern official-subagent jobs as model_neutral_job_v1 requirements: required capabilities plus ambiguity, consequence, coupling, and acceptance characteristics. Root Sol exclusively selects the actual worker model and reasoning effort at official spawn time, classifies blocker or failure causes, and may reassign only the affected scope at a higher sufficient profile or take ownership. Default coding/source work to ITERATIVE_DELIVERY and select non-sticky ONE_SHOT_QUALITY only from an explicit current-task user request. Preserve runner history; the CLI never dispatches a worker, infers a worker profile, or creates an automatic review or repair loop.",
+    "primary_route": "After the user explicitly names Coding Agents or invokes $coding-agents, the parent GUI Codex task decomposes the requested outcome, retains task control and integration decisions, dispatches bounded responsibilities directly through official collaboration tools, and integrates concise complete worker outputs. Continuation without repeating the name is limited to that already active workflow.",
     "fallback_conditions": [
-      "When official Codex subagent tools are unavailable, keep execution in the parent thread and do not launch a CLI process runner."
+      "When official collaboration tools are unavailable, stop this workflow and report the unavailable boundary without emulating delegation."
     ],
     "non_use_conditions": [
-      "Mere .coding-agents directory presence and unrelated generic coding, debugging, source changes, delegation, or subagent coordination do not trigger Coding Agents."
+      "Do not select Coding Agents for generic coding, debugging, review, explanation, subagent decomposition, multi-agent coordination, or team coordination without explicit Coding Agents naming.",
+      "Do not select Coding Agents from .coding-agents directory presence or prior state alone.",
+      "Do not treat a continuation outside an already active explicitly selected Coding Agents workflow as a trigger."
     ],
     "discovery": {
       "task_terms": [
-        "Coding Agents",
-        "same-repo continuation",
-        "new-task intake",
-        "semantic state triage",
-        "model-neutral subagent job contract",
-        "capability improvement handoff"
+        "GUI Codex",
+        "coding task decomposition",
+        "official subagents",
+        "parent integration",
+        "task continuity"
       ],
       "trigger_phrases": [
-        "strong continuation intent",
-        "resume related work",
-        "root Sol worker routing",
-        "audit or repair"
+        "use Coding Agents",
+        "Use Coding Agents to split across subagents",
+        "Use $coding-agents to coordinate coding workers"
       ],
       "artifact_or_tool_terms": [
-        ".coding-agents",
-        "task_id",
-        "epoch",
-        "runner.md",
-        "model_neutral_job_v1",
-        "evidence_ref"
+        "spawn_agent",
+        "wait_agent",
+        "send_message",
+        "followup_task",
+        "interrupt_agent",
+        "list_agents",
+        ".coding-agents/context.md"
       ],
       "aliases": [
         "coding-agents"
@@ -56,11 +55,11 @@
           "document": {
             "interface": {
               "display_name": "Coding Agents",
-              "short_description": "State-first tasks and model-neutral worker contracts",
-              "default_prompt": "Use $coding-agents to inspect state first, preserve related progress, and record model-neutral jobs for root Sol to route at spawn time."
+              "short_description": "GUI coding coordination with official subagents",
+              "default_prompt": "Use $coding-agents explicitly to decompose this coding task, dispatch bounded work through official subagents, preserve parent control, and integrate the result."
             },
             "policy": {
-              "allow_implicit_invocation": true
+              "allow_implicit_invocation": false
             }
           }
         }
@@ -69,74 +68,34 @@
   },
   "inputs": [
     {
-      "name": "Explicit workflow request",
-      "description": "A user-named Coding Agents request, strong continuation intent for a repository with valid .coding-agents state, or a request to audit or repair its state or source CLI."
+      "name": "Coding outcome and repository",
+      "description": "The user-visible coding result, target repository, applicable instructions, authority boundary, and current source state."
     },
     {
-      "name": "Target repository and workflow identity",
-      "description": "The target Git worktree plus task_id, epoch, scope, delivery mode, optional task-local one-shot authority, and optional work type or assignment overlay."
+      "name": "Responsibility and ownership map",
+      "description": "Bounded responsibilities, dependencies, exclusive source ownership, and the parent integration boundary."
     },
     {
-      "name": "Model-neutral job routing requirements",
-      "description": "Required capabilities, low/medium/high ambiguity, consequence, and coupling characteristics, plus acceptance characteristics; no model name or reasoning-effort value is accepted or persisted."
+      "name": "Worker job characteristics",
+      "description": "Objective, exact scope, authoritative inputs, completed output, permissions, stop conditions, acceptance evidence, and finite descendant permission for each worker."
     },
     {
-      "name": "Optional typed evidence reference",
-      "description": "One Coding Agents-compatible typed reference, such as a source-local capability-improvement proposal, propagated into standard intake state without granting repair or dispatch authority."
+      "name": "Optional continuity material",
+      "description": "Current decisions, completed work, remaining dependencies, worker outcomes, blockers, and a safe resume point when a genuine pause or later continuation makes persistence useful."
     }
   ],
   "outputs": [
     {
-      "name": "Workflow-state packets",
-      "description": "Validated .coding-agents intake, compact shared-contract scaffold, model-neutral assignment, collection, finalization, orchestration-skeleton, audit, and handoff records carrying the recorded delivery mode."
+      "name": "Official-subagent work",
+      "description": "Bounded worker jobs dispatched directly by the parent through the official GUI collaboration surface."
     },
     {
-      "name": "Official subagent dispatch boundary",
-      "description": "Actual workers are dispatched only through official Codex subagent spawn tools. Root Sol selects model and reasoning effort at spawn time and owns cause-bound affected-scope reassignment or ownership transfer; the CLI emits no Codex child process and workers do not choose successors."
+      "name": "Integrated coding result",
+      "description": "Parent-integrated source or artifacts with one task-sized acceptance decision and concise user-facing handoff."
     },
     {
-      "name": "Evidence-linked standard state",
-      "description": "When intake receives --evidence-ref, project.md, task.md, audit.md, and handoff.md carry the exact validated typed reference."
-    }
-  ],
-  "validation_commands": [
-    {
-      "name": "full-contract-tests",
-      "argv": [
-        "/usr/bin/env",
-        "npm",
-        "test"
-      ],
-      "covers": [
-        "official-spawn-only",
-        "model-neutral-worker-routing",
-        "workflow-state-preserved",
-        "capability-improvement-evidence-link",
-        "semantic-state-triage",
-        "active-checklist-finalization-consistency",
-        "delivery-mode-authority-and-propagation"
-      ],
-      "test_paths": [
-        "tests/metacognitive-gate.test.mjs",
-        "tests/routing-metadata.test.mjs",
-        "tests/workflow-state.test.mjs"
-      ],
-      "cwd": ".",
-      "timeout_seconds": 180
-    },
-    {
-      "name": "source-doctor",
-      "argv": [
-        "npm",
-        "run",
-        "doctor:self"
-      ],
-      "covers": [],
-      "test_paths": [
-        "tests/workflow-state.test.mjs"
-      ],
-      "cwd": ".",
-      "timeout_seconds": 120
+      "name": "Optional continuity note",
+      "description": "A minimal parent-maintained context file used only when persistence materially helps; its format does not control acceptance."
     }
   ],
   "runtime_boundaries": {
@@ -147,97 +106,29 @@
     ],
     "forbidden_source_paths": [
       ".coding-agents/",
-      "~/.codex/plugins/cache",
-      "~/.codex/skills/.system"
+      "~/.codex/plugins/cache"
     ]
   },
   "user_facing_ui": {
     "present": false
   },
-  "production_contract": {
-    "reviewed": true,
-    "rules": [
-      {
-        "id": "official-spawn-only",
-        "description": "The source CLI records assignments and orchestration skeletons but never launches Codex workers; actual dispatch uses only official Codex subagent spawn tools.",
-        "enforcement_points": [
-          "bin/coding-agents.mjs"
-        ],
-        "tests": [
-          "tests/routing-metadata.test.mjs",
-          "tests/workflow-state.test.mjs"
-        ]
-      },
-      {
-        "id": "model-neutral-worker-routing",
-        "description": "Modern assignment and record-only orchestration packets require model_neutral_job_v1 capabilities, ambiguity, consequence, coupling, and acceptance characteristics; root Sol alone selects model/reasoning at official spawn, classifies blocker/failure causes, and limits any escalation to affected scope without automatic success review or repair loops.",
-        "enforcement_points": [
-          "bin/coding-agents.mjs",
-          "skills/coding-agents/SKILL.md",
-          "docs/specs/coding-agents-self-change-spec.md"
-        ],
-        "tests": [
-          "tests/routing-metadata.test.mjs",
-          "tests/workflow-state.test.mjs"
-        ]
-      },
-      {
-        "id": "workflow-state-preserved",
-        "description": "The .coding-agents intake keeps shared scaffold contracts compact and task coverage outcome-focused while assignment, collection, finalization, handoff, doctor, verification, lifecycle, full dispatched-packet contracts, and historical packet compatibility remain enforced.",
-        "enforcement_points": [
-          "bin/coding-agents.mjs"
-        ],
-        "tests": [
-          "tests/metacognitive-gate.test.mjs",
-          "tests/workflow-state.test.mjs"
-        ]
-      },
-      {
-        "id": "capability-improvement-evidence-link",
-        "description": "Fresh intake accepts one optional validated typed --evidence-ref and propagates it to project, task, audit, and handoff state without authorizing repair, dispatch, commit, refresh, or activation.",
-        "enforcement_points": [
-          "bin/coding-agents.mjs",
-          "skills/coding-agents/SKILL.md"
-        ],
-        "tests": [
-          "tests/workflow-state.test.mjs"
-        ]
-      },
-      {
-        "id": "semantic-state-triage",
-        "description": "Codex inspects existing .coding-agents state and completion flags before intake, preserves and appends semantically related progress without asking the user for a routine mode, and creates fresh identity only for clearly unrelated work while preserving historical runner packets.",
-        "enforcement_points": [
-          "skills/coding-agents/SKILL.md",
-          ".codex-plugin/plugin.json",
-          "creator-contract.json",
-          "docs/specs/coding-agents-self-change-spec.md"
-        ],
-        "tests": [
-          "tests/routing-metadata.test.mjs"
-        ]
-      },
-      {
-        "id": "active-checklist-finalization-consistency",
-        "description": "Successful finalize completes every active-task checklist entry, while doctor and verify-assignments reject finalized/open and all-complete/unfinalized contradictions.",
-        "enforcement_points": [
-          "bin/coding-agents.mjs"
-        ],
-        "tests": [
-          "tests/workflow-state.test.mjs"
-        ]
-      },
-      {
-        "id": "delivery-mode-authority-and-propagation",
-        "description": "Coding/source work defaults non-sticky to ITERATIVE_DELIVERY; ONE_SHOT_QUALITY requires explicit task-local user-request authority; both modes integrate every known declared-slice requirement into the first acceptance candidate, iterative differs by scope and verification breadth, post-result audit only confirms quality, and repair after the candidate requires an observed failure.",
-        "enforcement_points": [
-          "bin/coding-agents.mjs",
-          "skills/coding-agents/SKILL.md"
-        ],
-        "tests": [
-          "tests/metacognitive-gate.test.mjs",
-          "tests/workflow-state.test.mjs"
-        ]
-      }
-    ]
+  "workflow_contract": {
+    "parent_owner": [
+      "decomposition",
+      "task-control decisions",
+      "authority and safety",
+      "worker model and reasoning routing",
+      "conflict resolution",
+      "integration",
+      "task acceptance",
+      "final reporting"
+    ],
+    "worker_owner": [
+      "one bounded independent output",
+      "first-pass completeness",
+      "acceptance evidence for the owned output",
+      "concise integration material"
+    ],
+    "acceptance_rule": "Use one task-sized semantic acceptance bundle; success ends verification, and a concrete failure returns only the affected scope to its owner."
   }
 }

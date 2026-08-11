@@ -1,6 +1,6 @@
 interface:
   display_name: "Coding Agents"
-  short_description: "State-first tasks and model-neutral worker contracts"
-  default_prompt: "Use $coding-agents to inspect state first, preserve related progress, and record model-neutral jobs for root Sol to route at spawn time."
+  short_description: "GUI coding coordination with official subagents"
+  default_prompt: "Use $coding-agents explicitly to decompose this coding task, dispatch bounded work through official subagents, preserve parent control, and integrate the result."
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false

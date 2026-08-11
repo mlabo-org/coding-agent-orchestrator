@@ -1,8 +1,0 @@
-{
-  "type": "module",
-  "scripts": {
-    "test": "node --test tests/*.test.mjs",
-    "test:cli": "node --test tests/metacognitive-gate.test.mjs tests/workflow-state.test.mjs",
-    "doctor:self": "node --test --test-name-pattern=\"doctor verifies the target git info exclude without mutating it\" tests/workflow-state.test.mjs"
-  }
-}
