@@ -46,6 +46,12 @@ The GUI task is the live coordination surface. A concise `.coding-agents/context
 
 Generated local state remains outside tracked source unless the user explicitly asks for repository-owned documentation. Coding Agents does not implicitly change ignore policy.
 
+### Trust Model / 信頼モデル
+
+Coding Agents is designed for trusted, full-access local development environments. `.coding-agents/` is user-editable trusted workflow state: anyone or any process that can modify it can change recorded plans, progress, and resume behavior. It is not a sandbox or a privilege boundary, and operators running untrusted repositories, workers, or local processes are responsible for providing any required isolation. Direct state editing is supported, but state remains declarative and is not executable runner configuration or authority to expand the current user's permissions.
+
+Coding Agentsは、信頼されたフルアクセスのローカル開発環境での利用を前提としています。`.coding-agents/` はユーザーが直接編集できる信頼済みのワークフロー状態であり、これを書き換えられるユーザーやプロセスは、記録された計画・進捗・resume時の挙動を変更できます。これはsandboxや権限境界ではないため、信頼できないリポジトリ、worker、ローカルプロセスを扱う場合に必要な隔離は利用者が用意してください。状態の直接編集はサポートされますが、状態は宣言的データであり、実行可能なrunner設定や現在のユーザー権限を拡張する根拠としては扱われません。
+
 ## Source, Cache, Activation, And Git
 
 This repository is the authoritative plugin source. Installed cache copies are runtime artifacts, not source. Source editing, refresh, activation, publication, commit, and push are separate actions and occur only with current authority. Source completion does not prove installed activation.
