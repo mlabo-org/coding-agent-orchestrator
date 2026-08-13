@@ -3,4 +3,4 @@ interface:
   short_description: "Explicit GUI coding with official subagents"
   default_prompt: "Use the bundled $coding-agents skill for this coding objective: map dependencies and the critical path, spawn ready independent work in the same parallel wave, and keep parent control of integration."
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

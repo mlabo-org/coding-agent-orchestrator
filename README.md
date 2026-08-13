@@ -8,7 +8,7 @@ There is no CLI, script, child session, external executable, or hidden automatio
 
 Activate the workflow for a coding objective by invoking `$coding-agents`, explicitly selecting the bundled Coding Agents skill, or selecting the Coding Agents plugin and explicitly asking it to use the Coding Agents workflow. A bare plugin attachment, plugin inspection, discovery question, or troubleshooting request does not activate the coding workflow.
 
-The bundled skill intentionally sets `allow_implicit_invocation: false`, so it is not injected into the model's ordinary skill context. This preserves the explicit-only boundary; direct skill invocation or an explicit Coding Agents coding request through the selected plugin is required. Once activated, the workflow may continue within that active Coding Agents task. Ordinary coding, a generic request for subagents, an explanation, a review, and `.coding-agents/` presence do not activate it.
+The bundled skill sets `allow_implicit_invocation: true` so it can appear in normal fresh-task catalogs. This is discovery permission only, not authorization for automatic selection. Selection remains restricted to a current request that invokes `$coding-agents`, explicitly selects the bundled Coding Agents skill, or selects the Coding Agents plugin and explicitly asks to use the Coding Agents workflow. Once activated, the workflow may continue within that active Coding Agents task. Ordinary coding, a generic request for subagents, an explanation, a review, and `.coding-agents/` presence do not activate it.
 
 ## The Scheduling Goal
 

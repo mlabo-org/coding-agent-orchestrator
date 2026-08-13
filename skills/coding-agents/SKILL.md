@@ -16,7 +16,7 @@ Use Coding Agents to minimize total wall-clock time for coding work by giving bo
 
 Select this skill only for a coding objective when the current request directly invokes `$coding-agents`, explicitly selects the bundled Coding Agents skill, or selects the Coding Agents plugin and explicitly asks to use the Coding Agents workflow. A bare plugin attachment, plugin inspection, discovery question, or troubleshooting request does not activate the coding workflow.
 
-Treat `policy.allow_implicit_invocation: false` as intentional. The skill is not injected for ordinary prompts; direct skill invocation or an explicit Coding Agents coding request through the selected plugin is required. After activation, a continuation request may proceed inside the same active workflow without repeating the name.
+Treat `policy.allow_implicit_invocation: true` as discovery permission only. It allows the skill to appear in normal fresh-task catalogs; it does not authorize automatic selection. Selection remains restricted to a current request that invokes `$coding-agents`, explicitly selects the bundled Coding Agents skill, or selects the Coding Agents plugin and explicitly asks to use the Coding Agents workflow. After activation, a continuation request may proceed inside the same active workflow without repeating the name.
 
 Do not select it for generic coding, debugging, review, explanation, subagent decomposition, multi-agent coordination, team coordination, or continuation outside an already active explicitly selected Coding Agents workflow. Never infer activation from repository contents or the presence of `.coding-agents/`.
 
