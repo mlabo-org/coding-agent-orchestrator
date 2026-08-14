@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "coding-agents/coding-agents-input/v1",
+  "title": "Coding Agents coordination input",
+  "description": "A bounded coding objective for an explicitly activated Coding Agents workflow in the current GUI Codex task. The activation value is a routing claim that the host must independently verify from the current user interaction.",
+  "type": "object",
+  "required": [
+    "activation",
+    "objective",
+    "workspaceRoot"
+  ],
+  "properties": {
+    "activation": {
+      "type": "string",
+      "description": "How the current user explicitly selected Coding Agents, or that this is a continuation of an already active workflow. This field does not itself grant activation.",
+      "enum": [
+        "explicit-dollar-skill",
+        "explicit-bundled-skill",
+        "explicit-plugin-workflow",
+        "active-workflow-continuation"
+      ]
+    },
+    "objective": {
+      "type": "string",
+      "description": "The complete bounded coding outcome for the parent Codex task to own and integrate.",
+      "minLength": 1
+    },
+    "workspaceRoot": {
+      "type": "string",
+      "description": "The resolved jobsite root for source inspection, scoped implementation, and acceptance.",
+      "minLength": 1
+    },
+    "requestedScope": {
+      "type": "array",
+      "description": "User-declared source or artifact boundaries when the objective names them.",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "acceptanceCriteria": {
+      "type": "array",
+      "description": "Known completion conditions that must be integrated before the first acceptance candidate.",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "description": "Known execution, authority, safety, delivery-mode, or external-effect constraints for this objective.",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "coding-agents/coding-agents-output/v1",
+  "title": "Coding Agents coordination output",
+  "description": "The complete parent-owned result of an explicitly activated Coding Agents objective. Incomplete, blocked, or unavailable execution is represented by the broker's error or stop envelope instead of this success output.",
+  "type": "object",
+  "required": [
+    "status",
+    "summary",
+    "changedPaths",
+    "acceptanceEvidence",
+    "externalEffects",
+    "unresolvedRisks",
+    "continuityState"
+  ],
+  "properties": {
+    "status": {
+      "const": "completed"
+    },
+    "summary": {
+      "type": "string",
+      "description": "The completed user-visible coding outcome owned and integrated by the parent Codex task.",
+      "minLength": 1
+    },
+    "changedPaths": {
+      "type": "array",
+      "description": "Source or deliverable paths changed for this objective; empty only when the completed objective was non-mutating.",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "acceptanceEvidence": {
+      "type": "array",
+      "description": "The one task-sized semantic acceptance bundle actually executed, or an empty list when the completed objective required no executable check.",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "result",
+          "detail"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "result": {
+            "enum": [
+              "passed",
+              "not-applicable"
+            ]
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "externalEffects": {
+      "type": "array",
+      "description": "Separately authorized commit, refresh, activation, publication, or other external-effect outcomes; empty when none occurred.",
+      "items": {
+        "type": "object",
+        "required": [
+          "action",
+          "status",
+          "detail"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "completed",
+              "not-requested",
+              "not-applicable"
+            ]
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "unresolvedRisks": {
+      "type": "array",
+      "description": "Concrete remaining unverified risks after completion; empty when none are known.",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "continuityState": {
+      "description": "Whether optional untracked Coding Agents continuity state was needed for this completed objective.",
+      "enum": [
+        "not-needed",
+        "not-created",
+        "updated"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,42 @@
+{
+  "manifestVersion": "local-capability-manifest/v1",
+  "publisher": "suzuki-makoto",
+  "packageKind": "plugin",
+  "packageId": "coding-agents",
+  "descriptorVersion": "0.1.0",
+  "capabilities": [
+    {
+      "leafId": "coding-agents",
+      "title": "Coding Agents",
+      "description": "Coordinate an explicitly activated coding objective in the current GUI Codex task through official subagents while the parent retains authority, integration, acceptance, and final reporting.",
+      "executionClass": "host_coordinator",
+      "runtimeBinding": {
+        "kind": "host_coordinator",
+        "instruction": "Act only in the current GUI Codex task. This descriptor is discoverable but never activates Coding Agents by discovery, attachment, generic coding, a generic subagent request, or the input activation claim alone. Before coordinating, independently establish from the current user interaction that the user invoked $coding-agents, explicitly selected the bundled skill, explicitly selected the Coding Agents plugin and requested its workflow, or is continuing an already active workflow. If explicit activation is not established or the official collaboration tools are unavailable, return a stopped result. When active, follow the package's Coding Agents SKILL.md contract: resolve the repository and instruction chain; retain parent ownership of decomposition, authority, safety, worker-profile selection, integration, acceptance, and reporting; delegate only bounded independent work whose parallel execution materially helps; and use only official GUI Codex collaboration tools for worker lifecycle. Do not use a CLI, external Codex session, hidden automation, invoke_skill abstraction, MCP execution, or server-to-server calls. Complete with actual host results only, and never attribute host or model judgment to the broker or another server."
+      },
+      "authorityRequests": [
+        {
+          "authority": "explicit-coding-agents-workflow-activation",
+          "reason": "The Codex host must establish current-user explicit activation before coordinating this workflow."
+        },
+        {
+          "authority": "official-gui-codex-subagent-lifecycle",
+          "reason": "When delegation is justified by the active coding objective, the Codex host may use the official collaboration lifecycle for bounded workers."
+        }
+      ],
+      "artifactRoots": [],
+      "inputSchema": {
+        "schemaVersion": "local-capability-schema/v1",
+        "schemaId": "coding-agents/coding-agents-input/v1",
+        "path": "schemas/v1/leaves/coding-agents-input.schema.json"
+      },
+      "outputSchema": {
+        "schemaVersion": "local-capability-schema/v1",
+        "schemaId": "coding-agents/coding-agents-output/v1",
+        "path": "schemas/v1/leaves/coding-agents-output.schema.json"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    }
+  ]
+}
