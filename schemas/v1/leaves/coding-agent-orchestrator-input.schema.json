@@ -2,12 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "coding-agent-orchestrator/coding-agent-orchestrator-input/v1",
   "title": "Coding Agent Orchestrator coordination input",
-  "description": "A bounded coding objective for an explicitly activated Coding Agent Orchestrator (CAO) workflow in the current GUI Codex task. The activation value is a routing claim that the host must independently verify from the current user interaction.",
+  "description": "A bounded coding objective and deterministic .CAO state transition for an explicitly activated Coding Agent Orchestrator (CAO) workflow.",
   "type": "object",
   "required": [
     "activation",
     "objective",
-    "workspaceRoot"
+    "workspaceRoot",
+    "stateTransition"
   ],
   "properties": {
     "activation": {
@@ -29,6 +30,24 @@
     "workspaceRoot": {
       "type": "string",
       "description": "The resolved jobsite root for source inspection, scoped implementation, and acceptance.",
+      "minLength": 1
+    },
+    "stateTransition": {
+      "type": "string",
+      "description": "Whether the host preserves a related workflow or initializes clearly unrelated work. The host determines this from current state and the user objective.",
+      "enum": [
+        "continue-related",
+        "initialize-unrelated"
+      ]
+    },
+    "taskId": {
+      "type": "string",
+      "description": "Existing or newly selected task identity recorded in .CAO/task.md.",
+      "minLength": 1
+    },
+    "epoch": {
+      "type": "string",
+      "description": "Existing or newly selected workflow epoch recorded in .CAO/task.md.",
       "minLength": 1
     },
     "requestedScope": {

@@ -4,45 +4,40 @@
   "capability_id": "coding-agent-orchestrator",
   "official_creator": "plugin-creator",
   "routing": {
-    "task_class": "Explicitly selected Coding Agent Orchestrator (CAO) coordination in GUI Codex that minimizes total wall-clock time through dependency-aware official-subagent waves, parent integration, and optional task continuity",
+    "task_class": "Explicitly selected Coding Agent Orchestrator (CAO) coordination with official GUI Codex subagents and deterministic .CAO workflow-state control",
     "natural_language_triggers": [
       "CAO <coding objective>",
       "CAOで<coding objective>",
       "CAO: <coding objective>",
       "$coding-agent-orchestrator",
       "select the bundled Coding Agent Orchestrator skill",
-      "Use the selected Coding Agent Orchestrator plugin for this coding objective",
       "Use Coding Agent Orchestrator for this coding objective",
-      "コーディング・エージェント・オーケストレーターでこのコーディング作業を進めて",
       "continue this already active Coding Agent Orchestrator workflow"
     ],
-    "primary_route": "For a coding objective, activate only when the current request begins with uppercase CAO as an invocation prefix (CAO <objective>, CAOで<objective>, or CAO: <objective>), directly invokes $coding-agent-orchestrator, explicitly selects the bundled Coding Agent Orchestrator skill, or explicitly requests the Coding Agent Orchestrator / コーディング・エージェント・オーケストレーター workflow. The parent then maps dependencies, the critical path, readiness, concurrency, and coordination or integration cost. It spawns every ready, independent, sufficiently large responsibility in the same parallel wave when doing so reduces total time-to-completion; tightly coupled, dependency-blocked, overlapping, or too-small work remains parent-owned or ordered. The parent retains authority, safety, conflicts, integration, and acceptance. Continuation without repeating the name is limited to that active workflow.",
+    "primary_route": "Activate only for an explicitly selected coding objective. Before production or delegation, resolve or initialize the target repository's .CAO state and preserve related task identity, scope, decisions, TODO progress, dynamic-role assignments, collections, audit evidence, finalization, and handoff. Record worker contracts through the state CLI, execute workers only through official Codex collaboration tools, and record terminal results before integration and finalization.",
     "fallback_conditions": [
-      "When official collaboration tools are unavailable, stop this workflow and report the unavailable boundary without emulating delegation."
+      "When official collaboration tools are unavailable, stop CAO execution, preserve exact .CAO state, and report the safe resume boundary without emulating delegation."
     ],
     "non_use_conditions": [
-      "Do not treat a bare Coding Agent Orchestrator plugin attachment, plugin inspection, discovery question, or troubleshooting request as activation of the coding workflow.",
-      "Do not activate from an incidental CAO mention, a non-leading CAO occurrence, or lowercase cao; CAO is an invocation alias only at the start of the current coding request.",
-      "Do not select Coding Agent Orchestrator for generic coding, debugging, review, explanation, subagent decomposition, multi-agent coordination, or team coordination without explicit workflow selection for a coding objective.",
-      "Do not select Coding Agent Orchestrator from .coding-agent-orchestrator directory presence or prior state alone.",
-      "Do not treat a continuation outside an already active explicitly selected Coding Agent Orchestrator workflow as a trigger."
+      "Do not activate from a bare plugin attachment, plugin inspection, discovery question, troubleshooting request, generic coding request, or generic subagent request.",
+      "Do not activate from an incidental CAO mention, non-leading CAO occurrence, or lowercase cao.",
+      "Do not activate from .CAO directory presence or prior state alone.",
+      "Do not treat continuation outside an already active explicitly selected workflow as activation."
     ],
     "discovery": {
       "task_terms": [
         "CAO coding orchestration",
-        "Coding Agent Orchestrator GUI Codex",
-        "コーディング・エージェント・オーケストレーター",
-        "Coding Agent Orchestrator critical path",
-        "$coding-agent-orchestrator parallel wave",
-        "Coding Agent Orchestrator wall-clock optimization",
-        "Coding Agent Orchestrator parent integration"
+        "Coding Agent Orchestrator",
+        ".CAO state control",
+        "state-first continuation",
+        "dynamic role assignment",
+        "official Codex subagents"
       ],
       "trigger_phrases": [
         "CAO coordinate this coding objective",
         "CAOでこの実装を進めて",
-        "Use the selected Coding Agent Orchestrator plugin for this coding objective",
-        "Select the bundled Coding Agent Orchestrator skill",
-        "Use $coding-agent-orchestrator to coordinate coding workers"
+        "Use $coding-agent-orchestrator",
+        "Select the bundled Coding Agent Orchestrator skill"
       ],
       "artifact_or_tool_terms": [
         "spawn_agent",
@@ -51,7 +46,11 @@
         "followup_task",
         "interrupt_agent",
         "list_agents",
-        ".coding-agent-orchestrator/context.md"
+        ".CAO/task.md",
+        ".CAO/decisions.md",
+        ".CAO/assignments.md",
+        ".CAO/runner.md",
+        "bin/coding-agents.mjs"
       ],
       "aliases": [
         "coding-agent-orchestrator",
@@ -68,8 +67,8 @@
           "document": {
             "interface": {
               "display_name": "Coding Agent Orchestrator",
-              "short_description": "Explicit GUI coding orchestration with official subagents",
-              "default_prompt": "Use $coding-agent-orchestrator for this coding objective: map dependencies and the critical path, spawn ready independent work in parallel, and keep parent control of integration."
+              "short_description": "Official subagents with deterministic .CAO state",
+              "default_prompt": "Use $coding-agent-orchestrator for this coding objective: inspect or initialize .CAO state, record dynamic-role assignments and results, and run workers only through official Codex subagents."
             },
             "policy": {
               "allow_implicit_invocation": true
@@ -82,43 +81,40 @@
   "inputs": [
     {
       "name": "Coding outcome and repository",
-      "description": "The user-visible coding result, target repository, applicable instructions, authority boundary, and current source state."
+      "description": "The requested result, jobsite, applicable instructions, authority boundary, and source state."
     },
     {
-      "name": "Scheduling and ownership map",
-      "description": "Bounded responsibilities, dependencies, critical path, readiness, expected duration, simultaneous-execution safety, coordination and integration cost, exclusive source ownership, and the parent integration boundary."
+      "name": "Workflow state",
+      "description": "The current .CAO task identity, epoch, scope, decisions, TODO progress, assignments, collections, lifecycle state, evidence, and handoff."
     },
     {
-      "name": "Worker job characteristics",
-      "description": "Objective, exact scope, authoritative inputs, completed output, permissions, stop conditions, acceptance evidence, and finite descendant permission for each worker."
-    },
-    {
-      "name": "Optional continuity material",
-      "description": "Current decisions, completed work, remaining dependencies, worker outcomes, blockers, and a safe resume point when a genuine pause or later continuation makes persistence useful."
+      "name": "Dynamic worker contracts",
+      "description": "Objective-derived responsibility names with exclusive scope, authoritative inputs, complete output, permissions, stop conditions, acceptance evidence, and finite descendant permission."
     }
   ],
   "outputs": [
     {
-      "name": "Time-saving official-subagent waves",
-      "description": "Ready, independent, sufficiently large worker jobs dispatched without serial delay in the same wave when their expected elapsed-time saving exceeds coordination and integration cost."
+      "name": "Official-subagent execution",
+      "description": "Bounded dynamically named responsibilities executed only through the official Codex collaboration surface."
     },
     {
       "name": "Integrated coding result",
-      "description": "Parent-integrated source or artifacts with one task-sized acceptance decision and concise user-facing handoff."
+      "description": "Parent-integrated source or artifacts with one task-sized acceptance decision."
     },
     {
-      "name": "Optional continuity note",
-      "description": "A minimal parent-maintained context file used only when persistence materially helps; its format does not control acceptance."
+      "name": "Finalized workflow state",
+      "description": "Validated .CAO records for task, decisions, assignments, collections, audit evidence, completion, and handoff."
     }
   ],
   "runtime_boundaries": {
     "source_of_truth": ".",
     "generated_or_runtime_paths": [
-      ".coding-agent-orchestrator/",
+      ".CAO/",
       "~/.codex/plugins/cache/local-plugins/coding-agent-orchestrator"
     ],
     "forbidden_source_paths": [
-      ".coding-agent-orchestrator/",
+      ".CAO/",
+      ".CAO-migration-backups/",
       "~/.codex/plugins/cache"
     ]
   },
@@ -127,25 +123,22 @@
   },
   "workflow_contract": {
     "parent_owner": [
-      "decomposition",
-      "dependency graph and critical path",
-      "parallel-wave scheduling",
-      "task-control decisions",
+      "task and state identity",
+      "decomposition and dependency graph",
       "authority and safety",
       "worker model and reasoning routing",
-      "conflict resolution",
-      "integration",
-      "task acceptance",
+      "integration and task acceptance",
       "final reporting"
     ],
     "worker_owner": [
       "one bounded independent output",
       "first-pass completeness",
-      "acceptance evidence for the owned output",
+      "owned-output evidence",
       "concise integration material"
     ],
-    "scheduling_rule": "Minimize total time-to-completion rather than agent count. Spawn all ready independent work in the same wave only when each responsibility is large enough to save real elapsed time after coordination and integration cost; keep tightly coupled, blocked, overlapping, or too-small work parent-owned or ordered.",
-    "non_role_rule": "Do not create validator-only, reviewer-only, state-formatting, or duplicate-investigation roles. State and verification remain the minimum support needed for implementation and task acceptance.",
-    "acceptance_rule": "Use one task-sized semantic acceptance bundle; success ends verification, and a concrete failure returns only the affected scope to its owner."
+    "execution_rule": "The state CLI records and validates workflow state but never launches workers. Official Codex collaboration tools are the sole worker-execution route.",
+    "role_rule": "Use unrestricted dynamic responsibility names derived from the actual objective. Never preallocate a fixed roster or enforce a role-name allowlist.",
+    "state_rule": ".CAO is required workflow state for every activated objective and preserves related continuation exactly.",
+    "acceptance_rule": "Use one task-sized semantic acceptance bundle, then finalize and validate the matching workflow state. Success ends verification."
   }
 }

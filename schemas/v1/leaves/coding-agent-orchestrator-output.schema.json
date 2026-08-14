@@ -11,7 +11,7 @@
     "acceptanceEvidence",
     "externalEffects",
     "unresolvedRisks",
-    "continuityState"
+    "workflowState"
   ],
   "properties": {
     "status": {
@@ -99,13 +99,37 @@
         "minLength": 1
       }
     },
-    "continuityState": {
-      "description": "Whether optional untracked Coding Agent Orchestrator continuity state was needed for this completed objective.",
-      "enum": [
-        "not-needed",
-        "not-created",
-        "updated"
-      ]
+    "workflowState": {
+      "type": "object",
+      "description": "The finalized deterministic .CAO state for this completed objective.",
+      "required": [
+        "path",
+        "taskId",
+        "epoch",
+        "finalized",
+        "integrity"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "(^|/)\\.CAO/?$"
+        },
+        "taskId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "epoch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "finalized": {
+          "const": true
+        },
+        "integrity": {
+          "const": "passed"
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

@@ -1,98 +1,61 @@
-# Coding Agent Orchestrator GUI Official-Subagent Specification
+# Coding Agent Orchestrator State-Control And GUI-Subagent Specification
 
-This is the active Coding Agent Orchestrator design. Its purpose is to minimize wall-clock time to a complete coding result through dependency-aware parallel delegation, while preserving clear ownership and a single acceptance decision. It replaces earlier state-machine and CLI-assisted designs; no compatibility route is retained.
+This specification defines the active CAO architecture. It replaces the optional-context-only design introduced by `1edad13` and restores `.CAO/` as the workflow state SSOT while retaining official GUI Codex subagents as the sole worker-execution route.
 
-## 1. Product And Activation Boundary
+## 1. Activation Boundary
 
-Coding Agent Orchestrator operates only inside the parent GUI Codex task through official collaboration tools. There is no CLI, script, external executable, child Codex session, or hidden automation route for delegation, coordination, state management, or acceptance.
+CAO activates only for a coding objective explicitly selected through a leading uppercase `CAO` invocation, `CAOで`, `CAO:`, `$coding-agent-orchestrator`, explicit skill selection, or an explicit request for the Coding Agent Orchestrator workflow. Generic coding, plugin inspection, discovery, incidental mentions, and state-directory presence do not activate it.
 
-The workflow activates for a coding objective only when the current request begins with uppercase `CAO` as an invocation prefix (`CAO <objective>`, `CAOで<objective>`, or `CAO: <objective>`), directly invokes `$coding-agent-orchestrator`, explicitly selects the bundled Coding Agent Orchestrator skill, or explicitly requests the Coding Agent Orchestrator / コーディング・エージェント・オーケストレーター workflow. A bare plugin attachment, product-name discussion, incidental or non-leading `CAO`, lowercase `cao`, plugin inspection, discovery question, troubleshooting request, generic coding request, generic subagent request, repository contents, and `.coding-agent-orchestrator/` state do not activate it. Continuation is permitted only within an already active, explicitly selected Coding Agent Orchestrator task.
+## 2. Required State Plane
 
-The bundled skill sets `policy.allow_implicit_invocation: true` so it can appear in normal fresh-task catalogs. This is discovery permission only, not authorization for automatic selection. Selection remains restricted to the explicit activation forms above.
+Every activated workflow resolves or creates `<jobsite>/.CAO/` before production or delegation. That directory is the inspectable SSOT for task identity, epoch, scope, accepted decisions, TODO state, dynamic-role contracts, issued assignments, collected results, lifecycle disposition, audit evidence, finalization, and handoff.
 
-If the official collaboration surface is unavailable, the parent stops the affected workflow and reports the missing capability. It does not emulate delegation by another route.
+Related requests preserve the active lineage and completed progress. Clearly unrelated work receives a fresh task ID and epoch while historical runner packets remain available. State is excluded locally through `.git/info/exclude` unless the user explicitly requests tracked records.
 
-## 2. Scheduling Objective
+Legacy `.coding-agents/` remains an accepted input boundary. If `.CAO/` is absent, read-only operations use the legacy directory directly. Before the first mutation, the CLI copies the complete legacy directory to `.CAO/`, preserves the original, excludes both paths locally, and makes `.CAO/` authoritative. If both directories already exist, `.CAO/` wins without merging.
 
-The scheduling objective is minimum time to a complete integrated outcome, not maximum agent count, utilization, or formal decomposition.
+The CLI in `bin/coding-agents.mjs` is the executable owner of state structure and transitions. It may create, normalize, validate, append, collect, and finalize state. It may not launch workers or manage runtime threads.
 
-Before any dispatch, the parent evaluates the coding objective as a dependency graph. It identifies the critical path, ready work, exclusive ownership boundaries, and the integration point for each candidate responsibility. For every ready candidate, the parent compares its expected wall-clock savings with its coordination and integration cost.
+## 3. Execution Plane
 
-The dispatch rule is:
+Official Codex collaboration tools are the only worker-execution surface. The parent uses `spawn_agent`, `wait_agent`, `send_message`, `followup_task`, `interrupt_agent`, and `list_agents` according to their exposed contracts. External Codex processes, hidden runners, and the state CLI never substitute for this surface.
 
-1. Spawn all ready responsibilities in the same parallel wave when they are independent, exclusively owned, and expected to reduce total completion time after their coordination and integration cost.
-2. Spawn those responsibilities immediately through the official GUI collaboration surface; do not serialize independent beneficial work to preserve an artificial phase order.
-3. Keep work in the parent, or execute it after its dependencies, when it is tightly coupled, too small to repay coordination cost, dependent on an unfinished result, or would create an ownership conflict.
+If collaboration tools are unavailable, the workflow stops with current state preserved. Parent-only fallback is not completion of a user-selected CAO workflow unless the user separately authorizes that change.
 
-Worker availability never creates a reason to divide coherent work, create a fixed team, or add a worker whose output does not shorten time to completion.
+## 4. Dynamic Responsibilities
 
-## 3. Parent And Worker Responsibilities
+CAO has no predefined roster, fixed role count, or role-name allowlist. The parent derives a responsibility name from the actual objective and records it only when the work is independently completable, exclusively owned, ready, sufficiently large, and useful to the critical path.
 
-The parent/root owns:
+The parent owns decomposition, dependencies, scheduling, authority, safety, worker profile selection, state consistency, conflict resolution, integration, task acceptance, and reporting. Each worker owns one bounded output end to end. Simultaneous workers never share source ownership.
 
-- the user-visible outcome and declared delivery slice;
-- repository, instruction, and authoritative-source resolution;
-- the dependency graph, critical-path analysis, ready-work decision, and parallel-wave composition;
-- authority, safety, scope, external-effect decisions, and user consultation;
-- every worker model, reasoning-effort, context-inheritance, and finite descendant-delegation choice;
-- exclusive ownership allocation, conflict avoidance, integration order, and conflict resolution;
-- the task-level semantic acceptance bundle, optional continuity state, and final reporting.
+## 5. State Transitions
 
-Each worker owns one bounded, independently completable output from its authoritative inputs to a complete first handoff. A worker may edit only its exclusive source or artifact scope and returns concise integration material with evidence already required for its output. A worker does not make policy decisions, change another worker's files, broaden scope, choose successors, or claim task-wide completion.
+The normal transition is:
 
-The parent remains the owner of tightly coupled policy, cross-worker integration, and any work whose dependency or coordination cost makes delegation slower.
+`intake or related continuation -> assign packet -> official spawn -> collect packet -> integration -> task acceptance bundle -> finalize -> verify-assignments and doctor -> handoff`
 
-## 4. Official GUI Collaboration Surface
+Before spawning, `assign` records the dynamic role, task identity, scope, expected output, model-neutral capability requirements, ambiguity, consequence, coupling, acceptance characteristics, hierarchy grant, and supervision contract.
 
-The parent uses the official collaboration tools directly according to their exposed contracts:
+After a terminal worker result, `collect` records actual status, findings, changed paths, evidence, blockers, assumptions, next action, and exactly one workflow-state lifecycle disposition. State does not claim runtime-thread closure.
 
-- `spawn_agent` creates a bounded worker for a ready responsibility;
-- `wait_agent` receives lifecycle updates without ceremonial polling;
-- `send_message` supplies newly relevant information to an active worker;
-- `followup_task` gives an idle or completed worker a new separately bounded responsibility only when it is ready and beneficial;
-- `interrupt_agent` stops work only for supersession, authority, or scope reasons; and
-- `list_agents` is used only when worker state changes a coordination decision.
+`finalize` requires concrete typed evidence for active decisions, completion conditions, and source/spec coverage. It updates active TODO completion and appends the task-finalization packet atomically or restores the prior TODO bytes on failure.
 
-The parent chooses worker profile and context independently for each actual responsibility. Coding Agent Orchestrator has no predefined roster, fixed role, or alternate operating path.
+## 6. Continuation Semantics
 
-## 5. Worker Job Contract And Parallel Safety
+Before fresh intake, the parent reads task, TODO, decisions, assignments, audit, handoff, and runner state. It compares outcome, artifacts, scope, and completion status semantically:
 
-Before production, every worker receives:
+- unfinished related work retains task ID and epoch;
+- a later related stage retains lineage and advances epoch only when the old execution context is stale or finalized;
+- only clearly unrelated work starts fresh active documents;
+- runner history is preserved across fresh intake;
+- undeclared ambiguity remains visible rather than being silently normalized.
 
-- objective and exact exclusive source or artifact scope;
-- authoritative inputs and decision-relevant context;
-- expected complete output and integration boundary;
-- allowed and forbidden actions;
-- stop conditions;
-- acceptance evidence already required for that output; and
-- explicit finite descendant-delegation permission.
+## 7. Acceptance And Recovery
 
-No two simultaneous workers receive overlapping ownership. The parent expresses dependencies in the assignment and only spawns work whose required inputs are ready. This preserves conflict-free parallelism without an extra coordination worker or record-formatting stage.
+Producers integrate all known requirements in their first handoff. The parent runs one task-sized semantic acceptance bundle. State validation confirms the recorded task decision; it does not create implementation quality or add requirements.
 
-Workers are producers, not validators, reviewers, or record-formatters. The workflow does not create a worker solely to inspect another candidate, reformat coordination records, rank alternatives, or duplicate another worker's responsibility. A successful worker receives no stronger-worker recheck or post-success confirmation.
+An observed failure returns only the affected responsibility to its owner. The parent records the failure and lifecycle state before reassignment. Successful work is not sent to a stronger worker or a second reviewer.
 
-## 6. Integration And One Acceptance Bundle
+## 8. Source And Runtime Boundary
 
-The parent integrates a worker output when its dependencies are satisfied. It resolves a real cross-worker conflict against authoritative inputs itself; it does not create a reviewer to select a candidate.
-
-Each producer incorporates known requirements into its first acceptance candidate. The declared slice has one semantic acceptance bundle containing only the evidence required for the release decision. Verification confirms completed work; it does not finish, rewrite, normalize, decorate, rank, or choose it.
-
-On an observed defect, the parent identifies the smallest cause and responsible owner, returns only the affected scope, and repeats only invalidated evidence. When the acceptance bundle passes, verification ends and the parent proceeds directly to handoff or the next unconditional construction stage already in the declared slice.
-
-## 7. Minimal Continuity State
-
-The active GUI task is the live coordination surface. Persistent state is optional and is used only when a genuine pause, handoff, or later continuation materially benefits from it.
-
-A concise `.coding-agent-orchestrator/context.md` may contain the current outcome and scope, accepted decisions, completed work, remaining dependencies, worker outcomes, blockers, and a safe resume point. The parent maintains it directly. It is not a required schema, protocol, state machine, worker packet, formatting target, or acceptance gate. Existing material is read semantically: useful current facts are preserved and stale material is replaced.
-
-Generated local state remains outside tracked source unless the user explicitly requests repository-owned documentation. The workflow does not change tracked ignore policy implicitly.
-
-## 8. Delivery, Blocking, And Recovery
-
-Coding/source work defaults to `ITERATIVE_DELIVERY`. `ONE_SHOT_QUALITY` applies only when the current user explicitly selects that named mode and never carries into another goal. Both modes require a complete first candidate for the declared slice.
-
-A blocked dependent branch does not stop independently ready work. The parent stops and reports only the affected action when source ownership is unresolved, unrelated edits overlap an owned file, authority is missing, the official collaboration surface is unavailable, or an unsafe external effect would be required.
-
-## 9. Source And Activation Boundaries
-
-Authoritative plugin source, installed cache, activation, publication, and Git history are distinct. Source changes target this repository; installed cache copies are not edited as source. Refresh, activation, commit, push, and publication require their own current authority and are not implied by source completion.
+The source repository is authoritative. Installed plugin cache is generated runtime material. `.CAO/`, migration backups, Git metadata, OS noise, and repository-local state are excluded from cache refresh. Source repair, cache refresh, installation, activation, restart, commit, and push remain separate operations.

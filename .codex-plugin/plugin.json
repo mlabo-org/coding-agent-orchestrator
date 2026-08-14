@@ -1,7 +1,7 @@
 {
   "name": "coding-agent-orchestrator",
-  "version": "0.1.0+codex.20260814165137",
-  "description": "Explicit-only Coding Agent Orchestrator (CAO) coordination in GUI Codex with official subagents. Activate for a coding objective only through a leading CAO or CAO\u3067 invocation, $coding-agent-orchestrator, explicit bundled-skill selection, or an explicit request to use this workflow; generic coding and bare attachment do not activate it.",
+  "version": "0.2.0+codex.20260815080618",
+  "description": "Explicit-only Coding Agent Orchestrator (CAO) with official GUI Codex subagents and deterministic .CAO state control. Activate only through a leading CAO or CAO\u3067 invocation, $coding-agent-orchestrator, explicit bundled-skill selection, or an explicit request for this workflow; generic coding and plugin inspection do not activate it.",
   "homepage": "https://github.com/mlabo-org/coding-agent-orchestrator#readme",
   "repository": "https://github.com/mlabo-org/coding-agent-orchestrator",
   "license": "MIT",
@@ -12,6 +12,10 @@
     "\u30b3\u30fc\u30c7\u30a3\u30f3\u30b0-\u30a8\u30fc\u30b8\u30a7\u30f3\u30c8-\u30aa\u30fc\u30b1\u30b9\u30c8\u30ec\u30fc\u30bf\u30fc",
     "gui-codex",
     "official-subagents",
+    ".CAO",
+    ".coding-agents-compatibility",
+    "workflow-state",
+    "state-first-continuation",
     "wall-clock-optimization",
     "critical-path",
     "parallel-wave",
@@ -23,7 +27,7 @@
   "interface": {
     "displayName": "Coding Agent Orchestrator",
     "shortDescription": "Explicit GUI coding orchestration with official subagents.",
-    "longDescription": "Coding Agent Orchestrator minimizes total coding wall-clock time by mapping dependencies and the critical path before the parent GUI Codex task dispatches work. Ready, independent, sufficiently large responsibilities whose benefit exceeds coordination and integration cost start in the same parallel wave without serial delay. Tightly coupled, dependency-blocked, overlapping, or too-small work stays parent-owned or ordered. The parent retains decomposition, authority, safety, worker routing, conflict resolution, integration, acceptance, and final reporting; each worker owns one exclusive complete output. State and verification remain minimal implementation support.",
+    "longDescription": "Coding Agent Orchestrator combines official GUI Codex subagent execution with deterministic .CAO workflow state and non-destructive acceptance of legacy .coding-agents state. The parent preserves task identity, epoch, scope, decisions, TODO progress, dynamic-role assignments, collected outcomes, lifecycle disposition, audit evidence, finalization, and handoff while mapping dependencies and the critical path. There is no fixed role roster. The record-only state CLI never launches workers; official collaboration tools remain the sole execution route.",
     "developerName": "Makoto Suzuki",
     "category": "Developer Tools",
     "websiteURL": "https://github.com/mlabo-org/coding-agent-orchestrator",
@@ -31,17 +35,21 @@
       "GUI Codex Task Decomposition",
       "CAO Explicit Activation",
       "Official Subagent Dispatch",
+      "Deterministic .CAO State Control",
+      "Legacy .coding-agents State Acceptance",
+      "State-first Continuation",
+      "Dynamic Role Contracts",
       "Dependency And Critical-Path Analysis",
       "Time-Saving Parallel Waves",
       "Wall-Clock Minimization",
       "Bounded Worker Ownership",
       "Parent Integration",
-      "Optional Task Continuity"
+      "Task Finalization And Handoff"
     ],
     "defaultPrompt": [
-      "CAO map dependencies and the critical path for this coding objective, then parallelize ready independent work.",
-      "Use $coding-agent-orchestrator to minimize wall-clock time while keeping tightly coupled work parent-owned.",
-      "Continue the active Coding Agent Orchestrator workflow and integrate completed exclusive worker outputs."
+      "CAO inspect or initialize .CAO state, map dependencies, and coordinate ready independent work through official subagents.",
+      "Use $coding-agent-orchestrator with deterministic task, decision, assignment, collection, and finalization state.",
+      "Continue the active Coding Agent Orchestrator workflow from its exact .CAO state."
     ],
     "brandColor": "#2563EB"
   },
