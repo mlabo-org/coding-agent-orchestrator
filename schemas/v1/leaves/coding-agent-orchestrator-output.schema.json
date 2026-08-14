@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "coding-agents/coding-agents-output/v1",
-  "title": "Coding Agents coordination output",
-  "description": "The complete parent-owned result of an explicitly activated Coding Agents objective. Incomplete, blocked, or unavailable execution is represented by the broker's error or stop envelope instead of this success output.",
+  "$id": "coding-agent-orchestrator/coding-agent-orchestrator-output/v1",
+  "title": "Coding Agent Orchestrator coordination output",
+  "description": "The complete parent-owned result of an explicitly activated Coding Agent Orchestrator objective. Incomplete, blocked, or unavailable execution is represented by the broker's error or stop envelope instead of this success output.",
   "type": "object",
   "required": [
     "status",
@@ -100,7 +100,7 @@
       }
     },
     "continuityState": {
-      "description": "Whether optional untracked Coding Agents continuity state was needed for this completed objective.",
+      "description": "Whether optional untracked Coding Agent Orchestrator continuity state was needed for this completed objective.",
       "enum": [
         "not-needed",
         "not-created",

@@ -1,39 +1,48 @@
 {
   "schema_version": "creator-contract/v2",
   "kind": "plugin",
-  "capability_id": "coding-agents",
+  "capability_id": "coding-agent-orchestrator",
   "official_creator": "plugin-creator",
   "routing": {
-    "task_class": "Explicitly selected GUI Codex coding coordination that minimizes total wall-clock time through dependency-aware official-subagent waves, parent integration, and optional task continuity",
+    "task_class": "Explicitly selected Coding Agent Orchestrator (CAO) coordination in GUI Codex that minimizes total wall-clock time through dependency-aware official-subagent waves, parent integration, and optional task continuity",
     "natural_language_triggers": [
-      "$coding-agents",
-      "select the bundled Coding Agents skill",
-      "Use the selected Coding Agents plugin for this coding objective",
-      "Use Coding Agents for this coding objective",
-      "continue this already active Coding Agents workflow"
+      "CAO <coding objective>",
+      "CAOで<coding objective>",
+      "CAO: <coding objective>",
+      "$coding-agent-orchestrator",
+      "select the bundled Coding Agent Orchestrator skill",
+      "Use the selected Coding Agent Orchestrator plugin for this coding objective",
+      "Use Coding Agent Orchestrator for this coding objective",
+      "コーディング・エージェント・オーケストレーターでこのコーディング作業を進めて",
+      "continue this already active Coding Agent Orchestrator workflow"
     ],
-    "primary_route": "For a coding objective, activate only after the user directly invokes $coding-agents, explicitly selects the bundled Coding Agents skill, or selects the Coding Agents plugin and explicitly requests the Coding Agents workflow. The parent then maps dependencies, the critical path, readiness, concurrency, and coordination or integration cost. It spawns every ready, independent, sufficiently large responsibility in the same parallel wave when doing so reduces total time-to-completion; tightly coupled, dependency-blocked, overlapping, or too-small work remains parent-owned or ordered. The parent retains authority, safety, conflicts, integration, and acceptance. Continuation without repeating the name is limited to that active workflow.",
+    "primary_route": "For a coding objective, activate only when the current request begins with uppercase CAO as an invocation prefix (CAO <objective>, CAOで<objective>, or CAO: <objective>), directly invokes $coding-agent-orchestrator, explicitly selects the bundled Coding Agent Orchestrator skill, or explicitly requests the Coding Agent Orchestrator / コーディング・エージェント・オーケストレーター workflow. The parent then maps dependencies, the critical path, readiness, concurrency, and coordination or integration cost. It spawns every ready, independent, sufficiently large responsibility in the same parallel wave when doing so reduces total time-to-completion; tightly coupled, dependency-blocked, overlapping, or too-small work remains parent-owned or ordered. The parent retains authority, safety, conflicts, integration, and acceptance. Continuation without repeating the name is limited to that active workflow.",
     "fallback_conditions": [
       "When official collaboration tools are unavailable, stop this workflow and report the unavailable boundary without emulating delegation."
     ],
     "non_use_conditions": [
-      "Do not treat a bare Coding Agents plugin attachment, plugin inspection, discovery question, or troubleshooting request as activation of the coding workflow.",
-      "Do not select Coding Agents for generic coding, debugging, review, explanation, subagent decomposition, multi-agent coordination, or team coordination without explicit workflow selection for a coding objective.",
-      "Do not select Coding Agents from .coding-agents directory presence or prior state alone.",
-      "Do not treat a continuation outside an already active explicitly selected Coding Agents workflow as a trigger."
+      "Do not treat a bare Coding Agent Orchestrator plugin attachment, plugin inspection, discovery question, or troubleshooting request as activation of the coding workflow.",
+      "Do not activate from an incidental CAO mention, a non-leading CAO occurrence, or lowercase cao; CAO is an invocation alias only at the start of the current coding request.",
+      "Do not select Coding Agent Orchestrator for generic coding, debugging, review, explanation, subagent decomposition, multi-agent coordination, or team coordination without explicit workflow selection for a coding objective.",
+      "Do not select Coding Agent Orchestrator from .coding-agent-orchestrator directory presence or prior state alone.",
+      "Do not treat a continuation outside an already active explicitly selected Coding Agent Orchestrator workflow as a trigger."
     ],
     "discovery": {
       "task_terms": [
-        "Coding Agents GUI Codex",
-        "Coding Agents critical path",
-        "$coding-agents parallel wave",
-        "Coding Agents wall-clock optimization",
-        "Coding Agents parent integration"
+        "CAO coding orchestration",
+        "Coding Agent Orchestrator GUI Codex",
+        "コーディング・エージェント・オーケストレーター",
+        "Coding Agent Orchestrator critical path",
+        "$coding-agent-orchestrator parallel wave",
+        "Coding Agent Orchestrator wall-clock optimization",
+        "Coding Agent Orchestrator parent integration"
       ],
       "trigger_phrases": [
-        "Use the selected Coding Agents plugin for this coding objective",
-        "Select the bundled Coding Agents skill",
-        "Use $coding-agents to coordinate coding workers"
+        "CAO coordinate this coding objective",
+        "CAOでこの実装を進めて",
+        "Use the selected Coding Agent Orchestrator plugin for this coding objective",
+        "Select the bundled Coding Agent Orchestrator skill",
+        "Use $coding-agent-orchestrator to coordinate coding workers"
       ],
       "artifact_or_tool_terms": [
         "spawn_agent",
@@ -42,22 +51,25 @@
         "followup_task",
         "interrupt_agent",
         "list_agents",
-        ".coding-agents/context.md"
+        ".coding-agent-orchestrator/context.md"
       ],
       "aliases": [
-        "coding-agents"
+        "coding-agent-orchestrator",
+        "Coding Agent Orchestrator",
+        "CAO",
+        "コーディング・エージェント・オーケストレーター"
       ]
     },
     "openai_yaml": {
       "manifests": [
         {
-          "skill_root": "skills/coding-agents",
-          "path": "skills/coding-agents/agents/openai.yaml",
+          "skill_root": "skills/coding-agent-orchestrator",
+          "path": "skills/coding-agent-orchestrator/agents/openai.yaml",
           "document": {
             "interface": {
-              "display_name": "Coding Agents",
-              "short_description": "Explicit GUI coding with official subagents",
-              "default_prompt": "Use the bundled $coding-agents skill for this coding objective: map dependencies and the critical path, spawn ready independent work in the same parallel wave, and keep parent control of integration."
+              "display_name": "Coding Agent Orchestrator",
+              "short_description": "Explicit GUI coding orchestration with official subagents",
+              "default_prompt": "Use $coding-agent-orchestrator for this coding objective: map dependencies and the critical path, spawn ready independent work in parallel, and keep parent control of integration."
             },
             "policy": {
               "allow_implicit_invocation": true
@@ -102,11 +114,11 @@
   "runtime_boundaries": {
     "source_of_truth": ".",
     "generated_or_runtime_paths": [
-      ".coding-agents/",
-      "~/.codex/plugins/cache/local-plugins/coding-agents"
+      ".coding-agent-orchestrator/",
+      "~/.codex/plugins/cache/local-plugins/coding-agent-orchestrator"
     ],
     "forbidden_source_paths": [
-      ".coding-agents/",
+      ".coding-agent-orchestrator/",
       "~/.codex/plugins/cache"
     ]
   },

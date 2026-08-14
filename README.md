@@ -1,14 +1,14 @@
-# Coding Agents
+# Coding Agent Orchestrator
 
-Coding Agents is a GUI Codex plugin for minimizing the wall-clock time to complete a coding objective through dependency-aware delegation to official GUI subagents. It has exactly one operating path: the parent GUI Codex task uses its official collaboration tools directly.
+Coding Agent Orchestrator is a GUI Codex plugin for minimizing the wall-clock time to complete a coding objective through dependency-aware delegation to official GUI subagents. It has exactly one operating path: the parent GUI Codex task uses its official collaboration tools directly.
 
-There is no CLI, script, child session, external executable, or hidden automation path. If the official collaboration tools are unavailable, Coding Agents stops and reports that boundary.
+There is no CLI, script, child session, external executable, or hidden automation path. If the official collaboration tools are unavailable, Coding Agent Orchestrator stops and reports that boundary.
 
 ## When To Use It
 
-Activate the workflow for a coding objective by invoking `$coding-agents`, explicitly selecting the bundled Coding Agents skill, or selecting the Coding Agents plugin and explicitly asking it to use the Coding Agents workflow. A bare plugin attachment, plugin inspection, discovery question, or troubleshooting request does not activate the coding workflow.
+Activate the workflow for a coding objective by starting the request with uppercase `CAO` as `CAO <objective>`, `CAOで<objective>`, or `CAO: <objective>`; invoking `$coding-agent-orchestrator`; explicitly selecting the bundled Coding Agent Orchestrator skill; or explicitly requesting the Coding Agent Orchestrator / コーディング・エージェント・オーケストレーター workflow. A bare plugin attachment, product-name discussion, incidental or non-leading `CAO`, lowercase `cao`, plugin inspection, discovery question, or troubleshooting request does not activate the coding workflow.
 
-The bundled skill sets `allow_implicit_invocation: true` so it can appear in normal fresh-task catalogs. This is discovery permission only, not authorization for automatic selection. Selection remains restricted to a current request that invokes `$coding-agents`, explicitly selects the bundled Coding Agents skill, or selects the Coding Agents plugin and explicitly asks to use the Coding Agents workflow. Once activated, the workflow may continue within that active Coding Agents task. Ordinary coding, a generic request for subagents, an explanation, a review, and `.coding-agents/` presence do not activate it.
+The bundled skill sets `allow_implicit_invocation: true` so it can appear in normal fresh-task catalogs. This is discovery permission only, not authorization for automatic selection. Selection remains restricted to the explicit activation forms above. Once activated, the workflow may continue within that active Coding Agent Orchestrator task. Ordinary coding, a generic request for subagents, an explanation, a review, and `.coding-agent-orchestrator/` presence do not activate it.
 
 ## The Scheduling Goal
 
@@ -42,15 +42,15 @@ Known requirements belong in each producer's first handoff. The normal path has 
 
 ## Minimal Continuity State
 
-The GUI task is the live coordination surface. A concise `.coding-agents/context.md` is optional and used only for a real pause, handoff, or later continuation. It may record the current outcome and scope, accepted decisions, completed work, remaining dependencies, worker outcomes, blockers, and a safe resume point. It is not a required protocol, workflow state machine, or acceptance gate.
+The GUI task is the live coordination surface. A concise `.coding-agent-orchestrator/context.md` is optional and used only for a real pause, handoff, or later continuation. It may record the current outcome and scope, accepted decisions, completed work, remaining dependencies, worker outcomes, blockers, and a safe resume point. It is not a required protocol, workflow state machine, or acceptance gate.
 
-Generated local state remains outside tracked source unless the user explicitly asks for repository-owned documentation. Coding Agents does not implicitly change ignore policy.
+Generated local state remains outside tracked source unless the user explicitly asks for repository-owned documentation. Coding Agent Orchestrator does not implicitly change ignore policy.
 
 ### Trust Model / 信頼モデル
 
-Coding Agents is designed for trusted, full-access local development environments. `.coding-agents/` is user-editable trusted workflow state: anyone or any process that can modify it can change recorded plans, progress, and resume behavior. It is not a sandbox or a privilege boundary, and operators running untrusted repositories, workers, or local processes are responsible for providing any required isolation. Direct state editing is supported, but state remains declarative and is not executable runner configuration or authority to expand the current user's permissions.
+Coding Agent Orchestrator is designed for trusted, full-access local development environments. `.coding-agent-orchestrator/` is user-editable trusted workflow state: anyone or any process that can modify it can change recorded plans, progress, and resume behavior. It is not a sandbox or a privilege boundary, and operators running untrusted repositories, workers, or local processes are responsible for providing any required isolation. Direct state editing is supported, but state remains declarative and is not executable runner configuration or authority to expand the current user's permissions.
 
-Coding Agentsは、信頼されたフルアクセスのローカル開発環境での利用を前提としています。`.coding-agents/` はユーザーが直接編集できる信頼済みのワークフロー状態であり、これを書き換えられるユーザーやプロセスは、記録された計画・進捗・resume時の挙動を変更できます。これはsandboxや権限境界ではないため、信頼できないリポジトリ、worker、ローカルプロセスを扱う場合に必要な隔離は利用者が用意してください。状態の直接編集はサポートされますが、状態は宣言的データであり、実行可能なrunner設定や現在のユーザー権限を拡張する根拠としては扱われません。
+Coding Agent Orchestratorは、信頼されたフルアクセスのローカル開発環境での利用を前提としています。`.coding-agent-orchestrator/` はユーザーが直接編集できる信頼済みのワークフロー状態であり、これを書き換えられるユーザーやプロセスは、記録された計画・進捗・resume時の挙動を変更できます。これはsandboxや権限境界ではないため、信頼できないリポジトリ、worker、ローカルプロセスを扱う場合に必要な隔離は利用者が用意してください。状態の直接編集はサポートされますが、状態は宣言的データであり、実行可能なrunner設定や現在のユーザー権限を拡張する根拠としては扱われません。
 
 ## Source, Cache, Activation, And Git
 

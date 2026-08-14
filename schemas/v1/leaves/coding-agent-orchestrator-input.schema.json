@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "coding-agents/coding-agents-input/v1",
-  "title": "Coding Agents coordination input",
-  "description": "A bounded coding objective for an explicitly activated Coding Agents workflow in the current GUI Codex task. The activation value is a routing claim that the host must independently verify from the current user interaction.",
+  "$id": "coding-agent-orchestrator/coding-agent-orchestrator-input/v1",
+  "title": "Coding Agent Orchestrator coordination input",
+  "description": "A bounded coding objective for an explicitly activated Coding Agent Orchestrator (CAO) workflow in the current GUI Codex task. The activation value is a routing claim that the host must independently verify from the current user interaction.",
   "type": "object",
   "required": [
     "activation",
@@ -12,8 +12,9 @@
   "properties": {
     "activation": {
       "type": "string",
-      "description": "How the current user explicitly selected Coding Agents, or that this is a continuation of an already active workflow. This field does not itself grant activation.",
+      "description": "How the current user explicitly selected Coding Agent Orchestrator, including a leading uppercase CAO invocation, or that this is a continuation of an already active workflow. This field does not itself grant activation.",
       "enum": [
+        "explicit-cao-prefix",
         "explicit-dollar-skill",
         "explicit-bundled-skill",
         "explicit-plugin-workflow",

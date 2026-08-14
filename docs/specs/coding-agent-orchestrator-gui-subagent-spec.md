@@ -1,14 +1,14 @@
-# Coding Agents GUI Official-Subagent Specification
+# Coding Agent Orchestrator GUI Official-Subagent Specification
 
-This is the active Coding Agents design. Its purpose is to minimize wall-clock time to a complete coding result through dependency-aware parallel delegation, while preserving clear ownership and a single acceptance decision. It replaces earlier state-machine and CLI-assisted designs; no compatibility route is retained.
+This is the active Coding Agent Orchestrator design. Its purpose is to minimize wall-clock time to a complete coding result through dependency-aware parallel delegation, while preserving clear ownership and a single acceptance decision. It replaces earlier state-machine and CLI-assisted designs; no compatibility route is retained.
 
 ## 1. Product And Activation Boundary
 
-Coding Agents operates only inside the parent GUI Codex task through official collaboration tools. There is no CLI, script, external executable, child Codex session, or hidden automation route for delegation, coordination, state management, or acceptance.
+Coding Agent Orchestrator operates only inside the parent GUI Codex task through official collaboration tools. There is no CLI, script, external executable, child Codex session, or hidden automation route for delegation, coordination, state management, or acceptance.
 
-The workflow activates for a coding objective only when the user directly invokes `$coding-agents`, explicitly selects the bundled Coding Agents skill, or selects the Coding Agents plugin and explicitly requests the Coding Agents workflow. A bare plugin attachment, plugin inspection, discovery question, troubleshooting request, generic coding request, generic subagent request, repository contents, and `.coding-agents/` state do not activate it. Continuation is permitted only within an already active, explicitly selected Coding Agents task.
+The workflow activates for a coding objective only when the current request begins with uppercase `CAO` as an invocation prefix (`CAO <objective>`, `CAOで<objective>`, or `CAO: <objective>`), directly invokes `$coding-agent-orchestrator`, explicitly selects the bundled Coding Agent Orchestrator skill, or explicitly requests the Coding Agent Orchestrator / コーディング・エージェント・オーケストレーター workflow. A bare plugin attachment, product-name discussion, incidental or non-leading `CAO`, lowercase `cao`, plugin inspection, discovery question, troubleshooting request, generic coding request, generic subagent request, repository contents, and `.coding-agent-orchestrator/` state do not activate it. Continuation is permitted only within an already active, explicitly selected Coding Agent Orchestrator task.
 
-The bundled skill sets `policy.allow_implicit_invocation: true` so it can appear in normal fresh-task catalogs. This is discovery permission only, not authorization for automatic selection. Selection remains restricted to a current request that invokes `$coding-agents`, explicitly selects the bundled Coding Agents skill, or selects the Coding Agents plugin and explicitly requests the Coding Agents workflow.
+The bundled skill sets `policy.allow_implicit_invocation: true` so it can appear in normal fresh-task catalogs. This is discovery permission only, not authorization for automatic selection. Selection remains restricted to the explicit activation forms above.
 
 If the official collaboration surface is unavailable, the parent stops the affected workflow and reports the missing capability. It does not emulate delegation by another route.
 
@@ -53,7 +53,7 @@ The parent uses the official collaboration tools directly according to their exp
 - `interrupt_agent` stops work only for supersession, authority, or scope reasons; and
 - `list_agents` is used only when worker state changes a coordination decision.
 
-The parent chooses worker profile and context independently for each actual responsibility. Coding Agents has no predefined roster, fixed role, or alternate operating path.
+The parent chooses worker profile and context independently for each actual responsibility. Coding Agent Orchestrator has no predefined roster, fixed role, or alternate operating path.
 
 ## 5. Worker Job Contract And Parallel Safety
 
@@ -83,7 +83,7 @@ On an observed defect, the parent identifies the smallest cause and responsible 
 
 The active GUI task is the live coordination surface. Persistent state is optional and is used only when a genuine pause, handoff, or later continuation materially benefits from it.
 
-A concise `.coding-agents/context.md` may contain the current outcome and scope, accepted decisions, completed work, remaining dependencies, worker outcomes, blockers, and a safe resume point. The parent maintains it directly. It is not a required schema, protocol, state machine, worker packet, formatting target, or acceptance gate. Existing material is read semantically: useful current facts are preserved and stale material is replaced.
+A concise `.coding-agent-orchestrator/context.md` may contain the current outcome and scope, accepted decisions, completed work, remaining dependencies, worker outcomes, blockers, and a safe resume point. The parent maintains it directly. It is not a required schema, protocol, state machine, worker packet, formatting target, or acceptance gate. Existing material is read semantically: useful current facts are preserved and stale material is replaced.
 
 Generated local state remains outside tracked source unless the user explicitly requests repository-owned documentation. The workflow does not change tracked ignore policy implicitly.
 

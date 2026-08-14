@@ -1,10 +1,10 @@
 ---
-name: coding-agents
+name: coding-agent-orchestrator
 description: >-
-  Run explicit-only Coding Agents coordination in GUI Codex with official subagents. Trigger via $coding-agents, bundled-skill selection, or explicit use of the selected plugin for coding; bare attachment, generic subagent requests, and .coding-agents presence do not trigger.
+  Orchestrate explicit-only GUI Codex coding with official subagents as Coding Agent Orchestrator (CAO). Trigger only via a leading CAO or CAOで invocation, $coding-agent-orchestrator, explicit skill selection, or an explicit request for the Coding Agent Orchestrator workflow; generic coding and bare attachment do not trigger.
 ---
 
-# Coding Agents
+# Coding Agent Orchestrator
 
 This `SKILL.md` is the local execution contract for this skill when the skill is selected.
 Codex must treat this file's trigger assumptions, workflow, tool boundaries, file boundaries, and output shape as binding instructions within this skill's scope.
@@ -12,20 +12,27 @@ This file does not override system instructions, developer instructions, explici
 
 ## Purpose And Trigger Boundary
 
-Use Coding Agents to minimize total wall-clock time for coding work by giving bounded responsibilities to official GUI Codex subagents while the parent retains task control and integration. Optimize time-to-completion, not agent count.
+Use Coding Agent Orchestrator to minimize total wall-clock time for coding work by giving bounded responsibilities to official GUI Codex subagents while the parent retains task control and integration. Optimize time-to-completion, not agent count.
 
-Select this skill only for a coding objective when the current request directly invokes `$coding-agents`, explicitly selects the bundled Coding Agents skill, or selects the Coding Agents plugin and explicitly asks to use the Coding Agents workflow. A bare plugin attachment, plugin inspection, discovery question, or troubleshooting request does not activate the coding workflow.
+Select this skill only for a coding objective when the current request satisfies one of these explicit activation forms:
 
-Treat `policy.allow_implicit_invocation: true` as discovery permission only. It allows the skill to appear in normal fresh-task catalogs; it does not authorize automatic selection. Selection remains restricted to a current request that invokes `$coding-agents`, explicitly selects the bundled Coding Agents skill, or selects the Coding Agents plugin and explicitly asks to use the Coding Agents workflow. After activation, a continuation request may proceed inside the same active workflow without repeating the name.
+- begins with uppercase `CAO` as the invocation prefix: `CAO <objective>`, `CAOで<objective>`, or `CAO: <objective>`;
+- directly invokes `$coding-agent-orchestrator`;
+- explicitly selects the bundled Coding Agent Orchestrator skill; or
+- explicitly requests the Coding Agent Orchestrator / コーディング・エージェント・オーケストレーター workflow.
 
-Do not select it for generic coding, debugging, review, explanation, subagent decomposition, multi-agent coordination, team coordination, or continuation outside an already active explicitly selected Coding Agents workflow. Never infer activation from repository contents or the presence of `.coding-agents/`.
+A bare plugin attachment, product-name discussion, incidental or non-leading `CAO`, lowercase `cao`, plugin inspection, discovery question, or troubleshooting request does not activate the coding workflow.
+
+Treat `policy.allow_implicit_invocation: true` as discovery permission only. It allows the skill to appear in normal fresh-task catalogs; it does not authorize automatic selection. Selection remains restricted to the explicit activation forms above. After activation, a continuation request may proceed inside the same active workflow without repeating the name.
+
+Do not select it for generic coding, debugging, review, explanation, subagent decomposition, multi-agent coordination, team coordination, or continuation outside an already active explicitly selected Coding Agent Orchestrator workflow. Never infer activation from repository contents or the presence of `.coding-agent-orchestrator/`.
 
 ## GUI-Only Execution Boundary
 
 - Operate only through the parent GUI Codex task and its official collaboration tools.
 - Use `spawn_agent` for direct worker creation; use `wait_agent`, `send_message`, `followup_task`, `interrupt_agent`, and `list_agents` only for their documented lifecycle purposes.
 - Do not use a CLI. Do not invoke external executables, scripts, child Codex sessions, or hidden automation as a substitute for the official collaboration surface.
-- If the official collaboration tools are unavailable, stop the Coding Agents workflow and report that boundary. Do not emulate delegation through another mechanism.
+- If the official collaboration tools are unavailable, stop the Coding Agent Orchestrator workflow and report that boundary. Do not emulate delegation through another mechanism.
 - Treat plugin source, installed cache, activation, publication, and Git history as separate boundaries. Change or activate one only when the current request authorizes it; never edit an installed cache as source.
 
 ## Parent And Worker Ownership
@@ -80,7 +87,7 @@ Do not give the same source ownership to multiple workers. Keep tightly coupled 
 
 State is optional and exists only to preserve useful context across a genuine pause, handoff, or later continuation. The active Codex task remains the live coordination surface.
 
-- When continuity would materially help, maintain a short file such as `.coding-agents/context.md` directly from the parent GUI task.
+- When continuity would materially help, maintain a short file such as `.coding-agent-orchestrator/context.md` directly from the parent GUI task.
 - Record only the current outcome, scope, accepted decisions, completed work, remaining dependencies, worker outcomes, blockers, and safe resume point.
 - Read existing state semantically. Preserve still-current decisions and completed work; replace stale or contradictory material instead of layering compatibility fields.
 - Do not require a predefined roster, packet schemas, lifecycle fields, repeated mappings, or validator approval. State formatting is never a completion gate.
