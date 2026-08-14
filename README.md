@@ -1,8 +1,19 @@
-# Coding Agent Orchestrator
+# Coding Agent Orchestrator (CAO)
 
-Coding Agent Orchestrator is a GUI Codex plugin for minimizing the wall-clock time to complete a coding objective through dependency-aware delegation to official GUI subagents. It has exactly one operating path: the parent GUI Codex task uses its official collaboration tools directly.
+Coding Agent Orchestrator (CAO; コーディング・エージェント・オーケストレーター) is a GUI Codex plugin for minimizing the wall-clock time to complete a coding objective through dependency-aware delegation to official GUI subagents.
 
-There is no CLI, script, child session, external executable, or hidden automation path. If the official collaboration tools are unavailable, Coding Agent Orchestrator stops and reports that boundary.
+| Surface | Canonical value |
+| --- | --- |
+| Product name | Coding Agent Orchestrator |
+| Short invocation alias | `CAO` |
+| Plugin, skill, and repository ID | `coding-agent-orchestrator` |
+| Japanese name | コーディング・エージェント・オーケストレーター |
+| Repository | [mlabo-org/coding-agent-orchestrator](https://github.com/mlabo-org/coding-agent-orchestrator) |
+| Optional continuity directory | `.coding-agent-orchestrator/` |
+
+CAO and CLI Agent Runner are separate capabilities. CAO coordinates official subagents inside the current GUI Codex task; it does not invoke vendor-selectable CLI workers or act as the CLI Agent Runner.
+
+CAO has exactly one operating path: the parent GUI Codex task uses its official collaboration tools directly. There is no CLI, script, child session, external executable, or hidden automation path. If the official collaboration tools are unavailable, Coding Agent Orchestrator stops and reports that boundary.
 
 ## When To Use It
 

@@ -1,7 +1,7 @@
 {
   "name": "coding-agent-orchestrator",
-  "version": "0.1.0",
-  "description": "Explicit-only Coding Agent Orchestrator (CAO) coordination in GUI Codex with official subagents. Activate for a coding objective only through a leading CAO or CAOで invocation, $coding-agent-orchestrator, explicit bundled-skill selection, or an explicit request to use this workflow; generic coding and bare attachment do not activate it.",
+  "version": "0.1.0+codex.20260814165137",
+  "description": "Explicit-only Coding Agent Orchestrator (CAO) coordination in GUI Codex with official subagents. Activate for a coding objective only through a leading CAO or CAO\u3067 invocation, $coding-agent-orchestrator, explicit bundled-skill selection, or an explicit request to use this workflow; generic coding and bare attachment do not activate it.",
   "homepage": "https://github.com/mlabo-org/coding-agent-orchestrator#readme",
   "repository": "https://github.com/mlabo-org/coding-agent-orchestrator",
   "license": "MIT",
@@ -9,7 +9,7 @@
   "keywords": [
     "coding-agent-orchestrator",
     "cao",
-    "コーディング-エージェント-オーケストレーター",
+    "\u30b3\u30fc\u30c7\u30a3\u30f3\u30b0-\u30a8\u30fc\u30b8\u30a7\u30f3\u30c8-\u30aa\u30fc\u30b1\u30b9\u30c8\u30ec\u30fc\u30bf\u30fc",
     "gui-codex",
     "official-subagents",
     "wall-clock-optimization",
