@@ -1,14 +1,14 @@
 {
-  "name": "coding-agents-marketplace",
+  "name": "coding-agent-orchestrator-marketplace",
   "interface": {
-    "displayName": "Coding Agents"
+    "displayName": "Coding Agent Orchestrator"
   },
   "plugins": [
     {
-      "name": "coding-agents",
+      "name": "coding-agent-orchestrator",
       "source": {
         "source": "url",
-        "url": "https://github.com/mlabo-org/coding-agents.git",
+        "url": "https://github.com/mlabo-org/coding-agent-orchestrator.git",
         "ref": "main"
       },
       "policy": {

@@ -1,13 +1,15 @@
 {
-  "name": "coding-agents",
+  "name": "coding-agent-orchestrator",
   "version": "0.1.0",
-  "description": "Explicit-only GUI Codex coding coordination with official subagents. Activate for a coding objective only through $coding-agents, explicit bundled-skill selection, or explicit use of the selected Coding Agents plugin; bare plugin attachment, generic subagent requests, and .coding-agents presence do not activate it.",
-  "homepage": "https://github.com/mlabo-org/coding-agents#readme",
-  "repository": "https://github.com/mlabo-org/coding-agents",
+  "description": "Explicit-only Coding Agent Orchestrator (CAO) coordination in GUI Codex with official subagents. Activate for a coding objective only through a leading CAO or CAOで invocation, $coding-agent-orchestrator, explicit bundled-skill selection, or an explicit request to use this workflow; generic coding and bare attachment do not activate it.",
+  "homepage": "https://github.com/mlabo-org/coding-agent-orchestrator#readme",
+  "repository": "https://github.com/mlabo-org/coding-agent-orchestrator",
   "license": "MIT",
   "skills": "./skills/",
   "keywords": [
-    "coding-agents",
+    "coding-agent-orchestrator",
+    "cao",
+    "コーディング-エージェント-オーケストレーター",
     "gui-codex",
     "official-subagents",
     "wall-clock-optimization",
@@ -19,14 +21,15 @@
     "coding-continuity"
   ],
   "interface": {
-    "displayName": "Coding Agents",
-    "shortDescription": "Explicit GUI coding with official subagents.",
-    "longDescription": "Coding Agents minimizes total coding wall-clock time by mapping dependencies and the critical path before the parent GUI Codex task dispatches work. Ready, independent, sufficiently large responsibilities whose benefit exceeds coordination and integration cost start in the same parallel wave without serial delay. Tightly coupled, dependency-blocked, overlapping, or too-small work stays parent-owned or ordered. The parent retains decomposition, authority, safety, worker routing, conflict resolution, integration, acceptance, and final reporting; each worker owns one exclusive complete output. State and verification remain minimal implementation support.",
+    "displayName": "Coding Agent Orchestrator",
+    "shortDescription": "Explicit GUI coding orchestration with official subagents.",
+    "longDescription": "Coding Agent Orchestrator minimizes total coding wall-clock time by mapping dependencies and the critical path before the parent GUI Codex task dispatches work. Ready, independent, sufficiently large responsibilities whose benefit exceeds coordination and integration cost start in the same parallel wave without serial delay. Tightly coupled, dependency-blocked, overlapping, or too-small work stays parent-owned or ordered. The parent retains decomposition, authority, safety, worker routing, conflict resolution, integration, acceptance, and final reporting; each worker owns one exclusive complete output. State and verification remain minimal implementation support.",
     "developerName": "Makoto Suzuki",
     "category": "Developer Tools",
-    "websiteURL": "https://github.com/mlabo-org/coding-agents",
+    "websiteURL": "https://github.com/mlabo-org/coding-agent-orchestrator",
     "capabilities": [
       "GUI Codex Task Decomposition",
+      "CAO Explicit Activation",
       "Official Subagent Dispatch",
       "Dependency And Critical-Path Analysis",
       "Time-Saving Parallel Waves",
@@ -36,9 +39,9 @@
       "Optional Task Continuity"
     ],
     "defaultPrompt": [
-      "Use $coding-agents for this coding objective: map dependencies and the critical path, then parallelize ready independent work.",
-      "Use $coding-agents to minimize time-to-completion, not agent count; keep tightly coupled work parent-owned.",
-      "Continue the active $coding-agents workflow with parent integration, exclusive worker outputs, and minimal verification."
+      "CAO map dependencies and the critical path for this coding objective, then parallelize ready independent work.",
+      "Use $coding-agent-orchestrator to minimize wall-clock time while keeping tightly coupled work parent-owned.",
+      "Continue the active Coding Agent Orchestrator workflow and integrate completed exclusive worker outputs."
     ],
     "brandColor": "#2563EB"
   },

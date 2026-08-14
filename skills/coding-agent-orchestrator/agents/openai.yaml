@@ -1,0 +1,6 @@
+interface:
+  display_name: "Coding Agent Orchestrator"
+  short_description: "Explicit GUI coding orchestration with official subagents"
+  default_prompt: "Use $coding-agent-orchestrator for this coding objective: map dependencies and the critical path, spawn ready independent work in parallel, and keep parent control of integration."
+policy:
+  allow_implicit_invocation: true
