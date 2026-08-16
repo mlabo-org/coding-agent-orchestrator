@@ -2,6 +2,8 @@
 
 日本語 | [English](README.md)
 
+> **アーキテクチャ更新:** 公式Codex Orchestration v2と、Lunaを含むモデル選択が、CAOの求めるsubagent実行を十分に担える状態へ更新されました。これに伴い、CAOプラグイン自身がsubagentをspawn・選択・配分・管理する仕組みは廃止しました。現在はライブオーケストレーションをすべてネイティブCodexへ任せ、公式app-serverとHookを、実行観測・記録・状態再注入・続行判定のトリガーとして使用します。
+
 Coding Agent Orchestrator（CAO）は、コーディング時にAgentとネイティブなオーケストレーションを上位から管制し、その状態を永続的に記録するプラグインです。名前にある「Orchestrator」はworkerを直接配分する実行エンジンという意味ではなく、目的、scope、decision、work状態、runtime観測、証跡、handoffを固定する上位管制面を表しています。実際のオーケストレーションはネイティブCodexが行い、CAOはその全体を1つの永続契約へ束縛します。
 
 CAO自身はsubagentを起動・選択・配分しません。タスク分解、モデルとreasoningの選択、spawn／fork、再帰的委任、agent間メッセージ、ライブ監督、統合、採否判断はネイティブCodexが所有します。

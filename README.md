@@ -2,6 +2,8 @@
 
 [日本語](README.ja.md) | English
 
+> **Architecture update:** Official Codex Orchestration v2 and its model selection, including Luna, now provide the subagent execution quality CAO needs. CAO therefore no longer spawns, selects, routes, or manages subagents itself. It now leaves live orchestration entirely to native Codex and uses the official app-server plus Hooks as observation, recording, state-rehydration, and continuation triggers. Existing CAO-owned spawn and worker-management behavior has been retired.
+
 Coding Agent Orchestrator (CAO) is the plugin that provides higher-level control and durable records for Agents and native orchestration during coding. “Orchestrator” in the name describes this supervisory control plane: CAO anchors the objective, scope, decisions, work state, runtime observations, evidence, and handoff while native Codex performs the actual orchestration.
 
 CAO does not launch, select, or route subagents. Native Codex owns decomposition, models and reasoning, spawn and fork behavior, recursive delegation, peer messaging, live supervision, integration, and acceptance. CAO keeps that changing execution topology bound to one durable contract.
