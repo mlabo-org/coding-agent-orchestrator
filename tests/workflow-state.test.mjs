@@ -19,7 +19,11 @@ test("intake binds exact root thread and promotes legacy state without deleting 
     const result = intake(repo, { taskId: "state-binding" });
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, new RegExp(`ok root_thread_id: ${ROOT_THREAD_ID}`));
-    assert.equal(readState(repo, "task.md").includes(`root_thread_id: ${ROOT_THREAD_ID}`), true);
+    const task = readState(repo, "task.md");
+    assert.equal(task.includes(`root_thread_id: ${ROOT_THREAD_ID}`), true);
+    assert.match(task, /state_contract_version: semantic_state_v2/);
+    assert.doesNotMatch(task, /Matching root and descendant starts receive/);
+    assert.doesNotMatch(task, /doctor passes/);
     assert.equal(readFileSync(path.join(repo, ".coding-agents", "legacy.txt"), "utf8"), "preserve\n");
     assert.equal(readFileSync(path.join(repo, ".CAO", "legacy.txt"), "utf8"), "preserve\n");
     const exclude = readFileSync(path.join(repo, ".git", "info", "exclude"), "utf8");
@@ -57,9 +61,13 @@ test("material work is opened once, resolved once, and blocks finalization while
     assert.notEqual(duplicate.status, 0);
     assert.match(duplicate.stderr, /already resolved/);
 
+    recordAcceptance(repo, "work-state");
     const finalized = runCli(repo, ["finalize", ...identityArgs("work-state"), ...coverageArgs("work-state")]);
     assert.equal(finalized.status, 0, finalized.stderr);
-    assert.equal(runCli(repo, ["doctor"]).status, 0);
+    assert.match(readState(repo, "handoff.md"), /^- status: completed$/m);
+    assert.doesNotMatch(readState(repo, "handoff.md"), /Continue task/);
+    const doctor = runCli(repo, ["doctor"]);
+    assert.equal(doctor.status, 0, `${doctor.stdout}\n${doctor.stderr}`);
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
@@ -122,6 +130,7 @@ test("root hooks rehydrate matching state and block only known unfinished state"
     assert.equal(stopOutput.decision, "block");
     assert.match(stopOutput.reason, /not finalized/);
 
+    recordAcceptance(repo, "root-hooks");
     const finalized = runCli(repo, ["finalize", ...identityArgs("root-hooks"), ...coverageArgs("root-hooks")]);
     assert.equal(finalized.status, 0, finalized.stderr);
     const acceptedStop = hook(repo, rootStopPayload(repo));
@@ -164,7 +173,10 @@ test("app-server reconciliation records recursive coordination without copying p
     const result = runCli(repo, ["reconcile-runtime", "--task-id", "runtime-reconcile", "--codex-binary", fakeCodex]);
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /semantic_completion_inferred: false/);
-    const events = readRuntimeEvents(repo).filter((event) => event.source === "codex-app-server-readback");
+    const evidenceRef = result.stdout.match(/ok evidence_ref: (runtime:\S+)/)?.[1];
+    assert.ok(evidenceRef);
+    const allEvents = readRuntimeEvents(repo);
+    const events = allEvents.filter((event) => event.source === "codex-app-server-readback");
     assert.ok(events.some((event) => event.observation.kind === "thread" && event.observation.thread_id === CHILD_THREAD_ID));
     const collab = events.find((event) => event.observation.kind === "collaboration_tool_call");
     assert.equal(collab.observation.tool, "sendInput");
@@ -173,6 +185,16 @@ test("app-server reconciliation records recursive coordination without copying p
     assert.equal(collab.observation.prompt_present, true);
     assert.equal(collab.observation.prompt, undefined);
     assert.ok(events.some((event) => event.observation.kind === "subagent_activity"));
+    const receipt = allEvents.find((event) => event.observation.kind === "runtime_reconciliation");
+    assert.equal(`runtime:${receipt.event_key}`, evidenceRef);
+    assert.equal(receipt.observation.semantic_completion_inferred, false);
+    assert.deepEqual(receipt.observation.incomplete_lifecycle_thread_ids, [CHILD_THREAD_ID]);
+    const runtimeVerification = runCli(repo, [
+      "verify", ...identityArgs("runtime-reconcile"), "--check-id", "V-runtime-receipt", "--status", "passed",
+      "--detail", "runtime reconciliation receipt is present", "--covers", "D-runtime-reconcile-003",
+      "--evidence-refs", evidenceRef,
+    ]);
+    assert.equal(runtimeVerification.status, 0, runtimeVerification.stderr);
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
@@ -214,13 +236,26 @@ function identityArgs(taskId) {
 }
 
 function coverageArgs(taskId) {
-  const decisions = Array.from({ length: 6 }, (_, index) => `D-${taskId}-${String(index + 1).padStart(3, "0")}`);
-  const completions = Array.from({ length: 8 }, (_, index) => `C-${taskId}-${String(index + 1).padStart(3, "0")}`);
+  const decisions = Array.from({ length: 4 }, (_, index) => `D-${taskId}-${String(index + 1).padStart(3, "0")}`);
+  const completions = Array.from({ length: 5 }, (_, index) => `C-${taskId}-${String(index + 1).padStart(3, "0")}`);
   return [
-    "--decision-coverage", decisions.map((id) => `${id} test:workflow-state result:pass`).join(";"),
-    "--completion-coverage", completions.map((id) => `${id} test:workflow-state result:pass`).join(";"),
-    "--source-spec-coverage", "file:bin/coding-agents.mjs;file:hooks/hooks.json",
+    "--decision-coverage", decisions.map((id) => `${id} verification:V-${taskId}`).join(";"),
+    "--completion-coverage", completions.map((id) => `${id} verification:V-${taskId}`).join(";"),
+    "--source-spec-coverage", "file:README.md",
   ];
+}
+
+function recordAcceptance(repo, taskId) {
+  const ids = [
+    ...Array.from({ length: 4 }, (_, index) => `D-${taskId}-${String(index + 1).padStart(3, "0")}`),
+    ...Array.from({ length: 5 }, (_, index) => `C-${taskId}-${String(index + 1).padStart(3, "0")}`),
+  ];
+  const result = runCli(repo, [
+    "verify", ...identityArgs(taskId), "--check-id", `V-${taskId}`, "--status", "passed",
+    "--detail", "admitted primary path passed", "--covers", ids.join(";"),
+    "--evidence-refs", "test:workflow-state result:pass",
+  ]);
+  assert.equal(result.status, 0, result.stderr);
 }
 
 function rootStopPayload(repo) {

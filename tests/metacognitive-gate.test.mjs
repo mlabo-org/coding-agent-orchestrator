@@ -52,15 +52,31 @@ test("completed semantic work requires typed evidence while blocked work preserv
 test("finalization coverage is sealed against every active decision and completion condition", () => {
   const repo = fixture("coverage-state");
   try {
+    const recorded = run(repo, [
+      "verify", ...identity("coverage-state"), "--check-id", "V-focused", "--status", "passed",
+      "--detail", "only the first contract items were checked",
+      "--covers", "D-coverage-state-001;C-coverage-state-001",
+      "--evidence-refs", "test:focused result:pass",
+    ]);
+    assert.equal(recorded.status, 0, recorded.stderr);
     const missing = run(repo, [
       "finalize", ...identity("coverage-state"),
-      "--decision-coverage", "D-coverage-state-001 file:.CAO/task.md",
-      "--completion-coverage", "C-coverage-state-001 test:focused result:pass",
-      "--source-spec-coverage", "file:bin/coding-agents.mjs",
+      "--decision-coverage", "D-coverage-state-001 verification:V-focused",
+      "--completion-coverage", "C-coverage-state-001 verification:V-focused",
+      "--source-spec-coverage", "file:README.md",
     ]);
     assert.notEqual(missing.status, 0);
     assert.match(missing.stderr, /decision coverage missing D-coverage-state-002/);
     assert.match(readFileSync(path.join(repo, ".CAO", "todo.md"), "utf8"), /^- \[ \]/m);
+
+    const uncovered = run(repo, [
+      "finalize", ...identity("coverage-state"),
+      "--decision-coverage", Array.from({ length: 4 }, (_, index) => `D-coverage-state-${String(index + 1).padStart(3, "0")} verification:V-focused`).join(";"),
+      "--completion-coverage", Array.from({ length: 5 }, (_, index) => `C-coverage-state-${String(index + 1).padStart(3, "0")} verification:V-focused`).join(";"),
+      "--source-spec-coverage", "file:README.md",
+    ]);
+    assert.notEqual(uncovered.status, 0);
+    assert.match(uncovered.stderr, /verification:V-focused does not cover D-coverage-state-002/);
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }

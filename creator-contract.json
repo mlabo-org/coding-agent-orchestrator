@@ -94,7 +94,7 @@
     },
     {
       "name": "Finalized workflow state",
-      "description": "Closed semantic work, typed evidence coverage, finalization, and safe continuation state."
+      "description": "Closed semantic work, declared verification coverage, finalization, and a completed handoff with an explicit resume condition."
     }
   ],
   "runtime_boundaries": {
@@ -114,9 +114,9 @@
   "workflow_contract": {
     "execution_owner": "native-codex",
     "state_owner": "coding-agent-orchestrator",
-    "runtime_observation_rule": "Official SessionStart, SubagentStart, SubagentStop, and Stop Hooks provide immediate events; official app-server thread/read and thread/list data reconcile exact ancestry and collaboration facts.",
+    "runtime_observation_rule": "Official SessionStart, SubagentStart, SubagentStop, and Stop Hooks provide immediate events; official app-server thread/read and thread/list data reconcile exact ancestry and collaboration facts into a typed runtime receipt that exposes incomplete lifecycle observations.",
     "semantic_completion_rule": "Runtime completion is never semantic completion. Only parent-integrated work results and the admitted acceptance evidence can close semantic state.",
     "state_rule": ".CAO is the exact-root-bound state SSOT; .coding-agents is migration input only.",
-    "acceptance_rule": "Use one admitted task-sized acceptance bundle, finalize exact state, run doctor, and stop verification on success."
+    "acceptance_rule": "Use one admitted task-sized acceptance bundle whose passed verification declares the exact active contract IDs it covers; finalize exact state into a completed handoff, run doctor, and stop verification on success."
   }
 }

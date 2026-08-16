@@ -25,7 +25,7 @@
   "interface": {
     "displayName": "Coding Agent Orchestrator",
     "shortDescription": "Exact-thread state control for native Codex coding.",
-    "longDescription": "Coding Agent Orchestrator binds an explicit coding objective to deterministic .CAO state. Native Codex owns decomposition, subagent choice, model selection, recursive delegation, peer messaging, supervision, integration, and acceptance. Official Hooks provide immediate state rehydration and lifecycle events; official app-server readback reconciles ancestry and coordination. Runtime completion never becomes semantic completion without parent integration and typed state evidence.",
+    "longDescription": "Coding Agent Orchestrator binds an explicit coding objective to deterministic .CAO state. Native Codex owns decomposition, subagent choice, model selection, recursive delegation, peer messaging, supervision, integration, and acceptance. Official Hooks provide immediate state rehydration and lifecycle events; official app-server readback emits reconciliation receipts that expose incomplete lifecycle observations. Runtime completion never becomes semantic completion, and finalization accepts only passed verifications that explicitly declare the active contract IDs they cover.",
     "developerName": "Makoto Suzuki",
     "category": "Developer Tools",
     "websiteURL": "https://github.com/mlabo-org/coding-agent-orchestrator",
@@ -39,8 +39,8 @@
       "State-first Continuation",
       "Runtime And Semantic State Separation",
       "Known-Work Stop Control",
-      "Typed Evidence Coverage",
-      "Task Finalization And Handoff"
+      "Declared Verification Coverage",
+      "Completed Task Handoff"
     ],
     "defaultPrompt": [
       "CAO bind this coding task to exact .CAO state while native Codex chooses execution.",

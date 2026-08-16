@@ -12,8 +12,9 @@ CAO does not launch or route subagents. Native Codex owns decomposition, model a
 - `SubagentStart` resolves the child ancestry through the official Codex app-server and injects the current task contract only into descendants of the bound root.
 - `SubagentStop` records lifecycle facts without treating the result as accepted work.
 - `Stop` continues the root only when known `.CAO` work is still unresolved; it does not invent review requirements.
-- `reconcile-runtime` reads official app-server thread and collaboration items to recover missed ancestry, nested activity, and cross-agent messaging facts.
+- `reconcile-runtime` reads official app-server thread and collaboration items, reports incomplete lifecycle observations, and emits a typed `runtime:` receipt without inferring semantic completion.
 - Semantic work, decisions, progress, typed evidence, finalization, and handoff remain separate from runtime observations.
+- `verify --covers` binds each admitted check to the exact active decision and completion IDs it supports. `finalize` accepts only those declaring passed verifications and changes `handoff.md` to `status: completed`.
 
 ## Activation
 

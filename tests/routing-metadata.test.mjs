@@ -22,6 +22,8 @@ test("public metadata exposes explicit state control without owning native execu
   assert.ok(manifest.interface.capabilities.includes("Exact Root-Thread State Binding"));
   assert.ok(manifest.interface.capabilities.includes("Official Hook Event Capture"));
   assert.ok(manifest.interface.capabilities.includes("App-Server Runtime Reconciliation"));
+  assert.ok(manifest.interface.capabilities.includes("Declared Verification Coverage"));
+  assert.ok(manifest.interface.capabilities.includes("Completed Task Handoff"));
   assert.match(manifest.interface.longDescription, /Native Codex owns.*recursive delegation.*peer messaging/is);
   assert.match(manifest.interface.longDescription, /runtime completion.*semantic completion/i);
 
@@ -58,6 +60,8 @@ test("capability schemas expose root binding and separate runtime observations f
   assert.match(input.properties.rootThreadId.description, /exact.*root.*thread/i);
   assert.ok(output.properties.workflowState.required.includes("rootThreadId"));
   assert.ok(output.properties.workflowState.required.includes("runtimeObservationIntegrity"));
+  assert.ok(output.properties.workflowState.required.includes("handoffStatus"));
+  assert.equal(output.properties.workflowState.properties.handoffStatus.const, "completed");
   assert.match(output.properties.workflowState.properties.runtimeObservationIntegrity.description, /does not prove semantic completion/i);
 });
 

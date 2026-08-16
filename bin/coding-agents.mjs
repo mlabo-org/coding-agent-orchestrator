@@ -19,7 +19,7 @@ import { execFileSync, spawn } from "node:child_process";
 
 const STATE_DIR_NAME = ".CAO";
 const LEGACY_STATE_DIR_NAME = ".coding-agents";
-const STATE_CONTRACT_VERSION = "semantic_state_v1";
+const STATE_CONTRACT_VERSION = "semantic_state_v2";
 const RUNTIME_EVENT_VERSION = "cao_runtime_event_v1";
 const DELIVERY_MODE_VERSION = "delivery_mode_v1";
 const ITERATIVE_DELIVERY = "ITERATIVE_DELIVERY";
@@ -43,7 +43,7 @@ const WORK_RESULT_STATUSES = new Set(["completed", "blocked", "failed", "interru
 const PROGRESS_STATUSES = new Set(["pending", "in_progress", "completed", "blocked"]);
 const VERIFICATION_STATUSES = new Set(["passed", "failed", "skipped"]);
 const TYPED_REFERENCE_FORMS =
-  "file:<path>, path:<path>, artifact:<ref>, work:<id>, decision:<id>, verification:<id>, command:<command> exit:<integer>, or test:<name> result:<pass|fail|integer>";
+  "file:<path>, path:<path>, artifact:<ref>, work:<id>, decision:<id>, verification:<id>, runtime:<event-key>, command:<command> exit:<integer>, or test:<name> result:<pass|fail|integer>";
 
 class CliError extends Error {
   constructor(message, exitCode = 1) {
@@ -125,7 +125,7 @@ const COMMAND_OPTIONS = {
   "interrupt-work": new Set(["taskId", "epoch", "scope", "workId", "summary", "changedPaths", "evidenceRefs", "blockers", "unresolved", "next", "actorRef"]),
   decide: new Set(["taskId", "epoch", "scope", "decisionId", "decision", "impact", "evidenceRefs"]),
   progress: new Set(["taskId", "epoch", "scope", "itemId", "status", "summary", "evidenceRefs"]),
-  verify: new Set(["taskId", "epoch", "scope", "checkId", "status", "detail", "evidenceRefs"]),
+  verify: new Set(["taskId", "epoch", "scope", "checkId", "status", "detail", "covers", "evidenceRefs"]),
   finalize: new Set(["taskId", "epoch", "scope", "decisionCoverage", "completionCoverage", "sourceSpecCoverage"]),
   handoff: new Set(["taskId"]),
   doctor: new Set([]),
@@ -313,10 +313,16 @@ async function reconcileRuntime(args) {
     if (writeRuntimeEvent(state.stateDir, resolution)) created += 1;
     else duplicate += 1;
   }
+  const receipt = buildRuntimeReconciliationReceipt(state.stateDir, active, created, duplicate);
+  const receiptCreated = writeRuntimeEvent(state.stateDir, receipt);
+  const evidenceRef = `runtime:${receipt.event_key}`;
   process.stdout.write([
     `ok runtime-reconcile: ${active.rootThreadId}`,
     `ok observations_created: ${created}`,
     `ok observations_existing: ${duplicate}`,
+    `ok receipt_created: ${receiptCreated}`,
+    `ok incomplete_lifecycle_threads: ${receipt.observation.incomplete_lifecycle_thread_ids.join(",") || "none"}`,
+    `ok evidence_ref: ${evidenceRef}`,
     "ok semantic_completion_inferred: false",
   ].join("\n") + "\n");
 }
@@ -325,7 +331,7 @@ function beginWork(args) {
   const packet = activePacket(args);
   const workId = identity(args.workId, "--work-id");
   const ledger = readLedger(packet.stateDir);
-  if (workRecords(ledger).has(workId)) throw new CliError(`work_id already exists: ${workId}`);
+  if (workRecords(ledger, packet).has(workId)) throw new CliError(`work_id already exists: ${workId}`);
   const fields = {
     work_id: workId,
     responsibility: requiredText(args.responsibility, "--responsibility"),
@@ -347,7 +353,7 @@ function finishWork(args, status) {
   if (!WORK_RESULT_STATUSES.has(status)) throw new CliError(`invalid work result status: ${status}`);
   const packet = activePacket(args);
   const workId = identity(args.workId, "--work-id");
-  const records = workRecords(readLedger(packet.stateDir));
+  const records = workRecords(readLedger(packet.stateDir), packet);
   const record = records.get(workId);
   if (!record) throw new CliError(`unknown work_id: ${workId}`);
   if (record.terminal) throw new CliError(`work_id already resolved: ${workId}`);
@@ -429,18 +435,25 @@ function progress(args) {
 
 function verify(args) {
   const packet = activePacket(args);
+  const active = readActiveTask(packet.stateDir);
   const checkId = identity(args.checkId, "--check-id");
   rejectDuplicateField(packet.stateDir, "check_id", checkId);
   const status = requiredText(args.status, "--status");
   if (!VERIFICATION_STATUSES.has(status)) throw new CliError(`--status must be one of ${[...VERIFICATION_STATUSES].join(", ")}`);
+  const taskText = readFileSync(path.join(packet.stateDir, "task.md"), "utf8");
+  const covers = requiredContractCoverage(args.covers, contractIds(taskText), "--covers");
   const evidenceRefs = status === "passed"
     ? requiredReferences(args.evidenceRefs, "--evidence-refs")
     : (args.evidenceRefs ?? "none");
-  if (evidenceRefs !== "none") validateReferenceList(evidenceRefs, "--evidence-refs");
+  if (evidenceRefs !== "none") {
+    validateReferenceList(evidenceRefs, "--evidence-refs");
+    validateEvidenceReferences(packet, active, evidenceRefs, "--evidence-refs");
+  }
   const fields = {
     check_id: checkId,
     status,
     detail: requiredText(args.detail, "--detail"),
+    covers,
     evidence_refs: evidenceRefs,
     task_id: packet.taskId,
     epoch: packet.epoch,
@@ -455,10 +468,12 @@ function verify(args) {
 function finalize(args) {
   const packet = activePacket(args);
   const active = readActiveTask(packet.stateDir);
+  const ledger = readLedger(packet.stateDir);
+  if (activeFinalizationBlock(ledger, active)) throw new CliError(`task already finalized: ${packet.taskId}`);
   if (!active.rootThreadId || active.rootThreadId === "unbound") {
     throw new CliError("cannot finalize unbound state; intake must bind root_thread_id");
   }
-  const openWork = [...workRecords(readLedger(packet.stateDir)).entries()]
+  const openWork = [...workRecords(ledger, active).entries()]
     .filter(([, value]) => !value.terminal)
     .map(([workId]) => workId);
   if (openWork.length > 0) throw new CliError(`cannot finalize with open work: ${openWork.join(", ")}`);
@@ -472,13 +487,20 @@ function finalize(args) {
   const decisionCoverage = requiredText(args.decisionCoverage, "--decision-coverage");
   const completionCoverage = requiredText(args.completionCoverage, "--completion-coverage");
   const sourceSpecCoverage = requiredReferences(args.sourceSpecCoverage, "--source-spec-coverage");
-  validateCoverage(decisionCoverage, decisionIds, "decision coverage");
-  validateCoverage(completionCoverage, completionIds, "completion coverage");
+  const verifications = verificationRecords(ledger, active);
+  validateCoverage(decisionCoverage, decisionIds, "decision coverage", verifications);
+  validateCoverage(completionCoverage, completionIds, "completion coverage", verifications);
+  validateSourceSpecCoverage(sourceSpecCoverage, packet.targetCwd);
   const todoPath = path.join(packet.stateDir, "todo.md");
+  const handoffPath = path.join(packet.stateDir, "handoff.md");
   const currentTodo = readFileSync(todoPath, "utf8");
+  const currentHandoff = readFileSync(handoffPath, "utf8");
   const completedTodo = currentTodo.replace(/^- \[ \]/gm, "- [x]");
-  atomicWrite(todoPath, completedTodo);
+  const recordedAt = new Date().toISOString();
+  const completedHandoff = renderCompletedHandoff(packet, active, taskText, recordedAt);
   try {
+    atomicWrite(todoPath, completedTodo);
+    atomicWrite(handoffPath, completedHandoff);
     appendPacket(packet.stateDir, "task-finalization", {
       task_id: packet.taskId,
       epoch: packet.epoch,
@@ -487,10 +509,11 @@ function finalize(args) {
       decision_coverage: decisionCoverage,
       completion_coverage: completionCoverage,
       source_spec_coverage: sourceSpecCoverage,
-      recorded_at: new Date().toISOString(),
+      recorded_at: recordedAt,
     });
   } catch (error) {
-    atomicWrite(todoPath, currentTodo);
+    if (readFileSync(todoPath, "utf8") !== currentTodo) atomicWrite(todoPath, currentTodo);
+    if (readFileSync(handoffPath, "utf8") !== currentHandoff) atomicWrite(handoffPath, currentHandoff);
     throw error;
   }
   process.stdout.write(`ok task-finalization: ${packet.taskId}\nok status: completed\n`);
@@ -535,7 +558,7 @@ function doctor(args) {
       results.push(["ERROR", "ledger.md header is invalid"]);
       fatal = true;
     }
-    const openWork = [...workRecords(ledger).entries()].filter(([, value]) => !value.terminal).map(([workId]) => workId);
+    const openWork = [...workRecords(ledger, active).entries()].filter(([, value]) => !value.terminal).map(([workId]) => workId);
     if (openWork.length > 0) results.push(["WARN", `open work: ${openWork.join(", ")}`]);
     const allRuntimeEvents = readRuntimeEvents(state.stateDir);
     const runtimeEvents = runtimeEventsForActiveTask(state.stateDir, active);
@@ -548,14 +571,32 @@ function doctor(args) {
     }
     const unresolvedRuntime = unresolvedRuntimeAgentIds(state.stateDir, active);
     if (unresolvedRuntime.length > 0) results.push(["WARN", `unresolved runtime ancestry: ${unresolvedRuntime.join(", ")}`]);
-    if (/^- type: task-finalization$/m.test(ledger)) {
+    const finalization = activeFinalizationBlock(ledger, active);
+    if (finalization) {
       const todo = readFileSync(path.join(state.stateDir, "todo.md"), "utf8");
+      const handoffText = readFileSync(path.join(state.stateDir, "handoff.md"), "utf8");
       if (/^- \[ \]/m.test(todo)) {
         results.push(["ERROR", "finalized state still has incomplete TODO items"]);
         fatal = true;
       }
       if (openWork.length > 0) {
         results.push(["ERROR", "finalized state contains open work"]);
+        fatal = true;
+      }
+      if (!/^- status: completed$/m.test(handoffText)) {
+        results.push(["ERROR", "finalized state handoff is not completed"]);
+        fatal = true;
+      }
+      try {
+        const taskText = readFileSync(path.join(state.stateDir, "task.md"), "utf8");
+        const decisionIds = [...taskText.matchAll(/^- (D-[A-Za-z0-9_.-]+):/gm)].map((match) => match[1]);
+        const completionIds = [...taskText.matchAll(/^- (C-[A-Za-z0-9_.-]+):/gm)].map((match) => match[1]);
+        const verifications = verificationRecords(ledger, active);
+        validateCoverage(packetField(finalization, "decision_coverage"), decisionIds, "decision coverage", verifications);
+        validateCoverage(packetField(finalization, "completion_coverage"), completionIds, "completion coverage", verifications);
+        validateSourceSpecCoverage(packetField(finalization, "source_spec_coverage"), state.targetCwd);
+      } catch (error) {
+        results.push(["ERROR", `invalid finalization evidence: ${error.message}`]);
         fatal = true;
       }
     }
@@ -612,6 +653,68 @@ function writeRuntimeEvent(stateDir, event) {
     if (error?.code === "EEXIST") return false;
     throw error;
   }
+}
+
+function buildRuntimeReconciliationReceipt(stateDir, active, observationsCreated, observationsExisting) {
+  const events = runtimeEventsForActiveTask(stateDir, active)
+    .filter((event) => event.observation?.kind !== "runtime_reconciliation");
+  const eventKeys = events.map((event) => event.event_key).sort();
+  const snapshot = createHash("sha256").update(eventKeys.join("\n")).digest("hex");
+  const lifecycle = summarizeRuntimeLifecycle(events);
+  const unresolved = unresolvedRuntimeAgentIds(stateDir, active);
+  return {
+    version: RUNTIME_EVENT_VERSION,
+    event_key: `runtime-reconciliation:${active.rootThreadId}:${snapshot}`,
+    observed_at: new Date().toISOString(),
+    source: "codex-app-server-reconciliation",
+    binding_status: unresolved.length > 0 ? "unresolved" : "matched",
+    task_id: active.taskId,
+    epoch: active.epoch,
+    root_thread_id: active.rootThreadId,
+    observation: {
+      kind: "runtime_reconciliation",
+      observations_created: observationsCreated,
+      observations_existing: observationsExisting,
+      active_observation_count: events.length,
+      unresolved_ancestry_agent_ids: unresolved,
+      incomplete_lifecycle_thread_ids: lifecycle.filter((entry) => entry.activity_observed && !entry.stop_observed).map((entry) => entry.thread_id),
+      lifecycle,
+      semantic_completion_inferred: false,
+    },
+  };
+}
+
+function summarizeRuntimeLifecycle(events) {
+  const byThread = new Map();
+  const entryFor = (threadId) => {
+    if (!byThread.has(threadId)) byThread.set(threadId, {
+      thread_id: threadId,
+      start_observed: false,
+      stop_observed: false,
+      activity_observed: false,
+      activity_kinds: [],
+      thread_statuses: [],
+    });
+    return byThread.get(threadId);
+  };
+  for (const event of events) {
+    const hookName = event.hook?.hook_event_name;
+    const threadId = event.hook?.agent_id ?? event.observation?.thread_id;
+    if (!threadId) continue;
+    const entry = entryFor(threadId);
+    if (hookName === "SubagentStart") entry.start_observed = true;
+    if (hookName === "SubagentStop") entry.stop_observed = true;
+    if (event.observation?.kind === "subagent_activity") {
+      entry.activity_observed = true;
+      if (event.observation.activity_kind && !entry.activity_kinds.includes(event.observation.activity_kind)) {
+        entry.activity_kinds.push(event.observation.activity_kind);
+      }
+    }
+    if (event.observation?.kind === "thread" && event.observation.status && !entry.thread_statuses.includes(event.observation.status)) {
+      entry.thread_statuses.push(event.observation.status);
+    }
+  }
+  return [...byThread.values()].sort((left, right) => left.thread_id.localeCompare(right.thread_id));
 }
 
 function readRuntimeEvents(stateDir) {
@@ -680,7 +783,7 @@ function buildStateContext(stateDir, active) {
   const decisions = [...task.matchAll(/^- (D-[A-Za-z0-9_.-]+): (.+)$/gm)]
     .map((match) => `${match[1]}: ${match[2]}`)
     .slice(0, 12);
-  const openWork = [...workRecords(readLedger(stateDir)).entries()]
+  const openWork = [...workRecords(readLedger(stateDir), active).entries()]
     .filter(([, value]) => !value.terminal)
     .map(([workId]) => workId);
   return [
@@ -710,7 +813,7 @@ function stopContinuationReason(stateDir, active) {
     && packetField(block, "epoch") === active.epoch
     && packetField(block, "status") === "completed");
   if (finalized) return null;
-  const openWork = [...workRecords(ledger).entries()]
+  const openWork = [...workRecords(ledger, active).entries()]
     .filter(([, value]) => !value.terminal)
     .map(([workId]) => workId);
   const todoText = readFileSync(path.join(stateDir, "todo.md"), "utf8");
@@ -949,7 +1052,8 @@ function withSemanticWriteLock(args, operation) {
 }
 
 function activePacket(args) {
-  const state = prepareStateWrite(resolveTargetCwd(args));
+  const targetCwd = resolveTargetCwd(args);
+  const state = prepareStateWrite(targetCwd);
   const active = readActiveTask(state.stateDir);
   const taskId = identity(args.taskId, "--task-id");
   const epoch = identity(args.epoch, "--epoch");
@@ -957,12 +1061,13 @@ function activePacket(args) {
   if (active.taskId !== taskId) throw new CliError(`task_id mismatch: active=${active.taskId}`);
   if (active.epoch !== epoch) throw new CliError(`epoch mismatch: active=${active.epoch}`);
   if (active.scope !== scope) throw new CliError(`scope mismatch: active=${active.scope}`);
-  return { stateDir: state.stateDir, taskId, epoch, scope };
+  return { stateDir: state.stateDir, targetCwd, taskId, epoch, scope };
 }
 
-function workRecords(ledger) {
+function workRecords(ledger, active = null) {
   const records = new Map();
   for (const block of packetBlocks(ledger)) {
+    if (active && (packetField(block, "task_id") !== active.taskId || packetField(block, "epoch") !== active.epoch)) continue;
     const type = packetField(block, "type");
     const workId = packetField(block, "work_id");
     if (!workId) continue;
@@ -1018,8 +1123,8 @@ function renderStateDocs(value) {
     "todo.md": `# TODO\n\n- [x] ${value.taskId}.1 Intake current task facts and governing specifications.\n- [x] ${value.taskId}.2 Expose accepted decisions, scope, constraints, completion conditions, evidence, and safe resume state.\n- [ ] ${value.taskId}.3 Record material work through begin and terminal result transactions.\n- [ ] ${value.taskId}.4 Record the sealed acceptance evidence and unresolved boundaries.\n- [ ] ${value.taskId}.5 Finalize the durable state and handoff.`,
     "decisions.md": `# Decisions\n\n${decisions.map(({ id, text }) => `## ${id}\n\n- accepted: ${text}`).join("\n\n")}`,
     "work.md": `# Durable Work Transactions\n\n- Every material responsibility receives one work-begin record before execution and exactly one completed, blocked, failed, or interrupted result after native integration.\n- Optional actor references are opaque identifiers; they do not prove model, ancestry, liveness, capability, or thread closure.\n- Raw worker transcripts are not durable state. Record only semantic integration material.`,
-    "audit.md": `# Audit\n\n## Intake\n\n- status: ok\n- recorded_at: ${value.timestamp}\n- task_id: ${value.taskId}\n- epoch: ${value.epoch}\n- scope: ${value.scope}\n- evidence_ref: ${value.evidenceRef}\n\n## Pending Acceptance\n\n- Native Codex supplies the task acceptance decision and the minimum admitted evidence.\n- CAO verifies identity, open-work closure, typed-reference coverage, durable progress, and finalization consistency; it does not create semantic acceptance requirements.\n- Record skipped checks and unresolved boundaries without converting them into success.`,
-    "handoff.md": `# Durable Handoff\n\nContinue task \`${value.taskId}\` at epoch \`${value.epoch}\`.\n\n- target_cwd: ${value.targetCwd}\n- root_thread_id: ${value.rootThreadId}\n- task: ${value.task}\n- scope: ${value.scope}\n- evidence_ref: ${value.evidenceRef}\n- delivery_mode: ${value.deliveryMode}\n\nRead \`${STATE_DIR_NAME}/task.md\`, \`todo.md\`, \`decisions.md\`, \`work.md\`, \`audit.md\`, \`ledger.md\`, and \`runtime-events/\`. Use semantic state as the completion authority and runtime events only as execution observations. Native Codex independently chooses its current execution topology and tools. Surround each material responsibility with CAO begin-work and a terminal work result, then record accepted decisions, progress, and verification evidence. Stop before scope expansion, destructive work, external writes, authentication, activation, publication, or any other action outside current authority.`,
+    "audit.md": `# Audit\n\n## Intake\n\n- status: ok\n- recorded_at: ${value.timestamp}\n- task_id: ${value.taskId}\n- epoch: ${value.epoch}\n- scope: ${value.scope}\n- evidence_ref: ${value.evidenceRef}\n\n## Pending Acceptance\n\n- Native Codex supplies the task acceptance decision and the minimum admitted evidence.\n- Every verification declares the exact active decision and completion IDs it covers; finalization accepts only passed verification records with that declared coverage.\n- Runtime reconciliation emits a typed runtime receipt and reports incomplete lifecycle observation without inferring semantic completion.\n- Record skipped checks and unresolved boundaries without converting them into success.`,
+    "handoff.md": `# Durable Handoff\n\n- status: in_progress\n- task_id: ${value.taskId}\n- epoch: ${value.epoch}\n- target_cwd: ${value.targetCwd}\n- root_thread_id: ${value.rootThreadId}\n- task: ${value.task}\n- scope: ${value.scope}\n- evidence_ref: ${value.evidenceRef}\n- delivery_mode: ${value.deliveryMode}\n\nRead \`${STATE_DIR_NAME}/task.md\`, \`todo.md\`, \`decisions.md\`, \`work.md\`, \`audit.md\`, \`ledger.md\`, and \`runtime-events/\`. Use semantic state as the completion authority and runtime events only as execution observations. Native Codex independently chooses its current execution topology and tools. Surround each material responsibility with CAO begin-work and a terminal work result. Record the admitted acceptance bundle with \`verify --covers\`, map finalization coverage only to those passed verification records, then run \`doctor\` and hand off. Stop before scope expansion, destructive work, external writes, authentication, activation, publication, or any other action outside current authority.`,
   };
 }
 
@@ -1027,10 +1132,8 @@ function governingDecisions(value) {
   return [
     { id: `D-${value.taskId}-001`, text: `Complete the declared task under task_id=${value.taskId}, epoch=${value.epoch}, and scope=${value.scope}.` },
     { id: `D-${value.taskId}-002`, text: "Native Codex exclusively owns live coding execution and task acceptance; CAO does not own or constrain runtime topology." },
-    { id: `D-${value.taskId}-003`, text: `CAO binds state to root_thread_id=${value.rootThreadId}; official Hooks trigger immediate rehydration and lifecycle observation, and official app-server readback reconciles ancestry and collaboration events.` },
-    { id: `D-${value.taskId}-004`, text: "CAO exclusively owns deterministic durable state under .CAO, accepts legacy .coding-agents only as non-destructive migration input, and keeps runtime observations separate from semantic completion." },
-    { id: `D-${value.taskId}-005`, text: "Every material responsibility is opened before execution and resolved exactly once; finalization fails while work or runtime ancestry remains unresolved." },
-    { id: `D-${value.taskId}-006`, text: `Use delivery_mode=${value.deliveryMode}; finalization requires typed evidence for every active decision, completion condition, and source/spec boundary.` },
+    { id: `D-${value.taskId}-003`, text: `CAO binds state to root_thread_id=${value.rootThreadId}, owns deterministic .CAO state, accepts legacy .coding-agents only as migration input, and never treats runtime observation as semantic completion.` },
+    { id: `D-${value.taskId}-004`, text: `Use delivery_mode=${value.deliveryMode}; each finalization mapping must resolve to a passed verification record that explicitly covers that active contract ID.` },
   ];
 }
 
@@ -1038,13 +1141,14 @@ function completionConditions(value) {
   return [
     { id: `C-${value.taskId}-001`, text: `The first acceptance candidate completes the declared ${value.deliveryMode === ONE_SHOT_QUALITY ? "one-shot" : "iterative"} slice: ${value.task}` },
     { id: `C-${value.taskId}-002`, text: "Native Codex retained ownership of decomposition, agent and model use, messaging, recursive delegation, supervision, integration, and acceptance; CAO recorded only durable semantic state." },
-    { id: `C-${value.taskId}-003`, text: "Matching root and descendant starts receive current .CAO constraints; root premature stop is blocked by known unresolved state without inventing a new review requirement." },
-    { id: `C-${value.taskId}-004`, text: "Official Hook and app-server observations preserve exact thread identity, ancestry, coordination tool, and lifecycle facts without treating runtime completion as semantic completion." },
-    { id: `C-${value.taskId}-005`, text: "Every recorded material work transaction has exactly one terminal semantic result and no work or runtime ancestry remains unresolved." },
-    { id: `C-${value.taskId}-006`, text: "The minimum admitted primary-path verification passes and every observed release-critical defect is resolved or recorded as blocking." },
-    { id: `C-${value.taskId}-007`, text: "Source, state, cache/runtime, external-effect, and Git boundaries are preserved or explicitly reported." },
-    { id: `C-${value.taskId}-008`, text: "Finalization maps every active decision, completion condition, and source/spec boundary to deterministic typed evidence, and doctor passes." },
+    { id: `C-${value.taskId}-003`, text: "Every active material work transaction has exactly one terminal semantic result and no active runtime ancestry remains unresolved." },
+    { id: `C-${value.taskId}-004`, text: "The minimum admitted primary-path verification passes and every observed release-critical defect is resolved or recorded as blocking." },
+    { id: `C-${value.taskId}-005`, text: "Source, state, cache/runtime, external-effect, and Git boundaries are preserved or explicitly reported; finalization maps every active contract ID to its declaring passed verification." },
   ];
+}
+
+function renderCompletedHandoff(packet, active, taskText, recordedAt) {
+  return `${GENERATED_START}\n# Durable Handoff\n\n- status: completed\n- task_id: ${active.taskId}\n- epoch: ${active.epoch}\n- target_cwd: ${packet.targetCwd}\n- root_thread_id: ${active.rootThreadId}\n- task: ${field(taskText, "task") ?? "unavailable"}\n- scope: ${active.scope}\n- delivery_mode: ${field(taskText, "delivery_mode") ?? "unavailable"}\n- finalized_at: ${recordedAt}\n- resume_condition: explicit related follow-up, observed defect, or a new task intake\n\nThe active task is finalized. Do not repeat verification or finalization for the same unchanged decision. Read the semantic ledger and runtime receipts when a related follow-up needs the preserved evidence; initialize unrelated work as a new task.\n${GENERATED_END}\n`;
 }
 
 function upsertGenerated(file, body) {
@@ -1089,14 +1193,92 @@ function appendStateSection(file, heading, fields) {
   appendFileSync(file, `${lines.join("\n")}\n`, "utf8");
 }
 
-function validateCoverage(text, ids, label) {
+function validateCoverage(text, ids, label, verifications) {
   if (ids.length === 0) throw new CliError(`no active IDs found for ${label}`);
   const clauses = text.split(";").map((value) => value.trim()).filter(Boolean);
-  for (const id of ids) {
-    const clause = clauses.find((value) => value.includes(id));
-    if (!clause) throw new CliError(`${label} missing ${id}`);
-    if (!containsTypedReference(clause)) throw new CliError(`${label} for ${id} lacks typed evidence`);
+  const mapped = new Map();
+  for (const clause of clauses) {
+    const match = clause.match(/^(\S+)\s+verification:(\S+)$/u);
+    if (!match) throw new CliError(`${label} clauses must be '<contract-id> verification:<check-id>'`);
+    const [, id, checkId] = match;
+    if (!ids.includes(id)) throw new CliError(`${label} contains unknown ${id}`);
+    if (mapped.has(id)) throw new CliError(`${label} duplicates ${id}`);
+    mapped.set(id, checkId);
   }
+  for (const id of ids) {
+    const checkId = mapped.get(id);
+    if (!checkId) throw new CliError(`${label} missing ${id}`);
+    const verification = verifications.get(checkId);
+    if (!verification) throw new CliError(`${label} references unknown verification:${checkId}`);
+    if (verification.status !== "passed") throw new CliError(`${label} references non-passed verification:${checkId}`);
+    if (!verification.covers.has(id)) throw new CliError(`verification:${checkId} does not cover ${id}`);
+  }
+}
+
+function requiredContractCoverage(value, validIds, flag) {
+  const ids = requiredText(value, flag).split(";").map((item) => item.trim()).filter(Boolean);
+  if (ids.length === 0) throw new CliError(`${flag} requires active decision or completion IDs`);
+  if (new Set(ids).size !== ids.length) throw new CliError(`${flag} contains duplicate contract IDs`);
+  for (const id of ids) if (!validIds.includes(id)) throw new CliError(`${flag} contains unknown contract ID: ${id}`);
+  return ids.join(";");
+}
+
+function contractIds(taskText) {
+  return [...taskText.matchAll(/^- ([DC]-[A-Za-z0-9_.-]+):/gm)].map((match) => match[1]);
+}
+
+function verificationRecords(ledger, active) {
+  const records = new Map();
+  for (const block of packetBlocks(ledger)) {
+    if (packetField(block, "type") !== "verification-observation") continue;
+    if (packetField(block, "task_id") !== active.taskId || packetField(block, "epoch") !== active.epoch) continue;
+    const checkId = packetField(block, "check_id");
+    if (!checkId) continue;
+    records.set(checkId, {
+      status: packetField(block, "status"),
+      covers: new Set((packetField(block, "covers") ?? "").split(";").map((value) => value.trim()).filter(Boolean)),
+      evidenceRefs: packetField(block, "evidence_refs"),
+    });
+  }
+  return records;
+}
+
+function activeFinalizationBlock(ledger, active) {
+  return packetBlocks(ledger).find((block) => packetField(block, "type") === "task-finalization"
+    && packetField(block, "task_id") === active.taskId
+    && packetField(block, "epoch") === active.epoch) ?? null;
+}
+
+function validateSourceSpecCoverage(text, targetCwd) {
+  validateReferenceList(text, "--source-spec-coverage");
+  for (const reference of referenceSegments(text)) {
+    const match = reference.match(/^(?:file|path):(.+)$/u);
+    if (!match) throw new CliError("--source-spec-coverage accepts only file: or path: references");
+    const resolved = path.isAbsolute(match[1]) ? match[1] : path.resolve(targetCwd, match[1]);
+    if (!existsSync(resolved)) throw new CliError(`source/spec reference does not exist: ${reference}`);
+  }
+}
+
+function validateEvidenceReferences(packet, active, text, flag) {
+  const ledger = readLedger(packet.stateDir);
+  const completedWork = new Set([...workRecords(ledger, active).entries()].filter(([, record]) => record.terminal).map(([workId]) => workId));
+  const verifications = verificationRecords(ledger, active);
+  const runtimeEvents = runtimeEventsForActiveTask(packet.stateDir, active);
+  const runtimeKeys = new Set(runtimeEvents.map((event) => event.event_key));
+  for (const reference of referenceSegments(text)) {
+    let match;
+    if ((match = reference.match(/^work:(\S+)$/u)) && !completedWork.has(match[1])) throw new CliError(`${flag} references incomplete or unknown ${reference}`);
+    if ((match = reference.match(/^verification:(\S+)$/u)) && verifications.get(match[1])?.status !== "passed") throw new CliError(`${flag} references non-passed or unknown ${reference}`);
+    if ((match = reference.match(/^runtime:(\S+)$/u)) && !runtimeKeys.has(match[1])) throw new CliError(`${flag} references unknown ${reference}`);
+    if ((match = reference.match(/^(?:file|path):(.+)$/u))) {
+      const resolved = path.isAbsolute(match[1]) ? match[1] : path.resolve(packet.targetCwd, match[1]);
+      if (!existsSync(resolved)) throw new CliError(`${flag} references missing ${reference}`);
+    }
+  }
+}
+
+function referenceSegments(text) {
+  return text.split(";").map((value) => value.trim()).filter(Boolean);
 }
 
 function requiredReferences(value, flag) {
@@ -1113,7 +1295,7 @@ function validateReferenceList(text, flag) {
 }
 
 function containsTypedReference(value) {
-  return /(?:^|\s)(?:file|path|artifact|work|decision|verification):\S+/u.test(value)
+  return /(?:^|\s)(?:file|path|artifact|work|decision|verification|runtime):\S+/u.test(value)
     || /(?:^|\s)command:.+\sexit:-?\d+(?:\s|$)/u.test(value)
     || /(?:^|\s)test:.+\sresult:(?:pass|fail|-?\d+)(?:\s|$)/u.test(value);
 }
@@ -1149,8 +1331,8 @@ function resolveTargetCwd(args) {
 function resolveReadableState(targetCwd) {
   const stateDir = path.join(targetCwd, STATE_DIR_NAME);
   const legacyDir = path.join(targetCwd, LEGACY_STATE_DIR_NAME);
-  if (existsSync(stateDir)) return { stateDir, legacy: false, gitRoot: findGitRoot(targetCwd) };
-  if (existsSync(legacyDir)) return { stateDir: legacyDir, legacy: true, gitRoot: findGitRoot(targetCwd) };
+  if (existsSync(stateDir)) return { stateDir, targetCwd, legacy: false, gitRoot: findGitRoot(targetCwd) };
+  if (existsSync(legacyDir)) return { stateDir: legacyDir, targetCwd, legacy: true, gitRoot: findGitRoot(targetCwd) };
   throw new CliError(`missing workflow state: ${stateDir}`);
 }
 
@@ -1241,7 +1423,7 @@ function escapeRegExp(value) {
 }
 
 function printHelp() {
-  process.stdout.write(`coding-agents durable state-control CLI\n\nUsage:\n  coding-agents intake --target-cwd <path> --task <text> --task-id <id> --epoch <id> --scope <text> [--root-thread-id <id>] [--evidence-ref <typed-ref>] [--state-transition continue-related|initialize-unrelated] [--work-type <type>] [--delivery-mode ITERATIVE_DELIVERY|ONE_SHOT_QUALITY] [--one-shot-authority user_request:<ref>]\n  coding-agents context --target-cwd <path> [--task-id <id>]\n  coding-agents hook-event [--codex-binary <path>] < hook-event.json\n  coding-agents reconcile-runtime --target-cwd <path> [--task-id <id>] [--codex-binary <path>]\n  coding-agents begin-work --target-cwd <path> --task-id <id> --epoch <id> --scope <text> --work-id <id> --responsibility <text> --objective <text> --expected-output <text> [--actor-ref <opaque-ref>]\n  coding-agents complete-work|block-work|fail-work|interrupt-work --target-cwd <path> --task-id <id> --epoch <id> --scope <text> --work-id <id> --summary <text> [--changed-paths <text>] [--evidence-refs <typed-refs>] [--blockers <text>] [--unresolved <text>] [--next <text>] [--actor-ref <opaque-ref>]\n  coding-agents decide --target-cwd <path> --task-id <id> --epoch <id> --scope <text> --decision-id <id> --decision <text> --impact <text> --evidence-refs <typed-refs>\n  coding-agents progress --target-cwd <path> --task-id <id> --epoch <id> --scope <text> --item-id <id> --status pending|in_progress|completed|blocked --summary <text> [--evidence-refs <typed-refs>]\n  coding-agents verify --target-cwd <path> --task-id <id> --epoch <id> --scope <text> --check-id <id> --status passed|failed|skipped --detail <text> [--evidence-refs <typed-refs>]\n  coding-agents finalize --target-cwd <path> --task-id <id> --epoch <id> --scope <text> --decision-coverage <text> --completion-coverage <text> --source-spec-coverage <typed-refs>\n  coding-agents handoff --target-cwd <path> --task-id <id>\n  coding-agents doctor --target-cwd <path>\n\nNative Codex owns live execution. CAO owns exact root-tree binding, deterministic semantic state, known-work closure, Hook triggers, and app-server reconciliation. Runtime completion never implies semantic completion.\n`);
+  process.stdout.write(`coding-agents durable state-control CLI\n\nUsage:\n  coding-agents intake --target-cwd <path> --task <text> --task-id <id> --epoch <id> --scope <text> [--root-thread-id <id>] [--evidence-ref <typed-ref>] [--state-transition continue-related|initialize-unrelated] [--work-type <type>] [--delivery-mode ITERATIVE_DELIVERY|ONE_SHOT_QUALITY] [--one-shot-authority user_request:<ref>]\n  coding-agents context --target-cwd <path> [--task-id <id>]\n  coding-agents hook-event [--codex-binary <path>] < hook-event.json\n  coding-agents reconcile-runtime --target-cwd <path> [--task-id <id>] [--codex-binary <path>]\n  coding-agents begin-work --target-cwd <path> --task-id <id> --epoch <id> --scope <text> --work-id <id> --responsibility <text> --objective <text> --expected-output <text> [--actor-ref <opaque-ref>]\n  coding-agents complete-work|block-work|fail-work|interrupt-work --target-cwd <path> --task-id <id> --epoch <id> --scope <text> --work-id <id> --summary <text> [--changed-paths <text>] [--evidence-refs <typed-refs>] [--blockers <text>] [--unresolved <text>] [--next <text>] [--actor-ref <opaque-ref>]\n  coding-agents decide --target-cwd <path> --task-id <id> --epoch <id> --scope <text> --decision-id <id> --decision <text> --impact <text> --evidence-refs <typed-refs>\n  coding-agents progress --target-cwd <path> --task-id <id> --epoch <id> --scope <text> --item-id <id> --status pending|in_progress|completed|blocked --summary <text> [--evidence-refs <typed-refs>]\n  coding-agents verify --target-cwd <path> --task-id <id> --epoch <id> --scope <text> --check-id <id> --status passed|failed|skipped --detail <text> --covers <contract-ids> [--evidence-refs <typed-refs>]\n  coding-agents finalize --target-cwd <path> --task-id <id> --epoch <id> --scope <text> --decision-coverage <text> --completion-coverage <text> --source-spec-coverage <typed-refs>\n  coding-agents handoff --target-cwd <path> --task-id <id>\n  coding-agents doctor --target-cwd <path>\n\nNative Codex owns live execution. CAO owns exact root-tree binding, deterministic semantic state, known-work closure, Hook triggers, and app-server reconciliation. Runtime completion never implies semantic completion.\n`);
 }
 
 await main();

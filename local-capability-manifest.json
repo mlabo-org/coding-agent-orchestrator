@@ -12,7 +12,7 @@
       "executionClass": "state_controller",
       "runtimeBinding": {
         "kind": "state_controller",
-        "instruction": "Activate only from an explicit CAO request or explicit active-workflow continuation. Bind .CAO to the exact root thread, use official Hooks for immediate root and descendant events, use official app-server readback for ancestry and collaboration reconciliation, and keep runtime observations separate from semantic work, evidence, acceptance, finalization, and handoff. Never launch workers, select models, prescribe topology, flatten descendants, or infer semantic completion from runtime completion."
+        "instruction": "Activate only from an explicit CAO request or explicit active-workflow continuation. Bind .CAO to the exact root thread, use official Hooks for immediate root and descendant events, use official app-server readback for typed reconciliation receipts, and expose incomplete lifecycle observations without inferring semantic completion. Bind passed verification to the exact active contract IDs it covers and finalize into a completed handoff. Never launch workers, select models, prescribe topology, flatten descendants, or infer semantic completion from runtime completion."
       },
       "authorityRequests": [
         {

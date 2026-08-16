@@ -104,7 +104,8 @@
         "rootThreadId",
         "finalized",
         "integrity",
-        "runtimeObservationIntegrity"
+        "runtimeObservationIntegrity",
+        "handoffStatus"
       ],
       "properties": {
         "path": {
@@ -135,6 +136,10 @@
             "reconciled",
             "no-runtime-events"
           ]
+        },
+        "handoffStatus": {
+          "description": "Finalization replaced continuation instructions with an explicit completed handoff and resume condition.",
+          "const": "completed"
         }
       },
       "additionalProperties": false

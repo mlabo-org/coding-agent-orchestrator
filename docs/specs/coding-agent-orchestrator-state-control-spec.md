@@ -17,7 +17,7 @@ The semantic ledger records:
 - verification observations;
 - task finalization.
 
-Completed work and passed verification require typed evidence references. Finalization requires closed work, resolved runtime ancestry, complete decision and completion coverage, source/spec evidence, and consistent TODO state.
+Completed work and passed verification require typed evidence references. Each verification declares the exact active decision and completion IDs it covers. Finalization accepts only mappings from every active contract ID to a passed verification record that declares that ID; an arbitrary typed reference cannot satisfy coverage. Source/spec coverage accepts existing `file:` or `path:` references.
 
 Every semantic write acquires the exact-state `.semantic-write.lock` directory before reading or mutating task files. Contending writers wait for the owner and fail closed on timeout; they do not race independent read-modify-write snapshots. The lock is released after the complete state transition.
 
@@ -29,6 +29,8 @@ Unrelated intake retains those files as historical observations. Active context,
 
 Runtime observations are not written into the semantic ledger and cannot close semantic state.
 
+`reconcile-runtime` writes an idempotent `runtime_reconciliation` receipt in `runtime-events/` and returns its `runtime:<event-key>` reference. The receipt records exact ancestry resolution, the observed lifecycle facts, incomplete lifecycle thread IDs, and `semantic_completion_inferred: false`. A verification may cite that receipt when runtime behavior is part of its admitted scope; the receipt never proves semantic completion by itself.
+
 ## State rehydration and stop control
 
 Matching root starts and descendant starts receive a compact current contract. Descendants are told to remain inside inherited scope, avoid editing root-owned state unless explicitly assigned, and return complete integration evidence.
@@ -37,6 +39,8 @@ The root `Stop` Hook checks only already-known state. If the task is not finaliz
 
 ## Finalization and handoff
 
-Finalization is atomic with TODO completion: a ledger write failure restores the prior TODO bytes. `doctor` validates required state files, exact root binding, semantic ledger shape, runtime event identity, open work, unresolved ancestry, finalization/TODO agreement, and local Git exclusion.
+Intake generates the task-specific objective plus only the universal state conditions. Hook behavior is not inserted as a completion requirement unless the task itself requires it through the declared objective and admitted verification.
+
+Finalization is atomic with TODO and handoff completion: a ledger write failure restores the prior bytes. A successful finalization changes `handoff.md` from `in_progress` continuation instructions to a `completed` receipt with an explicit resume condition. `doctor` runs after finalization and validates required state files, exact root binding, semantic ledger shape, runtime event identity, active work, unresolved ancestry, finalization evidence, completed handoff, TODO agreement, and local Git exclusion.
 
 Source update, plugin refresh, Hook review/trust, activation, Git commit, and publication are separate boundaries.

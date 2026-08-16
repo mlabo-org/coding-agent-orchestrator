@@ -30,10 +30,10 @@ Do not activate from plugin inspection, a generic coding request, a generic suba
 4. Read `context`. Treat `.CAO/task.md`, `todo.md`, `decisions.md`, `work.md`, `audit.md`, `ledger.md`, and `runtime-events/` as durable task state.
 5. Open each independently meaningful material responsibility with `begin-work` before production. This is a semantic state transaction, not a dispatch instruction.
 6. Let native Codex choose and use the current execution capabilities. Do not wrap `spawn_agent`, prescribe a model, flatten descendants, or reconstruct peer coordination.
-7. After the parent integrates a result, record exactly one terminal work result. Record decisions, progress, and the admitted verification evidence as they become semantic facts.
-8. Run `reconcile-runtime` before finalization when subagents or collaboration were used, or when Hook ancestry was unresolved. It must use the exact bound root and official app-server read APIs.
-9. Finalize only after known work is closed, runtime ancestry is resolved, active decision/completion/source-spec coverage has typed evidence, and the admitted acceptance bundle passes.
-10. Run `doctor`, then hand off. Success ends verification.
+7. After the parent integrates a result, record exactly one terminal work result. Record decisions and progress as they become semantic facts. Record the admitted acceptance bundle with `verify --covers`, naming every active decision and completion ID that the passed verification actually supports.
+8. Run `reconcile-runtime` before finalization when subagents or collaboration were used, or when Hook ancestry was unresolved. It must use the exact bound root and official app-server read APIs, emit a `runtime:<event-key>` receipt, expose incomplete lifecycle observations, and keep `semantic_completion_inferred: false`. Cite that receipt only when runtime behavior is inside the admitted verification scope.
+9. Finalize only after known work is closed, runtime ancestry is resolved, and every active decision and completion ID maps to a passed verification record that explicitly covers it. Source/spec coverage must name existing authoritative files or paths. Typed-reference syntax alone is not acceptance evidence.
+10. Run `doctor` after finalization, then hand off the completed receipt. A successful handoff says `status: completed` and does not instruct another finalization. Success ends verification.
 
 ## Hook contract
 
