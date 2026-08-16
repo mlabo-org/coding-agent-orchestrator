@@ -3,12 +3,18 @@
   "version": "0.3.0",
   "private": true,
   "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
   "bin": {
     "coding-agents": "bin/coding-agents.mjs"
   },
   "scripts": {
     "test": "node --test tests/*.test.mjs",
     "test:cli": "node --test tests/metacognitive-gate.test.mjs tests/workflow-state.test.mjs",
-    "doctor:self": "node --test --test-name-pattern=\"doctor verifies the target git info exclude without mutating it\" tests/workflow-state.test.mjs"
+    "doctor:self": "node --test --test-name-pattern=\"doctor verifies the target git info exclude without mutating it\" tests/workflow-state.test.mjs",
+    "plugin:install:check": "node scripts/install-plugin.mjs --check",
+    "plugin:install": "node scripts/install-plugin.mjs --install"
   }
 }
