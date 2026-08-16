@@ -602,7 +602,7 @@ function doctor(args) {
     }
   }
   if (state.gitRoot) {
-    const excludePath = path.join(state.gitRoot, ".git", "info", "exclude");
+    const excludePath = resolveGitPath(state.gitRoot, "info/exclude");
     const exclude = existsSync(excludePath) ? readFileSync(excludePath, "utf8") : "";
     if (!hasExclude(exclude, STATE_DIR_NAME)) {
       results.push(["ERROR", `${STATE_DIR_NAME} is not locally excluded`]);
@@ -1362,6 +1362,16 @@ function findGitRoot(targetCwd) {
   }
 }
 
+function resolveGitPath(gitRoot, gitRelativePath) {
+  const resolved = execFileSync("git", ["rev-parse", "--git-path", gitRelativePath], {
+    cwd: gitRoot,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+  }).trim();
+  if (!resolved) throw new CliError(`git returned no path for ${gitRelativePath}`);
+  return path.isAbsolute(resolved) ? resolved : path.resolve(gitRoot, resolved);
+}
+
 function readGitStatus(targetCwd) {
   try {
     return execFileSync("git", ["status", "--short"], { cwd: targetCwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim() || "clean";
@@ -1379,9 +1389,8 @@ function isTracked(gitRoot, name) {
 }
 
 function ensureLocalExclude(gitRoot, name) {
-  const infoDir = path.join(gitRoot, ".git", "info");
-  const excludePath = path.join(infoDir, "exclude");
-  mkdirSync(infoDir, { recursive: true });
+  const excludePath = resolveGitPath(gitRoot, "info/exclude");
+  mkdirSync(path.dirname(excludePath), { recursive: true });
   const current = existsSync(excludePath) ? readFileSync(excludePath, "utf8") : "";
   if (hasExclude(current, name)) return;
   const prefix = current.length > 0 && !current.endsWith("\n") ? "\n" : "";

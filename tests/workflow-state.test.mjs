@@ -26,11 +26,30 @@ test("intake binds exact root thread and promotes legacy state without deleting 
     assert.doesNotMatch(task, /doctor passes/);
     assert.equal(readFileSync(path.join(repo, ".coding-agents", "legacy.txt"), "utf8"), "preserve\n");
     assert.equal(readFileSync(path.join(repo, ".CAO", "legacy.txt"), "utf8"), "preserve\n");
-    const exclude = readFileSync(path.join(repo, ".git", "info", "exclude"), "utf8");
-    assert.match(exclude, /^\/.CAO\/$/m);
-    assert.match(exclude, /^\/.coding-agents\/$/m);
+    const exclude = readFileSync(resolveGitPathForTest(repo, "info/exclude"), "utf8");
+    assert.match(exclude, /^\/\.CAO\/$/m);
+    assert.match(exclude, /^\/\.coding-agents\/$/m);
   } finally {
     rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("intake and doctor use Git's exclude path in a linked worktree", () => {
+  const fixture = makeTempLinkedWorktree();
+  try {
+    assert.match(readFileSync(path.join(fixture.worktree, ".git"), "utf8"), /^gitdir: /);
+    const excludePath = resolveGitPathForTest(fixture.worktree, "info/exclude");
+
+    const result = intake(fixture.worktree, { taskId: "linked-worktree" });
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(readFileSync(excludePath, "utf8"), /^\/\.CAO\/$/m);
+    assert.match(readFileSync(path.join(fixture.worktree, ".CAO", "task.md"), "utf8"), /task_id: linked-worktree/);
+
+    const doctor = runCli(fixture.worktree, ["doctor"]);
+    assert.equal(doctor.status, 0, `${doctor.stdout}\n${doctor.stderr}`);
+    assert.match(doctor.stdout, /OK \.CAO locally excluded/);
+  } finally {
+    rmSync(fixture.root, { recursive: true, force: true });
   }
 });
 
@@ -354,13 +373,35 @@ function readState(repo, name) {
   return readFileSync(path.join(repo, ".CAO", name), "utf8");
 }
 
+function resolveGitPathForTest(repo, gitRelativePath) {
+  const result = spawnSync("git", ["rev-parse", "--git-path", gitRelativePath], { cwd: repo, encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr);
+  const resolved = result.stdout.trim();
+  return path.isAbsolute(resolved) ? resolved : path.resolve(repo, resolved);
+}
+
 function makeTempGitRepo() {
   const repo = mkdtempSync(path.join(os.tmpdir(), "cao-state-"));
+  initializeTempGitRepo(repo);
+  return repo;
+}
+
+function makeTempLinkedWorktree() {
+  const root = mkdtempSync(path.join(os.tmpdir(), "cao-linked-worktree-"));
+  const repo = path.join(root, "repo");
+  const worktree = path.join(root, "linked");
+  mkdirSync(repo);
+  initializeTempGitRepo(repo);
+  const result = spawnSync("git", ["worktree", "add", "-qb", "linked-fixture", worktree], { cwd: repo, encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr);
+  return { root, repo, worktree };
+}
+
+function initializeTempGitRepo(repo) {
   spawnSync("git", ["init", "-q"], { cwd: repo });
   spawnSync("git", ["config", "user.email", "cao@example.invalid"], { cwd: repo });
   spawnSync("git", ["config", "user.name", "CAO Test"], { cwd: repo });
   writeFileSync(path.join(repo, "README.md"), "# fixture\n");
   spawnSync("git", ["add", "README.md"], { cwd: repo });
   spawnSync("git", ["commit", "-qm", "fixture"], { cwd: repo });
-  return repo;
 }
