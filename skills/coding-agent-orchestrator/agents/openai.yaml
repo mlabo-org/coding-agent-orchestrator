@@ -1,6 +1,6 @@
 interface:
   display_name: "Coding Agent Orchestrator"
-  short_description: "Official subagents with deterministic .CAO state"
-  default_prompt: "Use $coding-agent-orchestrator for this coding objective: inspect or initialize .CAO state, record dynamic-role assignments and results, and run workers only through official Codex subagents."
+  short_description: "Durable CAO state control for native Codex work"
+  default_prompt: "Use $coding-agent-orchestrator to bind this coding task to exact .CAO state while native Codex chooses the execution topology."
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false

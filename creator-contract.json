@@ -4,52 +4,43 @@
   "capability_id": "coding-agent-orchestrator",
   "official_creator": "plugin-creator",
   "routing": {
-    "task_class": "Explicitly selected Coding Agent Orchestrator (CAO) coordination with official GUI Codex subagents and deterministic .CAO workflow-state control",
+    "task_class": "Explicitly selected CAO durable state control for native Codex coding work",
     "natural_language_triggers": [
       "CAO <coding objective>",
       "CAOで<coding objective>",
-      "CAO: <coding objective>",
       "$coding-agent-orchestrator",
-      "select the bundled Coding Agent Orchestrator skill",
-      "Use Coding Agent Orchestrator for this coding objective",
-      "continue this already active Coding Agent Orchestrator workflow"
+      "Use Coding Agent Orchestrator",
+      "continue this active CAO workflow"
     ],
-    "primary_route": "Activate only for an explicitly selected coding objective. Before production or delegation, resolve or initialize the target repository's .CAO state and preserve related task identity, scope, decisions, TODO progress, dynamic-role assignments, collections, audit evidence, finalization, and handoff. Record worker contracts through the state CLI, execute workers only through official Codex collaboration tools, and record terminal results before integration and finalization.",
+    "primary_route": "Bind the explicit objective and exact root thread into .CAO before material work; rehydrate matching roots and descendants through official Hooks; reconcile native thread ancestry and collaboration facts through official app-server readback; record semantic work, decisions, progress, evidence, finalization, and handoff without owning execution topology.",
     "fallback_conditions": [
-      "When official collaboration tools are unavailable, stop CAO execution, preserve exact .CAO state, and report the safe resume boundary without emulating delegation."
+      "If exact Hook or app-server ancestry is unavailable, record the event as unresolved, inject no state into that event, preserve .CAO, and stop finalization until reconciliation succeeds."
     ],
     "non_use_conditions": [
-      "Do not activate from a bare plugin attachment, plugin inspection, discovery question, troubleshooting request, generic coding request, or generic subagent request.",
-      "Do not activate from an incidental CAO mention, non-leading CAO occurrence, or lowercase cao.",
-      "Do not activate from .CAO directory presence or prior state alone.",
-      "Do not treat continuation outside an already active explicitly selected workflow as activation."
+      "Do not activate from plugin inspection, generic coding, generic subagent use, incidental CAO text, or .CAO presence alone.",
+      "Do not use CAO as a worker launcher, model router, hierarchy manager, or acceptance substitute."
     ],
     "discovery": {
       "task_terms": [
-        "CAO coding orchestration",
-        "Coding Agent Orchestrator",
-        ".CAO state control",
-        "state-first continuation",
-        "dynamic role assignment",
-        "official Codex subagents"
+        "CAO state control",
+        "exact thread binding",
+        ".CAO workflow state",
+        "subagent event logging",
+        "app-server reconciliation"
       ],
       "trigger_phrases": [
-        "CAO coordinate this coding objective",
-        "CAOでこの実装を進めて",
+        "CAOでこの実装を状態管制して",
         "Use $coding-agent-orchestrator",
-        "Select the bundled Coding Agent Orchestrator skill"
+        "Continue the active CAO workflow"
       ],
       "artifact_or_tool_terms": [
-        "spawn_agent",
-        "wait_agent",
-        "send_message",
-        "followup_task",
-        "interrupt_agent",
-        "list_agents",
         ".CAO/task.md",
-        ".CAO/decisions.md",
-        ".CAO/assignments.md",
-        ".CAO/runner.md",
+        ".CAO/ledger.md",
+        ".CAO/runtime-events/",
+        "SubagentStart",
+        "SubagentStop",
+        "thread/read",
+        "thread/list",
         "bin/coding-agents.mjs"
       ],
       "aliases": [
@@ -67,11 +58,11 @@
           "document": {
             "interface": {
               "display_name": "Coding Agent Orchestrator",
-              "short_description": "Official subagents with deterministic .CAO state",
-              "default_prompt": "Use $coding-agent-orchestrator for this coding objective: inspect or initialize .CAO state, record dynamic-role assignments and results, and run workers only through official Codex subagents."
+              "short_description": "Durable CAO state control for native Codex work",
+              "default_prompt": "Use $coding-agent-orchestrator to bind this coding task to exact .CAO state while native Codex chooses the execution topology."
             },
             "policy": {
-              "allow_implicit_invocation": true
+              "allow_implicit_invocation": false
             }
           }
         }
@@ -80,30 +71,30 @@
   },
   "inputs": [
     {
-      "name": "Coding outcome and repository",
-      "description": "The requested result, jobsite, applicable instructions, authority boundary, and source state."
+      "name": "Explicit coding objective",
+      "description": "The requested result, workspace, scope, instructions, authority boundary, and acceptance conditions."
     },
     {
-      "name": "Workflow state",
-      "description": "The current .CAO task identity, epoch, scope, decisions, TODO progress, assignments, collections, lifecycle state, evidence, and handoff."
+      "name": "Exact root thread binding",
+      "description": "The current Codex root thread ID used to isolate active state from unrelated sessions."
     },
     {
-      "name": "Dynamic worker contracts",
-      "description": "Objective-derived responsibility names with exclusive scope, authoritative inputs, complete output, permissions, stop conditions, acceptance evidence, and finite descendant permission."
+      "name": "Current durable state",
+      "description": "Task facts, known work, decisions, progress, evidence, unresolved boundaries, runtime observations, and handoff under .CAO."
     }
   ],
   "outputs": [
     {
-      "name": "Official-subagent execution",
-      "description": "Bounded dynamically named responsibilities executed only through the official Codex collaboration surface."
+      "name": "State-controlled coding result",
+      "description": "The native Codex result integrated against the exact durable task contract."
     },
     {
-      "name": "Integrated coding result",
-      "description": "Parent-integrated source or artifacts with one task-sized acceptance decision."
+      "name": "Runtime observation ledger",
+      "description": "Idempotent Hook and app-server facts for the bound root tree, excluding raw prompts and assistant messages."
     },
     {
       "name": "Finalized workflow state",
-      "description": "Validated .CAO records for task, decisions, assignments, collections, audit evidence, completion, and handoff."
+      "description": "Closed semantic work, typed evidence coverage, finalization, and safe continuation state."
     }
   ],
   "runtime_boundaries": {
@@ -114,7 +105,6 @@
     ],
     "forbidden_source_paths": [
       ".CAO/",
-      ".CAO-migration-backups/",
       "~/.codex/plugins/cache"
     ]
   },
@@ -122,23 +112,11 @@
     "present": false
   },
   "workflow_contract": {
-    "parent_owner": [
-      "task and state identity",
-      "decomposition and dependency graph",
-      "authority and safety",
-      "worker model and reasoning routing",
-      "integration and task acceptance",
-      "final reporting"
-    ],
-    "worker_owner": [
-      "one bounded independent output",
-      "first-pass completeness",
-      "owned-output evidence",
-      "concise integration material"
-    ],
-    "execution_rule": "The state CLI records and validates workflow state but never launches workers. Official Codex collaboration tools are the sole worker-execution route.",
-    "role_rule": "Use unrestricted dynamic responsibility names derived from the actual objective. Never preallocate a fixed roster or enforce a role-name allowlist.",
-    "state_rule": ".CAO is required workflow state for every activated objective and preserves related continuation exactly.",
-    "acceptance_rule": "Use one task-sized semantic acceptance bundle, then finalize and validate the matching workflow state. Success ends verification."
+    "execution_owner": "native-codex",
+    "state_owner": "coding-agent-orchestrator",
+    "runtime_observation_rule": "Official SessionStart, SubagentStart, SubagentStop, and Stop Hooks provide immediate events; official app-server thread/read and thread/list data reconcile exact ancestry and collaboration facts.",
+    "semantic_completion_rule": "Runtime completion is never semantic completion. Only parent-integrated work results and the admitted acceptance evidence can close semantic state.",
+    "state_rule": ".CAO is the exact-root-bound state SSOT; .coding-agents is migration input only.",
+    "acceptance_rule": "Use one admitted task-sized acceptance bundle, finalize exact state, run doctor, and stop verification on success."
   }
 }

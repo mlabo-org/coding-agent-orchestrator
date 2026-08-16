@@ -1,0 +1,56 @@
+{
+  "description": "Exact-thread CAO state rehydration, official subagent observation, and known-work stop control.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/scripts/cao-state-hook.mjs\"",
+            "timeout": 10,
+            "statusMessage": "Rehydrating bound CAO state"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/scripts/cao-state-hook.mjs\"",
+            "timeout": 10,
+            "statusMessage": "Binding subagent to CAO state"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/scripts/cao-state-hook.mjs\"",
+            "timeout": 10,
+            "statusMessage": "Recording subagent lifecycle state"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${PLUGIN_ROOT}/scripts/cao-state-hook.mjs\"",
+            "timeout": 10,
+            "statusMessage": "Checking bound CAO completion state"
+          }
+        ]
+      }
+    ]
+  }
+}

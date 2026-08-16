@@ -1,68 +1,48 @@
 # Coding Agent Orchestrator
 
-Coding Agent Orchestrator (CAO) is an explicit-only Codex plugin that combines official GUI subagent execution with deterministic, inspectable workflow state under `.CAO/`.
+Coding Agent Orchestrator (CAO) is an explicit-only state-control plugin for coding work in Codex.
 
-| Surface | Owner |
-|---|---|
-| Worker execution | Official Codex collaboration tools |
-| Task identity, scope, decisions, progress, assignments, collection, audit, and finalization | `.CAO/` state plus the record-only state CLI |
-| Worker model and reasoning selection | Parent/root Codex at official spawn time |
-| Integration and task acceptance | Parent/root Codex |
+CAO does not launch or route subagents. Native Codex owns decomposition, model and reasoning selection, spawn and fork behavior, recursive delegation, peer messaging, live supervision, integration, and acceptance. CAO keeps the work anchored to a durable contract even when that runtime topology changes.
+
+## What CAO controls
+
+- `.CAO/` is the current task-state SSOT. Legacy `.coding-agents/` is accepted only as non-destructive migration input.
+- Intake binds the task to the exact `CODEX_THREAD_ID` root, so an old state directory cannot affect an unrelated session in the same repository.
+- `SessionStart` rehydrates the matching root after start, resume, clear, or compaction.
+- `SubagentStart` resolves the child ancestry through the official Codex app-server and injects the current task contract only into descendants of the bound root.
+- `SubagentStop` records lifecycle facts without treating the result as accepted work.
+- `Stop` continues the root only when known `.CAO` work is still unresolved; it does not invent review requirements.
+- `reconcile-runtime` reads official app-server thread and collaboration items to recover missed ancestry, nested activity, and cross-agent messaging facts.
+- Semantic work, decisions, progress, typed evidence, finalization, and handoff remain separate from runtime observations.
 
 ## Activation
 
-Use a leading `CAO`, `CAOで`, `CAO:`, `$coding-agent-orchestrator`, explicit skill selection, or an explicit request for the Coding Agent Orchestrator workflow. Generic coding, plugin inspection, an incidental CAO mention, or directory presence does not activate it.
-
-## State-First Control
-
-For an activated workflow, `.CAO/` is the required workflow SSOT. It records:
-
-- the active task ID, epoch, scope, delivery mode, and completion conditions;
-- accepted decisions and executable TODO state;
-- shared contracts for dynamically named responsibilities;
-- assignment, collection, orchestration, and finalization packets;
-- verification evidence, unresolved boundaries, and exact handoff state.
-
-Related follow-up work preserves task lineage, completed progress, decisions, and runner history. Only clearly unrelated work starts fresh state. State remains untracked through `.git/info/exclude` unless the user explicitly requests repository-owned records.
-
-If a repository has legacy `.coding-agents/` state but no `.CAO/`, CAO accepts the legacy state for reads. The first state-changing command copies it to `.CAO/`, adds both paths to `.git/info/exclude`, and leaves `.coding-agents/` untouched as a recoverable legacy copy.
-
-## Dynamic Roles
-
-CAO has no fixed roster and no role-name allowlist. The parent derives responsibility names from the actual objective and creates a role only when the work is bounded, independently completable, exclusively owned, ready, and worthwhile for the critical path.
-
-## Runtime Boundary
-
-The state CLI is record-only. It creates and validates `.CAO/`, records model-neutral job contracts, collects worker outcomes, and finalizes workflow state. It never launches Codex, chooses a worker profile, or manages runtime threads.
-
-Actual workers are created and managed only through the official Codex collaboration surface. If that surface is unavailable, CAO stops and preserves its exact state for safe continuation.
+Activate only through a leading `CAO` / `CAOで` request, `$coding-agent-orchestrator`, explicit skill selection, or an explicit continuation of an already active CAO task. Generic coding and generic subagent requests do not activate CAO.
 
 ## State CLI
 
-```sh
-node bin/coding-agents.mjs intake --target-cwd <jobsite> --task <task> --task-id <id> --epoch <epoch> --scope <scope>
-node bin/coding-agents.mjs assign --target-cwd <jobsite> --role <dynamic-role> --task-id <id> --epoch <epoch> --scope <scope> --required-capabilities <text> --ambiguity <low|medium|high> --consequence <low|medium|high> --coupling <low|medium|high> --acceptance-characteristics <text> --assignment <text> --expected-output <text>
-node bin/coding-agents.mjs collect --target-cwd <jobsite> --role <dynamic-role> --task-id <id> --epoch <epoch> --scope <scope> --status <status> --lifecycle-disposition <state_retired|continuation_expected>
-node bin/coding-agents.mjs finalize --target-cwd <jobsite> --task-id <id> --epoch <epoch> --scope <scope> --contract-coverage required --decision-coverage <typed-refs> --completion-coverage <typed-refs> --source-spec-coverage <typed-ref>
-node bin/coding-agents.mjs verify-assignments --target-cwd <jobsite>
-node bin/coding-agents.mjs doctor --target-cwd <jobsite>
+```text
+coding-agents intake
+coding-agents context
+coding-agents begin-work
+coding-agents complete-work | block-work | fail-work | interrupt-work
+coding-agents decide
+coding-agents progress
+coding-agents verify
+coding-agents reconcile-runtime
+coding-agents finalize
+coding-agents handoff
+coding-agents doctor
 ```
 
-Run `node bin/coding-agents.mjs --help` for the full packet and lifecycle contract.
+`hook-event` is the plugin Hook entrypoint. It is not a worker runner.
 
-## Development
+## Runtime boundary
 
-```sh
+The source repository is authoritative. Installation, cache refresh, Hook review/trust, activation, commit, and publication are separate operations. Plugin Hooks use `hooks/hooks.json` and require a refreshed installation plus any review/trust required by the active Codex app.
+
+## Verification
+
+```bash
 npm test
-npm run doctor:self
 ```
-
-The source repository is authoritative. Plugin cache refresh, installation, activation, commit, and push are separate operations.
-
-## Trust Boundary
-
-`.CAO/` is trusted, user-editable workflow state. It is not a sandbox or privilege boundary. Anyone able to modify it can alter recorded progress and resume behavior; validation detects structural inconsistency but does not make untrusted repository content safe.
-
-## License
-
-MIT License. Copyright (c) 2026 Makoto Suzuki.

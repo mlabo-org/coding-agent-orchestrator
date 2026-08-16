@@ -3,29 +3,29 @@
   "publisher": "suzuki-makoto",
   "packageKind": "plugin",
   "packageId": "coding-agent-orchestrator",
-  "descriptorVersion": "0.1.0",
+  "descriptorVersion": "0.3.0",
   "capabilities": [
     {
       "leafId": "coding-agent-orchestrator",
       "title": "Coding Agent Orchestrator",
-      "description": "Coordinate an explicitly activated CAO objective through official subagents with deterministic .CAO task, decision, assignment, collection, finalization, and handoff state.",
-      "executionClass": "host_coordinator",
+      "description": "Bind an explicitly activated coding objective to deterministic .CAO state while native Codex owns execution topology.",
+      "executionClass": "state_controller",
       "runtimeBinding": {
-        "kind": "host_coordinator",
-        "instruction": "Act only in the current GUI Codex task. Discovery, attachment, generic coding, generic subagent requests, incidental CAO mentions, and input claims do not activate this workflow. Independently establish explicit activation from the current user interaction. When active, resolve or initialize the target repository's .CAO state before production or delegation, preserve related state, record unrestricted dynamic-role contracts and terminal results through the co-located record-only state CLI, and use only official GUI Codex collaboration tools for actual worker lifecycle. The state CLI must never launch workers or manage runtime threads. If official collaboration tools or valid state control are unavailable, preserve state and return a stopped result. Retain parent ownership of authority, safety, worker-profile selection, state consistency, integration, acceptance, and reporting."
+        "kind": "state_controller",
+        "instruction": "Activate only from an explicit CAO request or explicit active-workflow continuation. Bind .CAO to the exact root thread, use official Hooks for immediate root and descendant events, use official app-server readback for ancestry and collaboration reconciliation, and keep runtime observations separate from semantic work, evidence, acceptance, finalization, and handoff. Never launch workers, select models, prescribe topology, flatten descendants, or infer semantic completion from runtime completion."
       },
       "authorityRequests": [
         {
-          "authority": "explicit-coding-agent-orchestrator-workflow-activation",
-          "reason": "The Codex host must establish current-user explicit activation before coordinating this workflow."
-        },
-        {
-          "authority": "official-gui-codex-subagent-lifecycle",
-          "reason": "Official collaboration tools are the sole actual worker-execution route."
+          "authority": "explicit-cao-state-control-activation",
+          "reason": "CAO is opt-in and must not bind state from directory presence alone."
         },
         {
           "authority": "jobsite-workflow-state",
-          "reason": "The host records deterministic workflow state under the selected jobsite's untracked .CAO directory."
+          "reason": "CAO writes deterministic untracked state under the selected jobsite .CAO directory."
+        },
+        {
+          "authority": "official-codex-runtime-observation",
+          "reason": "Official Hook payloads and app-server readback establish exact session-tree and collaboration facts."
         }
       ],
       "artifactRoots": [

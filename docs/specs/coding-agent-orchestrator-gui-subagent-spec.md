@@ -1,61 +1,36 @@
-# Coding Agent Orchestrator State-Control And GUI-Subagent Specification
+# CAO Native Execution Observation Specification
 
-This specification defines the active CAO architecture. It replaces the optional-context-only design introduced by `1edad13` and restores `.CAO/` as the workflow state SSOT while retaining official GUI Codex subagents as the sole worker-execution route.
+## Ownership
 
-## 1. Activation Boundary
+Native Codex is the only execution owner. It may choose no subagents, leaf workers, collaborative agents, recursive descendants, peer messaging, or a mixture. CAO never changes that topology.
 
-CAO activates only for a coding objective explicitly selected through a leading uppercase `CAO` invocation, `CAOで`, `CAO:`, `$coding-agent-orchestrator`, explicit skill selection, or an explicit request for the Coding Agent Orchestrator workflow. Generic coding, plugin inspection, discovery, incidental mentions, and state-directory presence do not activate it.
+CAO observes the resulting session tree so durable state remains exact.
 
-## 2. Required State Plane
+## Immediate events
 
-Every activated workflow resolves or creates `<jobsite>/.CAO/` before production or delegation. That directory is the inspectable SSOT for task identity, epoch, scope, accepted decisions, TODO state, dynamic-role contracts, issued assignments, collected results, lifecycle disposition, audit evidence, finalization, and handoff.
+The installed plugin contributes four official command Hooks:
 
-Related requests preserve the active lineage and completed progress. Clearly unrelated work receives a fresh task ID and epoch while historical runner packets remain available. State is excluded locally through `.git/info/exclude` unless the user explicitly requests tracked records.
+| Event | Exact control effect |
+| --- | --- |
+| `SessionStart` | Rehydrate state only when `session_id` equals the bound root thread. |
+| `SubagentStart` | Resolve `agent_id` ancestry through app-server, record the event, and inject current constraints only for a matching descendant. |
+| `SubagentStop` | Resolve ancestry and record lifecycle state; never close semantic work. |
+| `Stop` | Continue only a matching root with known unfinished state; finalized state passes. |
 
-Legacy `.coding-agents/` remains an accepted input boundary. If `.CAO/` is absent, read-only operations use the legacy directory directly. Before the first mutation, the CLI copies the complete legacy directory to `.CAO/`, preserves the original, excludes both paths locally, and makes `.CAO/` authoritative. If both directories already exist, `.CAO/` wins without merging.
+Hook payloads provide the thread/agent identity, turn, model fact, working directory, and lifecycle event. CAO stores no raw prompt or assistant-message content in runtime event records.
 
-The CLI in `bin/coding-agents.mjs` is the executable owner of state structure and transitions. It may create, normalize, validate, append, collect, and finalize state. It may not launch workers or manage runtime threads.
+## App-server reconciliation
 
-## 3. Execution Plane
+CAO starts a short-lived official `codex app-server --stdio` client and negotiates the experimental protocol. It uses:
 
-Official Codex collaboration tools are the only worker-execution surface. The parent uses `spawn_agent`, `wait_agent`, `send_message`, `followup_task`, `interrupt_agent`, and `list_agents` according to their exposed contracts. External Codex processes, hidden runners, and the state CLI never substitute for this surface.
+- `thread/read` for exact `parentThreadId` ancestry and thread metadata;
+- `thread/list` with `ancestorThreadId` for recursive descendants;
+- `thread/read(includeTurns: true)` for `collabAgentToolCall` and `subAgentActivity` items.
 
-If collaboration tools are unavailable, the workflow stops with current state preserved. Parent-only fallback is not completion of a user-selected CAO workflow unless the user separately authorizes that change.
+The normalized observations record sender/receiver thread IDs, tool kind, status, agent path, requested model/reasoning facts when present, and agent statuses. Prompt presence may be recorded as a boolean; prompt text is omitted.
 
-## 4. Dynamic Responsibilities
+The Desktop app's active app-server is connected to its host transport. CAO does not claim to attach to that private push stream. Hooks are the immediate trigger; official app-server readback is the reconciliation and recovery plane.
 
-CAO has no predefined roster, fixed role count, or role-name allowlist. The parent derives a responsibility name from the actual objective and records it only when the work is independently completable, exclusively owned, ready, sufficiently large, and useful to the critical path.
+## Separation invariant
 
-The parent owns decomposition, dependencies, scheduling, authority, safety, worker profile selection, state consistency, conflict resolution, integration, task acceptance, and reporting. Each worker owns one bounded output end to end. Simultaneous workers never share source ownership.
-
-## 5. State Transitions
-
-The normal transition is:
-
-`intake or related continuation -> assign packet -> official spawn -> collect packet -> integration -> task acceptance bundle -> finalize -> verify-assignments and doctor -> handoff`
-
-Before spawning, `assign` records the dynamic role, task identity, scope, expected output, model-neutral capability requirements, ambiguity, consequence, coupling, acceptance characteristics, hierarchy grant, and supervision contract.
-
-After a terminal worker result, `collect` records actual status, findings, changed paths, evidence, blockers, assumptions, next action, and exactly one workflow-state lifecycle disposition. State does not claim runtime-thread closure.
-
-`finalize` requires concrete typed evidence for active decisions, completion conditions, and source/spec coverage. It updates active TODO completion and appends the task-finalization packet atomically or restores the prior TODO bytes on failure.
-
-## 6. Continuation Semantics
-
-Before fresh intake, the parent reads task, TODO, decisions, assignments, audit, handoff, and runner state. It compares outcome, artifacts, scope, and completion status semantically:
-
-- unfinished related work retains task ID and epoch;
-- a later related stage retains lineage and advances epoch only when the old execution context is stale or finalized;
-- only clearly unrelated work starts fresh active documents;
-- runner history is preserved across fresh intake;
-- undeclared ambiguity remains visible rather than being silently normalized.
-
-## 7. Acceptance And Recovery
-
-Producers integrate all known requirements in their first handoff. The parent runs one task-sized semantic acceptance bundle. State validation confirms the recorded task decision; it does not create implementation quality or add requirements.
-
-An observed failure returns only the affected responsibility to its owner. The parent records the failure and lifecycle state before reassignment. Successful work is not sent to a stronger worker or a second reviewer.
-
-## 8. Source And Runtime Boundary
-
-The source repository is authoritative. Installed plugin cache is generated runtime material. `.CAO/`, migration backups, Git metadata, OS noise, and repository-local state are excluded from cache refresh. Source repair, cache refresh, installation, activation, restart, commit, and push remain separate operations.
+An observed start, message, wait, interruption, idle state, stop, or completed collaboration call is only a runtime fact. It cannot satisfy a work transaction, progress item, verification, or finalization requirement without parent integration and explicit semantic state.

@@ -1,19 +1,20 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "coding-agent-orchestrator/coding-agent-orchestrator-input/v1",
-  "title": "Coding Agent Orchestrator coordination input",
-  "description": "A bounded coding objective and deterministic .CAO state transition for an explicitly activated Coding Agent Orchestrator (CAO) workflow.",
+  "title": "Coding Agent Orchestrator state-control input",
+  "description": "An explicitly activated coding objective bound to an exact Codex root thread and deterministic .CAO state transition.",
   "type": "object",
   "required": [
     "activation",
     "objective",
     "workspaceRoot",
+    "rootThreadId",
     "stateTransition"
   ],
   "properties": {
     "activation": {
       "type": "string",
-      "description": "How the current user explicitly selected Coding Agent Orchestrator, including a leading uppercase CAO invocation, or that this is a continuation of an already active workflow. This field does not itself grant activation.",
+      "description": "The explicit current-user selection of CAO or explicit continuation of an active CAO workflow.",
       "enum": [
         "explicit-cao-prefix",
         "explicit-dollar-skill",
@@ -24,17 +25,19 @@
     },
     "objective": {
       "type": "string",
-      "description": "The complete bounded coding outcome for the parent Codex task to own and integrate.",
       "minLength": 1
     },
     "workspaceRoot": {
       "type": "string",
-      "description": "The resolved jobsite root for source inspection, scoped implementation, and acceptance.",
+      "minLength": 1
+    },
+    "rootThreadId": {
+      "type": "string",
+      "description": "The exact current Codex root thread identifier used to isolate state and descendant events from unrelated sessions.",
       "minLength": 1
     },
     "stateTransition": {
       "type": "string",
-      "description": "Whether the host preserves a related workflow or initializes clearly unrelated work. The host determines this from current state and the user objective.",
       "enum": [
         "continue-related",
         "initialize-unrelated"
@@ -42,18 +45,14 @@
     },
     "taskId": {
       "type": "string",
-      "description": "Existing or newly selected task identity recorded in .CAO/task.md.",
       "minLength": 1
     },
     "epoch": {
       "type": "string",
-      "description": "Existing or newly selected workflow epoch recorded in .CAO/task.md.",
       "minLength": 1
     },
     "requestedScope": {
       "type": "array",
-      "description": "User-declared source or artifact boundaries when the objective names them.",
-      "minItems": 1,
       "uniqueItems": true,
       "items": {
         "type": "string",
@@ -62,8 +61,6 @@
     },
     "acceptanceCriteria": {
       "type": "array",
-      "description": "Known completion conditions that must be integrated before the first acceptance candidate.",
-      "minItems": 1,
       "uniqueItems": true,
       "items": {
         "type": "string",
@@ -72,8 +69,6 @@
     },
     "constraints": {
       "type": "array",
-      "description": "Known execution, authority, safety, delivery-mode, or external-effect constraints for this objective.",
-      "minItems": 1,
       "uniqueItems": true,
       "items": {
         "type": "string",

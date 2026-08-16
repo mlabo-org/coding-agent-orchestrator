@@ -10,74 +10,82 @@ function read(relativePath) {
   return readFileSync(path.join(repoRoot, relativePath), "utf8");
 }
 
-test("plugin metadata exposes explicit CAO activation and required state control", () => {
+test("public metadata exposes explicit state control without owning native execution topology", () => {
   const manifest = JSON.parse(read(".codex-plugin/plugin.json"));
   const creator = JSON.parse(read("creator-contract.json"));
+  const capability = JSON.parse(read("local-capability-manifest.json"));
   const skill = read("skills/coding-agent-orchestrator/SKILL.md");
   const metadata = read("skills/coding-agent-orchestrator/agents/openai.yaml");
 
   assert.equal(manifest.name, "coding-agent-orchestrator");
-  assert.match(manifest.description, /Explicit-only Coding Agent Orchestrator.*deterministic \.CAO state control/i);
-  assert.ok(manifest.keywords.includes(".CAO"));
-  assert.ok(manifest.interface.capabilities.includes("Deterministic .CAO State Control"));
-  assert.match(manifest.interface.longDescription, /There is no fixed role roster/i);
-  assert.match(manifest.interface.longDescription, /record-only state CLI never launches workers/i);
-  assert.ok(manifest.interface.defaultPrompt.every((prompt) => /CAO|Coding Agent Orchestrator|\$coding-agent-orchestrator/.test(prompt)));
+  assert.match(manifest.description, /explicit-only.*state control/i);
+  assert.ok(manifest.interface.capabilities.includes("Exact Root-Thread State Binding"));
+  assert.ok(manifest.interface.capabilities.includes("Official Hook Event Capture"));
+  assert.ok(manifest.interface.capabilities.includes("App-Server Runtime Reconciliation"));
+  assert.match(manifest.interface.longDescription, /Native Codex owns.*recursive delegation.*peer messaging/is);
+  assert.match(manifest.interface.longDescription, /runtime completion.*semantic completion/i);
 
-  const frontmatter = skill.match(/^---\n([\s\S]*?)\n---\n/);
-  assert.ok(frontmatter, "SKILL.md must have YAML frontmatter");
-  const description = frontmatter[1]
-    .split("\n")
-    .filter((line) => line.startsWith("  "))
-    .map((line) => line.trim())
-    .join(" ");
-  assert.ok(description.length <= 400, "skill description must remain routing-budget concise");
-  assert.match(description.slice(0, 220), /Coding Agent Orchestrator.*official Codex subagents.*\.CAO state control/i);
-  assert.match(skill, /For every activated coding workflow, `\.CAO\/` is the workflow state SSOT/);
-  assert.match(skill, /There is no fixed roster and no role-name allowlist/);
-  assert.match(skill, /Before `spawn_agent`, record the exact dynamic role/);
-  assert.match(skill, /The CLI may create and validate `\.CAO\/`/);
-  assert.match(skill, /It must never launch Codex/);
-  assert.match(skill, /Use only `spawn_agent`.*`list_agents`/s);
+  assert.match(skill, /CAO is a state-control plane, not a subagent launcher/i);
+  assert.match(skill, /SubagentStart.*SubagentStop.*app-server/is);
+  assert.match(skill, /exact bound root thread tree/i);
+  assert.match(skill, /must not infer semantic completion/i);
+  assert.match(metadata, /Durable CAO state control/);
 
-  assert.match(creator.routing.primary_route, /resolve or initialize.*\.CAO state/i);
-  assert.match(creator.workflow_contract.role_rule, /unrestricted dynamic responsibility names/i);
-  assert.match(creator.workflow_contract.execution_rule, /never launches workers/i);
-  assert.equal(creator.runtime_boundaries.generated_or_runtime_paths[0], ".CAO/");
-
-  assert.match(metadata, /^  short_description: "Official subagents with deterministic \.CAO state"$/m);
-  assert.match(metadata, /^  default_prompt: "Use \$coding-agent-orchestrator.*\.CAO state/m);
-  assert.match(metadata, /^  allow_implicit_invocation: true$/m);
+  assert.equal(creator.workflow_contract.execution_owner, "native-codex");
+  assert.equal(creator.workflow_contract.state_owner, "coding-agent-orchestrator");
+  assert.match(creator.workflow_contract.runtime_observation_rule, /Hooks.*app-server/i);
+  assert.equal(capability.capabilities[0].executionClass, "state_controller");
+  assert.match(capability.capabilities[0].runtimeBinding.instruction, /exact root thread/i);
 });
 
-test("capability schemas require finalized workflow state", () => {
+test("plugin hooks cover root rehydration, descendant lifecycle, and known-work stop control", () => {
+  const hooks = JSON.parse(read("hooks/hooks.json"));
+  assert.deepEqual(Object.keys(hooks.hooks).sort(), ["SessionStart", "Stop", "SubagentStart", "SubagentStop"].sort());
+  for (const event of Object.keys(hooks.hooks)) {
+    const handler = hooks.hooks[event][0].hooks[0];
+    assert.equal(handler.type, "command");
+    assert.match(handler.command, /\$\{PLUGIN_ROOT\}\/scripts\/cao-state-hook\.mjs/);
+    assert.ok(handler.statusMessage.length > 0);
+  }
+  assert.doesNotThrow(() => JSON.parse(read("hooks/hooks.json")));
+  assert.match(read("scripts/cao-state-hook.mjs"), /bin\/coding-agents\.mjs/);
+});
+
+test("capability schemas expose root binding and separate runtime observations from semantic state", () => {
   const input = JSON.parse(read("schemas/v1/leaves/coding-agent-orchestrator-input.schema.json"));
   const output = JSON.parse(read("schemas/v1/leaves/coding-agent-orchestrator-output.schema.json"));
-  const capability = JSON.parse(read("local-capability-manifest.json"));
-
-  assert.ok(input.required.includes("stateTransition"));
-  assert.deepEqual(input.properties.stateTransition.enum, [
-    "continue-related",
-    "initialize-unrelated",
-  ]);
-  assert.ok(output.required.includes("workflowState"));
-  assert.equal(output.properties.workflowState.properties.finalized.const, true);
-  assert.equal(output.properties.workflowState.properties.integrity.const, "passed");
-  assert.deepEqual(capability.capabilities[0].artifactRoots, [".CAO/"]);
-  assert.match(capability.capabilities[0].runtimeBinding.instruction, /record-only state CLI/);
-  assert.match(capability.capabilities[0].runtimeBinding.instruction, /official GUI Codex collaboration tools for actual worker lifecycle/);
+  assert.ok(input.required.includes("rootThreadId"));
+  assert.match(input.properties.rootThreadId.description, /exact.*root.*thread/i);
+  assert.ok(output.properties.workflowState.required.includes("rootThreadId"));
+  assert.ok(output.properties.workflowState.required.includes("runtimeObservationIntegrity"));
+  assert.match(output.properties.workflowState.properties.runtimeObservationIntegrity.description, /does not prove semantic completion/i);
 });
 
-test("source CLI has deterministic state control without a worker runner or fixed roles", () => {
-  const cli = read("bin/coding-agents.mjs");
-
-  assert.doesNotMatch(cli, /(?:spawnSync|execFileSync)\s*\(\s*["']codex["']/);
-  assert.doesNotMatch(cli, /\bconst ROLES\b|unknown role:|14 role|14-role|fixed role/i);
-  assert.match(cli, /# Dynamic Role Assignments/);
-  assert.match(cli, /There is no fixed roster and no allowlist of role names/);
-  assert.match(cli, /--role must be a 1-80 character single-line responsibility name/);
-  assert.match(cli, /--runner and --timeout-ms are unsupported/);
-  assert.match(cli, /record-only; dispatch subagents through the official Codex spawn tools outside this CLI/);
-  assert.match(cli, /preserves runner\.md history/);
-  assert.match(cli, /task-finalization\/TODO agreement/i);
+test("active source no longer exposes CAO-owned worker routing or lifecycle control", () => {
+  const activePaths = [
+    "README.md",
+    "skills/coding-agent-orchestrator/SKILL.md",
+    "skills/coding-agent-orchestrator/agents/openai.yaml",
+    ".codex-plugin/plugin.json",
+    "creator-contract.json",
+    "local-capability-manifest.json",
+    "schemas/v1/leaves/coding-agent-orchestrator-input.schema.json",
+    "schemas/v1/leaves/coding-agent-orchestrator-output.schema.json",
+    "docs/specs/coding-agent-orchestrator-gui-subagent-spec.md",
+    "docs/specs/coding-agent-orchestrator-state-control-spec.md",
+  ];
+  const source = activePaths.map(read).join("\n");
+  const retired = [
+    ["Root", "Sol"].join(" "),
+    ["hierarchy", "mode"].join("_"),
+    ["heartbeat", "interval"].join("_"),
+    ["lifecycle", "disposition"].join("_"),
+    ["parallel", "wave"].join(" "),
+    ["critical", "path"].join(" "),
+    ["dynamic", "role", "assignment"].join(" "),
+  ];
+  for (const phrase of retired) {
+    const pattern = new RegExp(phrase, "i");
+    assert.doesNotMatch(source, pattern);
+  }
 });
